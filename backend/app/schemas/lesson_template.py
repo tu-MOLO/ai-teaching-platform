@@ -1,0 +1,45 @@
+"""
+教案模板相关的Pydantic schemas
+"""
+from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Optional
+
+
+class LessonTemplateBase(BaseModel):
+    """
+    教案模板基础schema
+    """
+    name: str = Field(..., description="模板名称")
+    description: Optional[str] = Field(None, description="模板描述")
+    structure: str = Field(..., description="模板结构（JSON格式）")
+    is_default: bool = Field(False, description="是否默认模板")
+
+
+class LessonTemplateCreate(LessonTemplateBase):
+    """
+    创建教案模板的schema
+    """
+    pass
+
+
+class LessonTemplateUpdate(BaseModel):
+    """
+    更新教案模板的schema
+    """
+    name: Optional[str] = Field(None, description="模板名称")
+    description: Optional[str] = Field(None, description="模板描述")
+    structure: Optional[str] = Field(None, description="模板结构（JSON格式）")
+    is_default: Optional[bool] = Field(None, description="是否默认模板")
+
+
+class LessonTemplateResponse(LessonTemplateBase):
+    """
+    教案模板响应的schema
+    """
+    id: str = Field(..., description="模板ID")
+    created_at: datetime = Field(..., description="创建时间")
+    updated_at: datetime = Field(..., description="更新时间")
+    
+    class Config:
+        from_attributes = True

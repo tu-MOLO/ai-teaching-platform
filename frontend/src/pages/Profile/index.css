@@ -1,0 +1,316 @@
+.profile-container {
+  padding: var(--space-lg);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  margin-bottom: var(--space-lg);
+}
+
+.profile-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.profile-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.profile-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.profile-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  gap: var(--space-md);
+}
+
+.profile-error p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+/* 卡片样式 */
+.profile-card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+}
+
+.profile-card + .profile-card {
+  margin-top: var(--space-lg);
+}
+
+.profile-card .ant-card-head {
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--space-md) var(--space-lg);
+}
+
+.profile-card .ant-card-head-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.profile-card .ant-card-body {
+  padding: var(--space-lg);
+}
+
+/* 左侧信息卡片 */
+.profile-info-card {
+  text-align: center;
+}
+
+.profile-avatar-section {
+  padding: var(--space-md) 0;
+}
+
+.profile-avatar {
+  margin-bottom: var(--space-md);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  font-size: 48px !important;
+}
+
+.profile-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.profile-role-tag {
+  font-size: var(--font-size-xs);
+  padding: 2px 12px;
+  border-radius: var(--radius-full);
+}
+
+.profile-bio-preview {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: var(--space-md) 0 0 0;
+  padding: 0 var(--space-md);
+  line-height: var(--line-height-normal);
+  min-height: 42px;
+}
+
+/* 统计信息 */
+.profile-stats {
+  padding: var(--space-sm) 0;
+}
+
+.profile-stats .ant-statistic-title {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-xs);
+}
+
+.profile-stats .ant-statistic-content {
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+}
+
+.profile-stats .ant-statistic-content-prefix {
+  font-size: var(--font-size-md);
+  margin-right: var(--space-sm);
+  color: var(--color-primary);
+}
+
+/* 元信息卡片 */
+.profile-meta-card .ant-descriptions-item-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.profile-meta-card .ant-descriptions-item-content {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.profile-id {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* 卡片标题 */
+.profile-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.profile-card-title .anticon {
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+}
+
+/* 编辑操作按钮 */
+.profile-edit-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* 表单样式 */
+.profile-form {
+  margin-top: var(--space-sm);
+}
+
+.profile-form .ant-form-item-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.profile-form .ant-input-prefix {
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-sm);
+}
+
+.profile-form .ant-input {
+  border-radius: var(--radius-md);
+}
+
+.profile-form .ant-input:focus,
+.profile-form .ant-input-focused {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(201, 168, 124, 0.15);
+}
+
+.profile-form.ant-form-disabled .ant-input {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+.profile-form.ant-form-disabled .ant-input-prefix {
+  color: var(--color-text-muted);
+}
+
+/* 只读提示 */
+.profile-readonly-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.profile-readonly-hint .anticon {
+  color: var(--color-text-tertiary);
+}
+
+/* 安全设置卡片 */
+.profile-security-card {
+  margin-top: var(--space-lg);
+}
+
+.profile-security-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.security-item-info h4 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.security-item-info p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: var(--space-md);
+  }
+
+  .profile-title {
+    font-size: var(--font-size-xl);
+  }
+
+  .profile-card .ant-card-body {
+    padding: var(--space-md);
+  }
+
+  .profile-security-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .profile-edit-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* 动画效果 */
+.profile-card {
+  transition: box-shadow var(--transition-normal);
+}
+
+.profile-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* 按钮样式优化 - 使用统一主色调 */
+.profile-container .ant-btn {
+  border-radius: var(--radius-md);
+}
+
+.profile-container .ant-btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.profile-container .ant-btn-primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-container .ant-btn-default:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 标签样式 */
+.profile-container .ant-tag {
+  border-radius: var(--radius-sm);
+}
+
+/* 分割线样式 */
+.profile-container .ant-divider {
+  border-color: var(--color-divider);
+}
+
+/* 描述列表样式 */
+.profile-container .ant-descriptions-item-label {
+  color: var(--color-text-secondary);
+}
+
+.profile-container .ant-descriptions-item-content {
+  color: var(--color-text-primary);
+}

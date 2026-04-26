@@ -1,0 +1,35 @@
+.ai-assistant-page {
+  padding: 24px;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-assistant-card {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.ai-assistant-icon {
+  font-size: 80px;
+  color: #1890ff;
+  margin-bottom: 24px;
+}
+
+.ai-assistant-content {
+  margin-top: 16px;
+}
+
+.ai-assistant-description {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.65);
+  margin-bottom: 8px;
+}
+
+.ai-assistant-subtitle {
+  font-size: 14px;
+}

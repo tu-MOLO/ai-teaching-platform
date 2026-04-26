@@ -1,0 +1,66 @@
+.layout {
+  min-height: 100vh;
+}
+
+.layout-content {
+  flex: 1;
+  background-color: #f0f2f5;
+  margin-left: 240px;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.layout-content-collapsed {
+  margin-left: 80px;
+}
+
+.content {
+  padding: 24px;
+  margin: 0;
+  min-height: calc(100vh - 64px);
+}
+
+/* 移动端抽屉样式 */
+.mobile-sidebar-drawer .ant-drawer-body {
+  padding: 0;
+}
+
+.mobile-sidebar-drawer .ant-drawer-content {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* 响应式适配 - 平板 */
+@media (max-width: 1024px) {
+  .content {
+    padding: 20px;
+  }
+}
+
+/* 响应式适配 - 手机 */
+@media (max-width: 768px) {
+  .layout-content,
+  .layout-content-collapsed {
+    margin-left: 0;
+  }
+  
+  .content {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
+}
+
+/* 响应式适配 - 小屏手机 */
+@media (max-width: 480px) {
+  .content {
+    padding: 12px;
+  }
+}
+
+/* 超大屏幕适配 */
+@media (min-width: 1920px) {
+  .content {
+    padding: 32px;
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+}

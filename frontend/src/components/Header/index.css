@@ -1,0 +1,410 @@
+/* 头部导航样式 */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-sm);
+  padding: 0 32px;
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+/* 移动端头部 */
+.header-mobile {
+  height: 56px;
+  padding: 0 16px;
+}
+
+/* 左侧区域 */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 移动端菜单按钮 */
+.header-menu-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.header-menu-btn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.header-menu-btn .anticon {
+  font-size: 20px;
+}
+
+.breadcrumb {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.breadcrumb-separator {
+  margin: 0 8px;
+  color: var(--color-text-tertiary);
+}
+
+/* 右侧区域 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 头部按钮 */
+.header-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.header-btn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.header-btn .anticon {
+  font-size: 18px;
+}
+
+/* 通知徽章 */
+.header-btn .ant-badge {
+  line-height: 1;
+}
+
+.header-btn .ant-badge-count {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-bg-card);
+}
+
+/* 用户菜单 */
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 12px 2px 2px;
+  border-radius: 10px;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header-user:hover {
+  background: var(--color-bg-secondary);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.user-role {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  line-height: 1.3;
+}
+
+/* 下拉菜单样式 */
+.header-dropdown .ant-dropdown-menu {
+  min-width: 180px;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+}
+
+.header-dropdown .ant-dropdown-menu-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.header-dropdown .ant-dropdown-menu-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.header-dropdown .ant-dropdown-menu-item-icon {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* 分割线 */
+.header-dropdown .ant-dropdown-menu-item-divider {
+  margin: 8px 0;
+  background: var(--color-border);
+}
+
+/* 搜索框 */
+.header-search {
+  position: relative;
+  width: 280px;
+}
+
+.header-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 16px 0 40px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  font-size: 14px;
+  color: var(--color-text-primary);
+  transition: all 0.2s ease;
+}
+
+.header-search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.header-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--color-bg-card);
+  box-shadow: 0 0 0 3px rgba(201, 168, 124, 0.1);
+}
+
+.header-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  font-size: 16px;
+}
+
+/* 通知下拉菜单样式 */
+.notification-dropdown-wrapper .ant-dropdown-menu {
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  min-width: 320px;
+  max-width: 360px;
+}
+
+.notification-dropdown {
+  background: var(--color-bg-card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.notification-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.notification-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.notification-item.unread {
+  background: rgba(201, 168, 124, 0.05);
+}
+
+.notification-item.unread:hover {
+  background: rgba(201, 168, 124, 0.1);
+}
+
+.notification-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notification-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.notification-item-content {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.notification-item-time {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+/* 帮助内容样式 */
+.help-content {
+  padding: 8px 0;
+}
+
+.help-content h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 16px;
+}
+
+.help-content p {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.help-content ul {
+  margin-bottom: 16px;
+  padding-left: 20px;
+}
+
+.help-content li {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.help-content li strong {
+  color: var(--color-text-primary);
+}
+
+/* ==================== 响应式适配 ==================== */
+
+/* 平板 */
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 20px;
+  }
+  
+  .header-search {
+    width: 200px;
+  }
+}
+
+/* 手机 */
+@media (max-width: 768px) {
+  .header {
+    height: 56px;
+    padding: 0 16px;
+  }
+  
+  .header-search {
+    display: none;
+  }
+  
+  .user-info {
+    display: none;
+  }
+  
+  .header-user {
+    padding: 6px;
+    margin-left: 4px;
+  }
+  
+  .notification-dropdown-wrapper .ant-dropdown-menu {
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .header-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .header-btn .anticon {
+    font-size: 16px;
+  }
+}
+
+/* 小屏手机 */
+@media (max-width: 480px) {
+  .header {
+    padding: 0 12px;
+  }
+  
+  .header-right {
+    gap: 4px;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* 超大屏幕 */
+@media (min-width: 1920px) {
+  .header {
+    padding: 0 40px;
+  }
+  
+  .header-search {
+    width: 320px;
+  }
+}

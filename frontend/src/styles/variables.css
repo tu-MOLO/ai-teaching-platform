@@ -1,0 +1,97 @@
+/* ============================================
+   AI教学平台 - 设计系统变量
+   采用暖调专业配色方案
+   ============================================ */
+
+:root {
+  /* 主色调 - 暖调专业 */
+  --color-primary: #c9a87c;
+  --color-primary-light: #d9c4a3;
+  --color-primary-dark: #a88b5e;
+  --color-primary-hover: #b89b6e;
+  
+  /* 背景色 */
+  --color-bg-primary: #fefcf8;
+  --color-bg-secondary: #f5f0e8;
+  --color-bg-tertiary: #ebe5db;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #1a1a2e;
+  
+  /* 文字色 */
+  --color-text-primary: #2c2c2c;
+  --color-text-secondary: #5a5a5a;
+  --color-text-tertiary: #8a8a8a;
+  --color-text-inverse: #ffffff;
+  --color-text-muted: #a0a0a0;
+  
+  /* 功能色 */
+  --color-success: #6b9b7a;
+  --color-warning: #d4a574;
+  --color-error: #c97b7b;
+  --color-info: #7a9ab8;
+  
+  /* 边框 */
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-divider: rgba(0, 0, 0, 0.08);
+  
+  /* 阴影系统 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+  
+  /* 间距系统 - 8px基准 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  
+  /* 圆角 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* 字体 */
+  --font-family-base: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: "SF Mono", "Fira Code", monospace;
+  
+  /* 字号 */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 32px;
+  
+  /* 字重 */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* 行高 */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  
+  /* Z-index层级 */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-modal: 1040;
+  --z-popover: 1060;
+  --z-tooltip: 1080;
+}

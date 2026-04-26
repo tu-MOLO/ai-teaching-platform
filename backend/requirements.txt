@@ -1,0 +1,50 @@
+# FastAPI框架
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+
+# 数据库
+sqlalchemy[asyncio]==2.0.27
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Pydantic和配置
+pydantic==2.6.1
+pydantic-settings==2.1.0
+email-validator==2.1.0.post1
+
+# 认证和安全
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+
+# 文件存储
+minio==7.2.4
+
+# 缓存（可选）
+redis==5.0.1
+
+# HTTP客户端
+httpx==0.26.0
+aiohttp==3.9.3
+
+# 工具库
+python-dotenv==1.0.1
+orjson==3.9.13
+
+# 导出功能
+weasyprint==59.0
+python-docx==0.8.11
+
+# 开发依赖（可选）
+pytest==7.4.4
+pytest-asyncio==0.23.4
+pytest-cov==4.1.0
+pytest-html==4.1.1
+httpx==0.26.0
+aiosqlite==0.19.0
+factory-boy==3.3.0
+black==24.1.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0
