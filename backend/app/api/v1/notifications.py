@@ -13,10 +13,7 @@ from app.core.security import get_current_user_id
 from app.models.notification import NotificationType
 from app.schemas.base import MessageResponse
 from app.schemas.notification import (
-    NotificationCreate,
-    NotificationCreateBulk,
     NotificationListResponse,
-    NotificationQueryParams,
     NotificationReadRequest,
     NotificationResponse,
     NotificationStats,
@@ -123,44 +120,6 @@ async def get_unread_count(
     """
     count = await NotificationService.get_unread_count(db, current_user)
     return {"unread_count": count}
-
-
-@router.post("", response_model=NotificationResponse, status_code=status.HTTP_201_CREATED, summary="创建通知")
-async def create_notification(
-    notification_in: NotificationCreate,
-    db: DBSession,
-    current_user: CurrentUser
-) -> NotificationResponse:
-    """
-    创建通知（管理员功能）
-    
-    用于系统向指定用户发送通知
-    """
-    # TODO: 添加管理员权限检查
-    
-    notification = await NotificationService.create(db, notification_in)
-    return NotificationResponse.model_validate(notification)
-
-
-@router.post("/bulk", response_model=MessageResponse, summary="批量创建通知")
-async def create_notifications_bulk(
-    bulk_in: NotificationCreateBulk,
-    db: DBSession,
-    current_user: CurrentUser
-) -> MessageResponse:
-    """
-    批量创建通知（管理员功能）
-    
-    用于系统向多个用户发送相同通知
-    """
-    # TODO: 添加管理员权限检查
-    
-    notifications = await NotificationService.create_bulk(db, bulk_in)
-    
-    return MessageResponse(
-        message=f"成功创建 {len(notifications)} 条通知",
-        code="success"
-    )
 
 
 @router.get("/{notification_id}", response_model=NotificationResponse, summary="获取通知详情")

@@ -146,24 +146,6 @@ const Profile: React.FC = () => {
     }
   }
 
-  // 获取角色标签颜色
-  const getRoleColor = (role: string) => {
-    const colorMap: Record<string, string> = {
-      admin: 'red',
-      teacher: 'blue'
-    }
-    return colorMap[role] || 'blue'
-  }
-
-  // 获取角色显示文本
-  const getRoleText = (role: string) => {
-    const textMap: Record<string, string> = {
-      admin: '管理员',
-      teacher: '教师'
-    }
-    return textMap[role] || '教师'
-  }
-
   // 获取状态标签
   const getStatusTag = (status: string, isActive: boolean) => {
     if (!isActive) {
@@ -173,7 +155,6 @@ const Profile: React.FC = () => {
       active: { color: 'success', text: '活跃' },
       inactive: { color: 'default', text: '未激活' },
       suspended: { color: 'warning', text: '已暂停' },
-      pending: { color: 'processing', text: '待审核' }
     }
     const config = statusMap[status] || { color: 'default', text: status }
     return <Tag color={config.color}>{config.text}</Tag>
@@ -329,8 +310,8 @@ const Profile: React.FC = () => {
               <h2 className="profile-name">
                 {profile.full_name || profile.username}
               </h2>
-              <Tag color={getRoleColor(profile.role)} className="profile-role-tag">
-                {getRoleText(profile.role)}
+              <Tag color="blue" className="profile-role-tag">
+                教师
               </Tag>
               <p className="profile-bio-preview">
                 {profile.bio || '暂无个人简介'}
@@ -350,10 +331,10 @@ const Profile: React.FC = () => {
                 </Col>
                 <Col span={12}>
                   <Statistic
-                    title="账户状态"
-                    value={profile.is_verified ? '已验证' : '未验证'}
+                    title="资料状态"
+                    value={profile.full_name ? '已完善' : '待完善'}
                     valueStyle={{
-                      color: profile.is_verified ? '#52c41a' : '#faad14',
+                      color: profile.full_name ? '#52c41a' : '#faad14',
                       fontSize: '16px'
                     }}
                     prefix={<SafetyOutlined />}
@@ -534,15 +515,15 @@ const Profile: React.FC = () => {
             <Divider />
             <div className="profile-security-item">
               <div className="security-item-info">
-                <h4>邮箱验证</h4>
+                <h4>账户资料</h4>
                 <p>
-                  {profile.is_verified
-                    ? '您的邮箱已通过验证'
-                    : '验证邮箱可以提高账户安全性'}
+                  {profile.full_name
+                    ? '当前资料已可满足日常教学使用'
+                    : '建议完善真实姓名和联系方式，便于后续交接与使用'}
                 </p>
               </div>
-              <Button type="default" disabled={profile.is_verified}>
-                {profile.is_verified ? '已验证' : '去验证'}
+              <Button type="default" onClick={handleEdit}>
+                完善资料
               </Button>
             </div>
           </Card>

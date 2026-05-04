@@ -1,7 +1,8 @@
 import api from './api';
-import type { ResourceTag } from './tag';
-import { toBlob, toItem, toListResponse } from './response';
+import { toItem, toListResponse } from './response';
 import type { Resource, ResourceListItem, ResourceQueryParams, ResourceListResponse } from '@/types/resource';
+
+export type { Resource, ResourceListItem, ResourceQueryParams, ResourceListResponse } from '@/types/resource';
 
 /**
  * 获取资源列表

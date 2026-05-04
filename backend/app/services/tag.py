@@ -4,7 +4,7 @@
 """
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import func, select
 
 from app.models.tag import Tag
 from app.schemas.tag import TagCreate, TagUpdate
@@ -62,6 +62,17 @@ class TagService:
             return tags
         except Exception as e:
             logger.error(f"Failed to get tags: {e}")
+            raise
+
+    @staticmethod
+    async def count_tags(db: AsyncSession) -> int:
+        """统计未删除标签总数"""
+        try:
+            query = select(func.count(Tag.id)).where(Tag.is_deleted == False)
+            result = await db.execute(query)
+            return result.scalar() or 0
+        except Exception as e:
+            logger.error(f"Failed to count tags: {e}")
             raise
     
     @staticmethod

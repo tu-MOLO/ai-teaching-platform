@@ -61,7 +61,6 @@ class UserAuthInfo(BaseSchema):
     avatar_url: Optional[str] = Field(default=None, description="头像URL")
     role: UserRole = Field(..., description="用户角色")
     is_active: bool = Field(..., description="是否激活")
-    is_verified: bool = Field(..., description="是否验证邮箱")
 
 
 # ============== 密码相关 ==============
@@ -74,25 +73,8 @@ class PasswordChangeRequest(BaseSchema):
 
 class PasswordResetRequest(BaseSchema):
     """密码重置请求"""
-    email: EmailStr = Field(..., description="邮箱地址")
-
-
-class PasswordResetConfirmRequest(BaseSchema):
-    """密码重置确认请求"""
-    token: str = Field(..., description="重置令牌")
+    username: str = Field(..., description="用户名或邮箱")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
-
-
-# ============== 邮箱验证 ==============
-
-class EmailVerificationRequest(BaseSchema):
-    """邮箱验证请求"""
-    email: EmailStr = Field(..., description="邮箱地址")
-
-
-class EmailVerificationConfirmRequest(BaseSchema):
-    """邮箱验证确认请求"""
-    token: str = Field(..., description="验证令牌")
 
 
 # ============== 当前用户信息 ==============
@@ -109,7 +91,6 @@ class CurrentUserResponse(BaseSchema):
     role: UserRole = Field(..., description="用户角色")
     status: str = Field(..., description="用户状态")
     is_active: bool = Field(..., description="是否激活")
-    is_verified: bool = Field(..., description="是否验证邮箱")
     last_login_at: Optional[datetime] = Field(default=None, description="最后登录时间")
     login_count: int = Field(default=0, description="登录次数")
     permissions: list[str] = Field(default_factory=list, description="权限列表")

@@ -4,7 +4,7 @@ API V1路由注册模块
 """
 from fastapi import APIRouter
 
-from app.api.v1 import auth, permissions, tags, resources, lesson_templates, lesson_plans, students, portfolios, courses, reports, notifications, users, dropdown_options
+from app.api.v1 import auth, tags, resources, lesson_templates, lesson_plans, students, portfolios, courses, reports, notifications, users, dropdown_options
 
 # 创建V1版本的路由器
 api_router = APIRouter()
@@ -14,9 +14,6 @@ api_router.include_router(auth.router)
 
 # 注册用户管理路由
 api_router.include_router(users.router, prefix="/users", tags=["用户"])
-
-# 注册权限管理路由
-api_router.include_router(permissions.router)
 
 # 注册标签路由
 api_router.include_router(tags.router, prefix="/tags", tags=["标签"])

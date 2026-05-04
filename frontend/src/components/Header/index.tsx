@@ -11,6 +11,8 @@ import {
   MenuOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { authService } from '../../services/auth'
+import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import { 
   getNotifications, 
@@ -48,15 +50,6 @@ const formatTime = (dateString: string): string => {
   return date.toLocaleDateString('zh-CN')
 }
 
-// 获取角色显示文本
-const getRoleText = (role?: string) => {
-  const textMap: Record<string, string> = {
-    admin: '管理员',
-    teacher: '教师'
-  }
-  return textMap[role || ''] || '教师'
-}
-
 interface HeaderProps {
   onMenuClick?: () => void
   isMobile?: boolean
@@ -64,7 +57,8 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
   const navigate = useNavigate()
-  const { user, logout } = useUserStore()
+  const { user, clearUser } = useUserStore()
+  const { logout } = useAuthStore()
   const [searchValue, setSearchValue] = useState('')
   const [helpModalVisible, setHelpModalVisible] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -142,6 +136,18 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
   }, [])
 
   // 处理用户菜单点击
+  const handleLogout = useCallback(async () => {
+    try {
+      await authService.logout()
+    } catch {
+      // ignore
+    } finally {
+      logout()
+      clearUser()
+      navigate('/login')
+    }
+  }, [clearUser, logout, navigate])
+
   const handleMenuClick = useCallback(({ key }: { key: string }) => {
     switch (key) {
       case 'profile':
@@ -154,12 +160,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
         showHelpModal()
         break
       case 'logout':
-        logout()
-        localStorage.clear()
-        navigate('/login')
+        void handleLogout()
         break
     }
-  }, [navigate, logout, showHelpModal])
+  }, [handleLogout, navigate, showHelpModal])
 
   const menuItems = [
     {
@@ -301,7 +305,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
             </div>
             <div className="user-info">
               <span className="user-name">{user?.username || '用户'}</span>
-              <span className="user-role">{getRoleText(user?.role)}</span>
+              <span className="user-role">教师</span>
             </div>
           </button>
         </Dropdown>
@@ -325,12 +329,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
           <p>本平台提供以下核心功能：</p>
           <ul>
             <li><strong>课程管理：</strong>创建、编辑和管理您的课程</li>
-            <li><strong>作业管理：</strong>布置作业、查看提交和批改作业</li>
+            <li><strong>教案管理：</strong>创建、整理和复用日常备课内容</li>
             <li><strong>学生管理：</strong>管理学生信息和查看学习进度</li>
-            <li><strong>数据分析：</strong>查看教学数据和学生表现分析</li>
-            <li><strong>AI助手：</strong>使用AI辅助教学和答疑</li>
+            <li><strong>成长档案：</strong>记录学生表现并沉淀过程性材料</li>
+            <li><strong>资源中心：</strong>统一管理教学资源与文件预览</li>
           </ul>
-          <p>如需更多帮助，请联系技术支持。</p>
+          <p>建议先在系统设置中维护学校信息、下拉选项和主题方案，再开始正式录入。</p>
         </div>
       </Modal>
     </AntHeader>

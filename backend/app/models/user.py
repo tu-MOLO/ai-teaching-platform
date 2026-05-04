@@ -4,10 +4,10 @@
 """
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
 
@@ -15,7 +15,6 @@ from app.models.base import BaseModel
 class UserRole(str, PyEnum):
     """用户角色枚举"""
     TEACHER = "teacher"      # 教师
-    ADMIN = "admin"          # 管理员
 
 
 class UserStatus(str, PyEnum):
@@ -23,7 +22,6 @@ class UserStatus(str, PyEnum):
     ACTIVE = "active"        # 活跃
     INACTIVE = "inactive"    # 未激活
     SUSPENDED = "suspended"  # 已暂停
-    PENDING = "pending"      # 待审核
 
 
 class User(BaseModel):
@@ -85,20 +83,12 @@ class User(BaseModel):
         Enum(UserRole, native_enum=False),
         default=UserRole.TEACHER,
         nullable=False,
-        comment="用户角色（枚举，向后兼容）"
-    )
-    
-    # 动态角色ID（用于关联到roles表）
-    role_id: Mapped[Optional[str]] = mapped_column(
-        String(36),
-        ForeignKey("roles.id", ondelete="SET NULL"),
-        nullable=True,
-        comment="动态角色ID"
+        comment="用户角色"
     )
     
     status: Mapped[UserStatus] = mapped_column(
         Enum(UserStatus, native_enum=False),
-        default=UserStatus.PENDING,
+        default=UserStatus.ACTIVE,
         nullable=False,
         comment="用户状态"
     )
@@ -109,20 +99,6 @@ class User(BaseModel):
         default=True,
         nullable=False,
         comment="账户是否激活"
-    )
-    
-    is_verified: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
-        comment="邮箱是否验证"
-    )
-    
-    is_superuser: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
-        comment="是否为超级管理员"
     )
     
     # 登录相关
@@ -165,10 +141,6 @@ class User(BaseModel):
         nullable=False,
         comment="令牌版本号"
     )
-    
-    # 关系
-    # 暂时移除所有关系定义以解决初始化问题
-    # dynamic_role: Mapped[Optional["Role"]] = relationship("Role", foreign_keys=[role_id], lazy="selectin")
     
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, email={self.email}, role={self.role})>"

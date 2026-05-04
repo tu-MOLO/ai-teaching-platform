@@ -200,7 +200,7 @@ def register_routers(app: FastAPI) -> None:
             from sqlalchemy import text
             async with async_engine.connect() as conn:
                 result = await conn.execute(text("SELECT 1"))
-                await result.scalar()
+                result.scalar()
             health_status["checks"]["database"] = {
                 "status": "healthy",
                 "message": "Database connection OK"

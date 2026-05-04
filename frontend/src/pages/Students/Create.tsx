@@ -7,6 +7,9 @@ import { refreshDashboardStats } from '../../stores/dashboard';
 
 const { Title } = Typography;
 
+const toDateString = (value?: { format: (template: string) => string }) =>
+  value ? value.format('YYYY-MM-DD') : undefined;
+
 const CreateStudent: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -19,8 +22,8 @@ const CreateStudent: React.FC = () => {
         gender: values.gender,
         grade: values.grade,
         class_name: values.class_name,
-        birth_date: values.birth_date?.toISOString(),
-        enrollment_date: values.enrollment_date?.toISOString(),
+        birth_date: values.birth_date.format('YYYY-MM-DD'),
+        enrollment_date: toDateString(values.enrollment_date),
         is_active: values.is_active,
       });
       message.success('创建成功');

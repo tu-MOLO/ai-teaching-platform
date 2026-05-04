@@ -39,7 +39,7 @@ class LessonPlanService:
             teaching_process=data.teaching_process,
             teaching_resources=data.teaching_resources,
             notes=data.notes,
-            status=LessonPlanStatus.DRAFT
+            status=data.status or LessonPlanStatus.DRAFT
         )
 
         async with self.db.begin():

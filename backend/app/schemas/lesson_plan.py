@@ -36,7 +36,7 @@ class LessonPlanCreate(LessonPlanBase):
     """
     创建教案的schema
     """
-    pass
+    status: Optional[LessonPlanStatus] = Field(None, description="教案状态")
 
 
 class LessonPlanUpdate(BaseModel):

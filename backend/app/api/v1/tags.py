@@ -3,6 +3,7 @@
 """
 from typing import List, Annotated
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
@@ -40,8 +41,7 @@ async def get_tags(
     try:
         skip = (page - 1) * page_size
         tags = await tag_service.get_tags(db, skip=skip, limit=page_size)
-        # TODO: 添加总数查询
-        total = len(tags)
+        total = await tag_service.count_tags(db)
         pages = (total + page_size - 1) // page_size
         return ListResponse(
             data=tags,

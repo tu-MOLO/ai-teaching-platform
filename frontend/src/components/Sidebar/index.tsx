@@ -1,20 +1,20 @@
 import React, { useState } from 'react'
 import { Layout, Menu, Tooltip } from 'antd'
-import { 
-  DashboardOutlined, 
-  BookOutlined, 
-  UserOutlined, 
-  SettingOutlined, 
-  LogoutOutlined, 
+import {
+  DashboardOutlined,
+  BookOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
   FolderOutlined,
   FileTextOutlined,
   TeamOutlined,
-  RobotOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  CloseOutlined
+  CloseOutlined,
 } from '@ant-design/icons'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { authService } from '../../services/auth'
 import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import './index.css'
@@ -35,109 +35,77 @@ interface SidebarProps {
   onClose?: () => void
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  collapsed: controlledCollapsed, 
-  onCollapse, 
+const menuItems: MenuItem[] = [
+  { key: '/', icon: <DashboardOutlined />, label: '工作台', path: '/' },
+  { key: '/courses', icon: <BookOutlined />, label: '课程管理', path: '/courses' },
+  { key: '/students', icon: <TeamOutlined />, label: '学生管理', path: '/students' },
+  { key: '/resource-center', icon: <FolderOutlined />, label: '资源中心', path: '/resource-center' },
+  { key: '/lesson-planner', icon: <FileTextOutlined />, label: '教案中心', path: '/lesson-planner' },
+  { key: '/portfolio', icon: <UserOutlined />, label: '学生档案', path: '/portfolio' },
+  { key: '/settings', icon: <SettingOutlined />, label: '系统设置', path: '/settings' },
+]
+
+const Sidebar: React.FC<SidebarProps> = ({
+  collapsed: controlledCollapsed,
+  onCollapse,
   mobile = false,
-  onClose 
+  onClose,
 }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { logout } = useAuthStore()
   const { clearUser } = useUserStore()
-  
+
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const collapsed = controlledCollapsed !== undefined ? controlledCollapsed : internalCollapsed
 
   const toggleCollapse = () => {
-    const newCollapsed = !collapsed
+    const nextCollapsed = !collapsed
     if (onCollapse) {
-      onCollapse(newCollapsed)
+      onCollapse(nextCollapsed)
     } else {
-      setInternalCollapsed(newCollapsed)
+      setInternalCollapsed(nextCollapsed)
     }
   }
 
   const handleMenuClick = (path: string) => {
     navigate(path)
-    if (mobile && onClose) {
-      onClose()
+    if (mobile) {
+      onClose?.()
     }
   }
 
   const handleLogout = () => {
-    logout()
-    clearUser()
-    navigate('/login')
-    if (mobile && onClose) {
-      onClose()
-    }
+    void (async () => {
+      try {
+        await authService.logout()
+      } catch {
+        // ignore
+      } finally {
+        logout()
+        clearUser()
+        navigate('/login')
+        if (mobile) {
+          onClose?.()
+        }
+      }
+    })()
   }
 
-  const menuItems: MenuItem[] = [
-    {
-      key: '/',
-      icon: <DashboardOutlined />,
-      label: '工作台',
-      path: '/',
-    },
-    {
-      key: '/courses',
-      icon: <BookOutlined />,
-      label: '课程管理',
-      path: '/courses',
-    },
-    {
-      key: '/students',
-      icon: <TeamOutlined />,
-      label: '学生管理',
-      path: '/students',
-    },
-    {
-      key: '/resource-center',
-      icon: <FolderOutlined />,
-      label: '资源中心',
-      path: '/resource-center',
-    },
-    {
-      key: '/lesson-planner',
-      icon: <FileTextOutlined />,
-      label: '教案中心',
-      path: '/lesson-planner',
-    },
-    {
-      key: '/ai-assistant',
-      icon: <RobotOutlined />,
-      label: 'AI助手',
-      path: '/ai-assistant',
-    },
-    {
-      key: '/portfolio',
-      icon: <UserOutlined />,
-      label: '学生档案',
-      path: '/portfolio',
-    },
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: '系统设置',
-      path: '/settings',
-    },
+  const selectedKeys = [
+    menuItems.find((item) => location.pathname === item.path || location.pathname.startsWith(item.path + '/'))?.key || '/',
   ]
 
-  const getSelectedKey = () => {
-    const currentPath = location.pathname
-    const matchedItem = menuItems.find(item => 
-      currentPath === item.path || currentPath.startsWith(item.path + '/')
-    )
-    return matchedItem ? [matchedItem.key] : ['/']
-  }
+  const menuConfig = menuItems.map((item) => ({
+    key: item.key,
+    icon: item.icon,
+    label: item.label,
+    onClick: () => handleMenuClick(item.path),
+  }))
 
-  // 移动端模式 - 不使用 Sider，直接渲染内容
   if (mobile) {
     return (
       <div className="sidebar-mobile">
-        {/* Logo区域 */}
         <div className="sidebar-header mobile-header">
           <div className="sidebar-logo">
             <div className="logo-icon">
@@ -148,7 +116,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="logo-text">
               <span className="logo-title">AI教学平台</span>
-              <span className="logo-subtitle">智慧教育管理系统</span>
+              <span className="logo-subtitle">教学管理系统</span>
             </div>
           </div>
           <button className="mobile-close-btn" onClick={onClose}>
@@ -156,24 +124,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* 菜单区域 */}
         <div className="sidebar-menu-wrapper">
           <div className="menu-section-title">主菜单</div>
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={getSelectedKey()}
-            className="sidebar-menu"
-            items={menuItems.map(item => ({
-              key: item.key,
-              icon: item.icon,
-              label: item.label,
-              onClick: () => handleMenuClick(item.path),
-            }))}
-          />
+          <Menu theme="dark" mode="inline" selectedKeys={selectedKeys} className="sidebar-menu" items={menuConfig} />
         </div>
 
-        {/* 底部退出按钮 */}
         <div className="sidebar-footer">
           <button className="logout-button" onClick={handleLogout}>
             <LogoutOutlined />
@@ -184,16 +139,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     )
   }
 
-  // 桌面端模式 - 使用 Sider
   return (
-    <Sider 
-      width={240} 
-      collapsedWidth={80}
-      collapsed={collapsed}
-      className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`} 
-      theme="dark"
-    >
-      {/* Logo区域 */}
+    <Sider width={240} collapsedWidth={80} collapsed={collapsed} className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`} theme="dark">
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <div className="logo-icon">
@@ -204,36 +151,26 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="logo-text">
             <span className="logo-title">AI教学平台</span>
-            <span className="logo-subtitle">智慧教育管理系统</span>
+            <span className="logo-subtitle">教学管理系统</span>
           </div>
         </div>
       </div>
 
-      {/* 菜单区域 */}
       <div className="sidebar-menu-wrapper">
         <div className="menu-section-title">主菜单</div>
         <Menu
           theme="dark"
           mode="inline"
           inlineCollapsed={collapsed}
-          selectedKeys={getSelectedKey()}
+          selectedKeys={selectedKeys}
           className="sidebar-menu"
-          items={menuItems.map(item => ({
-            key: item.key,
-            icon: item.icon,
-            label: item.label,
-            onClick: () => navigate(item.path),
-          }))}
+          items={menuConfig}
         />
       </div>
 
-      {/* 底部区域 */}
       <div className="sidebar-footer">
         <Tooltip title={collapsed ? '展开侧边栏' : '收起侧边栏'} placement="right">
-          <button 
-            className="collapse-button" 
-            onClick={toggleCollapse}
-          >
+          <button className="collapse-button" onClick={toggleCollapse}>
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             {!collapsed && <span>收起菜单</span>}
           </button>

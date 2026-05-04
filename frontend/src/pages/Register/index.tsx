@@ -25,7 +25,7 @@ const Register: React.FC = () => {
       setLoading(true)
       const { confirmPassword, ...registerData } = values
       await authService.register(registerData)
-      message.success('注册成功！请登录')
+      message.success('注册成功，请登录后完善个人资料')
       navigate('/login')
     } catch (error: any) {
       const errorMsg = error.response?.data?.detail || '注册失败，请稍后重试'
@@ -84,7 +84,7 @@ const Register: React.FC = () => {
             </div>
             <h1 className="brand-title">AI教学平台</h1>
             <p className="brand-subtitle">
-              专为特殊教育设计的智能化教学管理系统，让每一堂课都更有温度
+              面向教学场景的管理平台，聚焦课程、学生、资源与教案的真实使用流程。
             </p>
           </div>
         </div>

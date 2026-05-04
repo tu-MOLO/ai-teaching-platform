@@ -31,7 +31,14 @@ const EditCourse: React.FC = () => {
       setLoading(true);
       try {
         const data = await getCourse(id);
-        setCourseData(data);
+        setCourseData({
+          name: data.name,
+          subject: data.subject,
+          grade: data.grade,
+          teacher: data.teacher,
+          schedule: data.schedule || '',
+          status: data.status,
+        });
       } catch (error) {
         message.error('加载课程信息失败');
         console.error('Fetch course error:', error);

@@ -1,34 +1,34 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
-  Card,
-  Row,
-  Col,
   Button,
+  Card,
+  Col,
+  Divider,
+  Input,
+  Modal,
+  Popconfirm,
+  Row,
   Space,
   Typography,
-  Modal,
-  Input,
-  Popconfirm,
   message,
-  Divider,
 } from 'antd'
 import {
-  SaveOutlined,
-  ReloadOutlined,
   DeleteOutlined,
   EditOutlined,
-  SkinOutlined,
   FileAddOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  SkinOutlined,
 } from '@ant-design/icons'
-import { useThemeStore, type CustomTheme } from '../../stores/theme'
 import { presetThemes } from '../../constants/themes'
-import PresetThemeCard from './PresetThemeCard'
+import { useThemeStore, type CustomTheme } from '../../stores/theme'
 import ColorVariableEditor from './ColorVariableEditor'
-import ThemePreview from './ThemePreview'
-import HistoryControls from './HistoryControls'
 import ContrastWarning, { ContrastDetails } from './ContrastWarning'
+import HistoryControls from './HistoryControls'
+import PresetThemeCard from './PresetThemeCard'
+import ThemePreview from './ThemePreview'
 
-const { Title, Text } = Typography
+const { Text, Title } = Typography
 
 const ThemeSettings: React.FC = () => {
   const {
@@ -37,6 +37,7 @@ const ThemeSettings: React.FC = () => {
     customThemes,
     setThemeByPreset,
     saveCustomTheme,
+    renameCustomTheme,
     deleteCustomTheme,
     loadCustomTheme,
     resetToDefault,
@@ -50,52 +51,46 @@ const ThemeSettings: React.FC = () => {
   const [editName, setEditName] = useState('')
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
 
-  // 监听窗口大小变化
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // 初始化时应用主题
   useEffect(() => {
     applyThemeToDom()
-  }, [])
+  }, [applyThemeToDom])
 
-  // 判断屏幕尺寸
   const isMobile = windowWidth < 768
 
-  // 处理保存自定义方案
   const handleSaveCustomTheme = () => {
     if (!customThemeName.trim()) {
       message.warning('请输入方案名称')
       return
     }
+
     saveCustomTheme(customThemeName.trim())
     message.success('自定义方案保存成功')
     setIsSaveModalOpen(false)
     setCustomThemeName('')
   }
 
-  // 处理删除自定义方案
   const handleDeleteCustomTheme = (id: string) => {
     deleteCustomTheme(id)
     message.success('方案已删除')
   }
 
-  // 处理重命名自定义方案
-  const handleRenameCustomTheme = (_theme: CustomTheme) => {
+  const handleRenameCustomTheme = (theme: CustomTheme) => {
     if (!editName.trim()) {
       setEditingCustomTheme(null)
       return
     }
-    // 更新自定义方案名称（需要修改 store 来支持更新）
-    // 暂时先取消编辑状态
+
+    renameCustomTheme(theme.id, editName)
     setEditingCustomTheme(null)
-    message.info('重命名功能需要扩展 Store')
+    message.success('方案名称已更新')
   }
 
-  // 处理重置默认
   const handleResetToDefault = () => {
     resetToDefault()
     message.success('已恢复默认配色')
@@ -103,7 +98,6 @@ const ThemeSettings: React.FC = () => {
 
   return (
     <div style={{ padding: '0 0 24px 0' }}>
-      {/* 顶部工具栏 */}
       <Card style={{ marginBottom: 24 }} styles={{ body: { padding: 16 } }}>
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} sm={12}>
@@ -122,7 +116,7 @@ const ThemeSettings: React.FC = () => {
               </Button>
               <Popconfirm
                 title="恢复默认配色"
-                description="确定要恢复默认配色吗？这将清除所有自定义设置。"
+                description="确定要恢复默认配色吗？这将清除当前未保存的自定义调整。"
                 onConfirm={handleResetToDefault}
                 okText="确定"
                 cancelText="取消"
@@ -134,7 +128,6 @@ const ThemeSettings: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 预设配色方案 */}
       <section style={{ marginBottom: 24 }}>
         <Title level={5} style={{ marginBottom: 16 }}>
           <SkinOutlined style={{ marginRight: 8 }} />
@@ -153,7 +146,6 @@ const ThemeSettings: React.FC = () => {
         </Row>
       </section>
 
-      {/* 自定义方案 */}
       {customThemes.length > 0 && (
         <section style={{ marginBottom: 24 }}>
           <Title level={5} style={{ marginBottom: 16 }}>
@@ -179,7 +171,7 @@ const ThemeSettings: React.FC = () => {
                     {editingCustomTheme === theme.id ? (
                       <Input
                         value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
+                        onChange={(event) => setEditName(event.target.value)}
                         onPressEnter={() => handleRenameCustomTheme(theme)}
                         onBlur={() => handleRenameCustomTheme(theme)}
                         autoFocus
@@ -201,8 +193,8 @@ const ThemeSettings: React.FC = () => {
                         type="text"
                         size="small"
                         icon={<EditOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        onClick={(event) => {
+                          event.stopPropagation()
                           setEditingCustomTheme(theme.id)
                           setEditName(theme.name)
                         }}
@@ -210,8 +202,8 @@ const ThemeSettings: React.FC = () => {
                       <Popconfirm
                         title="删除方案"
                         description="确定要删除这个自定义方案吗？"
-                        onConfirm={(e) => {
-                          e?.stopPropagation()
+                        onConfirm={(event) => {
+                          event?.stopPropagation()
                           handleDeleteCustomTheme(theme.id)
                         }}
                         okText="删除"
@@ -222,27 +214,26 @@ const ThemeSettings: React.FC = () => {
                           size="small"
                           danger
                           icon={<DeleteOutlined />}
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={(event) => event.stopPropagation()}
                         />
                       </Popconfirm>
                     </Space>
                   </div>
 
-                  {/* 颜色预览 */}
                   <div style={{ display: 'flex', gap: 0, marginTop: 12, borderRadius: 4, overflow: 'hidden' }}>
                     {Object.values(theme.colors)
                       .slice(0, 5)
-                      .map((color, idx) => (
+                      .map((color, index) => (
                         <div
-                          key={idx}
+                          key={index}
                           style={{
                             flex: 1,
                             height: 24,
                             minWidth: 0,
                             backgroundColor: color,
                             border: '1px solid var(--color-border-light)',
-                            borderLeftWidth: idx === 0 ? 1 : 0,
-                            marginLeft: idx === 0 ? 0 : -1,
+                            borderLeftWidth: index === 0 ? 1 : 0,
+                            marginLeft: index === 0 ? 0 : -1,
                           }}
                         />
                       ))}
@@ -256,26 +247,20 @@ const ThemeSettings: React.FC = () => {
 
       <Divider />
 
-      {/* 可访问性警告 */}
       <ContrastWarning />
       <ContrastDetails />
 
       <Divider />
 
-      {/* 自定义颜色和预览 */}
       <Row gutter={[24, 24]}>
-        {/* 颜色编辑区域 */}
         <Col xs={24} lg={12}>
           <ColorVariableEditor />
         </Col>
-
-        {/* 实时预览区域 */}
         <Col xs={24} lg={12}>
           <ThemePreview />
         </Col>
       </Row>
 
-      {/* 保存方案模态框 */}
       <Modal
         title="保存自定义配色方案"
         open={isSaveModalOpen}
@@ -288,18 +273,18 @@ const ThemeSettings: React.FC = () => {
         cancelText="取消"
       >
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Text>为您的自定义配色方案命名：</Text>
+          <Text>为当前配色方案命名：</Text>
           <Input
             placeholder="例如：我的专属配色"
             value={customThemeName}
-            onChange={(e) => setCustomThemeName(e.target.value)}
+            onChange={(event) => setCustomThemeName(event.target.value)}
             onPressEnter={handleSaveCustomTheme}
             maxLength={20}
             showCount
           />
           {customThemes.length >= 10 && (
             <Text type="warning" style={{ fontSize: 12 }}>
-              注意：您已保存10个自定义方案，保存新方案将删除最早的一个。
+              已保存 10 个自定义方案，继续保存将覆盖最早的一项。
             </Text>
           )}
         </Space>

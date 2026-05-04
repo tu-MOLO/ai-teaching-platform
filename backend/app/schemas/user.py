@@ -43,15 +43,6 @@ class UserCreate(UserBase):
         if not any(c.isdigit() for c in v):
             raise ValueError("密码必须包含至少一个数字")
         return v
-
-
-class UserCreateAdmin(UserCreate):
-    """管理员创建用户请求（可设置更多字段）"""
-    status: UserStatus = Field(default=UserStatus.ACTIVE, description="用户状态")
-    is_active: bool = Field(default=True, description="是否激活")
-    is_verified: bool = Field(default=True, description="是否验证邮箱")
-
-
 # ============== 更新请求 ==============
 
 class UserUpdate(BaseSchema):
@@ -62,16 +53,6 @@ class UserUpdate(BaseSchema):
     phone: Optional[str] = Field(default=None, max_length=20, description="手机号码")
     bio: Optional[str] = Field(default=None, max_length=500, description="个人简介")
     avatar_url: Optional[str] = Field(default=None, max_length=500, description="头像URL")
-
-
-class UserUpdateAdmin(UserUpdate):
-    """管理员更新用户请求"""
-    role: Optional[UserRole] = Field(default=None, description="用户角色")
-    status: Optional[UserStatus] = Field(default=None, description="用户状态")
-    is_active: Optional[bool] = Field(default=None, description="是否激活")
-    is_verified: Optional[bool] = Field(default=None, description="是否验证邮箱")
-    is_superuser: Optional[bool] = Field(default=None, description="是否为超级管理员")
-
 
 class UserPasswordUpdate(BaseSchema):
     """用户密码更新请求"""
@@ -110,8 +91,6 @@ class UserInDB(AuditSchema):
     role: UserRole = Field(..., description="用户角色")
     status: UserStatus = Field(..., description="用户状态")
     is_active: bool = Field(..., description="是否激活")
-    is_verified: bool = Field(..., description="是否验证邮箱")
-    is_superuser: bool = Field(..., description="是否为超级管理员")
     last_login_at: Optional[datetime] = Field(default=None, description="最后登录时间")
     last_login_ip: Optional[str] = Field(default=None, description="最后登录IP")
     login_count: int = Field(default=0, description="登录次数")
@@ -132,7 +111,6 @@ class UserResponse(AuditSchema):
     role: UserRole = Field(..., description="用户角色")
     status: UserStatus = Field(..., description="用户状态")
     is_active: bool = Field(..., description="是否激活")
-    is_verified: bool = Field(..., description="是否验证邮箱")
     last_login_at: Optional[datetime] = Field(default=None, description="最后登录时间")
 
 
@@ -150,26 +128,6 @@ class UserListResponse(BaseSchema):
     pages: int = Field(default=1, description="总页数")
 
 
-class UserAdminResponse(UserResponse):
-    """管理员查看的用户响应（包含管理字段）"""
-    is_superuser: bool = Field(..., description="是否为超级管理员")
-    last_login_ip: Optional[str] = Field(default=None, description="最后登录IP")
-    failed_login_attempts: int = Field(default=0, description="连续登录失败次数")
-    locked_until: Optional[datetime] = Field(default=None, description="账户锁定截止时间")
-    token_version: int = Field(default=1, description="令牌版本")
-
-
-# ============== 查询参数 ==============
-
-class UserQueryParams(BaseSchema):
-    """用户查询参数"""
-    keyword: Optional[str] = Field(default=None, description="搜索关键词（用户名/邮箱/姓名）")
-    role: Optional[UserRole] = Field(default=None, description="用户角色")
-    status: Optional[UserStatus] = Field(default=None, description="用户状态")
-    is_active: Optional[bool] = Field(default=None, description="是否激活")
-    is_verified: Optional[bool] = Field(default=None, description="是否验证邮箱")
-
-
 # ============== 其他 ==============
 
 class UserAvatarUpdate(BaseSchema):
@@ -179,10 +137,5 @@ class UserAvatarUpdate(BaseSchema):
 
 class UserPasswordReset(BaseSchema):
     """用户密码重置请求"""
-    email: EmailStr = Field(..., description="邮箱地址")
-
-
-class UserPasswordResetConfirm(BaseSchema):
-    """用户密码重置确认"""
-    token: str = Field(..., description="重置令牌")
+    username: str = Field(..., description="用户名或邮箱")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")

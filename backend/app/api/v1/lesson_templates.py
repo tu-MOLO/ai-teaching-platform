@@ -3,7 +3,7 @@
 """
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from typing import List, Annotated
 
 from app.core.database import get_async_session
@@ -48,8 +48,11 @@ async def get_lesson_templates(
         .limit(page_size)
     )
     templates = result.scalars().all()
-    # TODO: 添加总数查询
-    total = len(templates)
+    total = (
+        await db.execute(
+            select(func.count(LessonTemplate.id)).where(LessonTemplate.is_deleted == False)
+        )
+    ).scalar() or 0
     pages = (total + page_size - 1) // page_size
     return ListResponse(
         data=list(templates),

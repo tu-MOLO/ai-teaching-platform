@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import StudentForm, { StudentFormData } from '../../components/Students/StudentForm';
 import { studentService } from '../../services/student';
 
+const toDateString = (value?: { format: (template: string) => string }) =>
+  value ? value.format('YYYY-MM-DD') : undefined
+
 const CreatePortfolioStudent: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -16,8 +19,8 @@ const CreatePortfolioStudent: React.FC = () => {
         gender: values.gender,
         grade: values.grade,
         class_name: values.class_name,
-        birth_date: values.birth_date?.toISOString(),
-        enrollment_date: values.enrollment_date?.toISOString(),
+        birth_date: values.birth_date.format('YYYY-MM-DD'),
+        enrollment_date: toDateString(values.enrollment_date),
         is_active: values.is_active,
       });
       message.success('学生添加成功');

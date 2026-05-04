@@ -85,7 +85,7 @@ export type Timestamp = string | Date;
 /**
  * 通用状态类型
  */
-export type Status = 'active' | 'inactive' | 'pending' | 'deleted';
+export type Status = 'active' | 'inactive' | 'deleted' | 'suspended';
 
 /**
  * 加载状态类型

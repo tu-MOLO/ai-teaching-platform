@@ -6,7 +6,6 @@ import {
   ArrowLeftOutlined,
   FileTextOutlined,
   CheckCircleOutlined,
-  RollbackOutlined,
   InboxOutlined,
   UndoOutlined,
   CloseCircleOutlined,

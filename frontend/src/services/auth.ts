@@ -22,7 +22,6 @@ export interface UserAuthInfo {
   avatar_url: string | null
   role: string
   is_active: boolean
-  is_verified: boolean
 }
 
 export interface LoginResponse {
@@ -39,6 +38,11 @@ export interface RegisterData {
 
 export interface PasswordChangeData {
   current_password: string
+  new_password: string
+}
+
+export interface PasswordResetData {
+  username: string
   new_password: string
 }
 
@@ -92,6 +96,13 @@ export const authService = {
    */
   changePassword: async (data: PasswordChangeData): Promise<{ message: string; code: string }> => {
     return api.post('/auth/password/change', data)
+  },
+
+  /**
+   * 本地密码重置
+   */
+  resetPassword: async (data: PasswordResetData): Promise<{ message: string; code: string }> => {
+    return api.post('/auth/password/reset', data)
   }
 }
 

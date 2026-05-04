@@ -18,7 +18,6 @@ const LessonPlanner = React.lazy(() => import('../pages/LessonPlanner'));
 const LessonPlanList = React.lazy(() => import('../pages/LessonPlanner/List'));
 const CreateLessonPlan = React.lazy(() => import('../pages/LessonPlanner/Create'));
 const LessonPlanDetail = React.lazy(() => import('../pages/LessonPlanner/Detail'));
-const AIAssistant = React.lazy(() => import('../pages/AIAssistant'));
 const Courses = React.lazy(() => import('../pages/Courses'));
 const Students = React.lazy(() => import('../pages/Students'));
 const Settings = React.lazy(() => import('../pages/Settings'));
@@ -26,6 +25,7 @@ const CreateCourse = React.lazy(() => import('../pages/Courses/Create'));
 const EditCourse = React.lazy(() => import('../pages/Courses/Edit'));
 const Reports = React.lazy(() => import('../pages/Reports'));
 const Profile = React.lazy(() => import('../pages/Profile'));
+const Notifications = React.lazy(() => import('../pages/Notifications'));
 const CreateStudent = React.lazy(() => import('../pages/Students/Create'));
 const EditStudent = React.lazy(() => import('../pages/Students/Edit'));
 const PortfolioCreateStudent = React.lazy(() => import('../pages/Portfolio/Create'));
@@ -120,10 +120,6 @@ const router: RouteObject[] = [
         element: withSuspense(CreateLessonPlan)
       },
       {
-        path: 'ai-assistant',
-        element: withSuspense(AIAssistant)
-      },
-      {
         path: 'portfolio',
         element: withSuspense(Portfolio)
       },
@@ -158,6 +154,10 @@ const router: RouteObject[] = [
       {
         path: 'profile',
         element: withSuspense(Profile)
+      },
+      {
+        path: 'notifications',
+        element: withSuspense(Notifications)
       }
     ]
   },

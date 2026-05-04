@@ -14,7 +14,7 @@ from app.schemas.user import (
     UserCreate,
     UserUpdate,
     UserResponse,
-    UserInDB
+    UserInDB,
 )
 from app.schemas.auth import (
     LoginRequest,

@@ -16,6 +16,7 @@ export interface LessonPlanFormData {
   teaching_process?: string;
   teaching_resources?: string;
   notes?: string;
+  status?: 'draft' | 'published' | 'archived';
 }
 
 /**

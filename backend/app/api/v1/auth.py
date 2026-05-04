@@ -1,8 +1,6 @@
 """认证API模块
 实现用户登录、注册、获取当前用户等认证相关接口
 """
-import logging
-import warnings
 from datetime import timedelta
 from typing import Annotated
 
@@ -37,6 +35,7 @@ from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
     PasswordChangeRequest,
+    PasswordResetRequest,
     RefreshTokenRequest,
     RegisterRequest,
     TokenData,
@@ -44,8 +43,6 @@ from app.schemas.auth import (
 )
 from app.schemas.base import MessageResponse
 from app.services.permission import PermissionService
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
@@ -173,18 +170,15 @@ async def register(
         hashed_password=get_password_hash(register_data.password),
         full_name=register_data.full_name,
         role=UserRole.TEACHER,
-        status=UserStatus.PENDING,
-        is_active=True,
-        is_verified=False
+        status=UserStatus.ACTIVE,
+        is_active=True
     )
     
     db.add(new_user)
     await db.commit()
     
-    # TODO: 发送验证邮件
-    
     return MessageResponse(
-        message="注册成功，请检查邮箱完成验证",
+        message="注册成功，请登录后完善个人资料",
         code="success"
     )
 
@@ -260,8 +254,7 @@ async def get_current_user(
     if not user:
         raise NotFoundException("用户")
     
-    # 根据角色获取权限列表（使用权限服务，支持动态配置）
-    permissions = await get_permissions_by_role(user.role, db)
+    permissions = await PermissionService(db).get_permissions_by_user_id(user.id)
     
     return CurrentUserResponse(
         id=user.id,
@@ -272,7 +265,6 @@ async def get_current_user(
         role=user.role,
         status=user.status.value if hasattr(user.status, 'value') else str(user.status),
         is_active=user.is_active,
-        is_verified=user.is_verified,
         last_login_at=user.last_login_at,
         login_count=user.login_count,
         permissions=permissions
@@ -342,104 +334,38 @@ async def change_password(
         code="success"
     )
 
-# ============================================================================
-# ⚠️ DEPRECATED: 硬编码权限配置（向后兼容遗留代码）
-# ============================================================================
-#
-# 警告：以下硬编码权限配置已废弃，仅用于向后兼容。
-# 新代码应使用 PermissionService (app/core/permissions.py) 从数据库动态加载权限。
-#
-# 废弃原因：
-# - 双重权限实现导致维护困难和潜在的不一致风险
-# - 无法在运行时动态调整权限配置
-# - 违反单一职责原则
-#
-# 迁移计划：
-# - Phase 1 (当前): 标记为deprecated，引导新代码使用PermissionService ✅
-# - Phase 2: 移除硬编码逻辑，完全依赖PermissionService
-# - Phase 3: 添加数据库初始化脚本导入默认权限配置
-#
-# @deprecated since v1.1.0
-# @see app.core.permissions.PermissionService
-# @see app.models.permission.Permission, Role, RolePermission
-# ============================================================================
 
-# 硬编码权限配置（向后兼容，当数据库权限未初始化时使用）
-BASE_PERMISSIONS = ["user:read", "user:update"]
-
-LEGACY_ROLE_PERMISSIONS = {
-    UserRole.TEACHER: [
-        "course:create",
-        "course:update",
-        "course:delete",
-        "course:read",
-        "enrollment:read",
-        "enrollment:update",
-        "assignment:create",
-        "assignment:update",
-        "assignment:delete",
-        "assignment:read",
-        "quiz:create",
-        "quiz:update",
-        "quiz:delete",
-        "quiz:read",
-        "grade:create",
-        "grade:update",
-        "grade:read"
-    ],
-    UserRole.ADMIN: [
-        "*"  # 管理员拥有所有权限
-    ]
-}
-
-
-async def get_permissions_by_role(
-    role: UserRole,
-    db: AsyncSession
-) -> list[str]:
+@router.post("/password/reset", response_model=MessageResponse, summary="重置密码")
+async def reset_password(
+    reset_data: PasswordResetRequest,
+    db: DBSession
+) -> MessageResponse:
     """
-    根据角色获取权限列表
+    本地部署场景的密码重置接口。
 
-    .. deprecated::
-        此函数已废弃，请使用 PermissionService.get_permissions_by_legacy_role()
-        该方法会优先从数据库加载权限，仅在数据库未初始化时回退到硬编码逻辑。
-
-    优先从数据库权限服务获取，如果失败则回退到硬编码逻辑（向后兼容）。
-
-    Args:
-        role: 用户角色
-        db: 数据库会话
-
-    Returns:
-        权限列表
-
-    Deprecated:
-        使用 PermissionService 替代
+    基于用户名或邮箱直接重置密码，不依赖邮件验证链路。
     """
-    try:
-        # 尝试从权限服务获取权限
-        permission_service = PermissionService(db)
-        permissions = await permission_service.get_permissions_by_legacy_role(role)
-        
-        # 如果数据库中有权限配置，使用数据库配置
-        if permissions:
-            return permissions
-    except Exception:
-        # 数据库查询失败时，回退到硬编码逻辑
-        pass
-
-    # 向后兼容：使用硬编码权限配置（已废弃）
-    warnings.warn(
-        "Using hardcoded permissions is deprecated. "
-        "Please migrate to PermissionService for dynamic permission management.",
-        DeprecationWarning,
-        stacklevel=2
+    stmt = select(User).where(
+        or_(
+            User.username == reset_data.username,
+            User.email == reset_data.username
+        ),
+        User.is_deleted == False
     )
-    logger.warning(
-        "Falling back to hardcoded permissions for role %s. "
-        "This is deprecated and will be removed in a future version. "
-        "Please ensure database permissions are properly initialized.",
-        role.value
-    )
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
 
-    return BASE_PERMISSIONS + LEGACY_ROLE_PERMISSIONS.get(role, [])
+    if not user:
+        raise NotFoundException("用户")
+
+    user.hashed_password = get_password_hash(reset_data.new_password)
+    user.increment_token_version()
+    user.record_failed_login()
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    await db.commit()
+
+    return MessageResponse(
+        message="密码已重置，请使用新密码登录",
+        code="success"
+    )

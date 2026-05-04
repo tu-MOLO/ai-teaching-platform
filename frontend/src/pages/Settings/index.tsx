@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  SkinOutlined,
+  TagsOutlined,
+} from '@ant-design/icons'
+import {
   Button,
   Card,
   Form,
@@ -12,11 +20,11 @@ import {
   Tabs,
   Typography,
   message,
-  Modal,
 } from 'antd'
-import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined, SkinOutlined, TagsOutlined, SmileOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { BasicSettingsFormData } from '../../types/forms'
+import ThemeSettings from '../../components/Theme/ThemeSettings'
+import { DROPDOWN_GROUPS, DROPDOWN_GROUP_MAP } from '../../constants/dropdownOptions'
+import localSettingsService from '../../services/localSettings'
 import {
   createDropdownOption,
   deleteDropdownOption,
@@ -24,16 +32,14 @@ import {
   updateDropdownOption,
   type DropdownOption,
 } from '../../services/dropdownOption'
-import { DROPDOWN_GROUPS, DROPDOWN_GROUP_MAP } from '../../constants/dropdownOptions'
-import ThemeSettings from '../../components/Theme/ThemeSettings'
-import { usePortfolioTypesStore, availableIcons, type PortfolioType } from '../../stores/portfolioTypes'
+import { usePortfolioTypesStore } from '../../stores/portfolioTypes'
+import type { BasicSettingsFormData } from '../../types/forms'
 
 const { Title, Text } = Typography
 
 const Settings: React.FC = () => {
   const [basicForm] = Form.useForm<BasicSettingsFormData>()
   const [optionForm] = Form.useForm()
-  const [portfolioTypeForm] = Form.useForm()
   const location = useLocation()
   const navigate = useNavigate()
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
@@ -46,25 +52,18 @@ const Settings: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState(initialGroup)
   const [options, setOptions] = useState<DropdownOption[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
+  const { types: portfolioTypes, resetToDefault } = usePortfolioTypesStore()
 
-  // 成长档案类型管理
-  const {
-    types: portfolioTypes,
-    addType,
-    updateType,
-    deleteType,
-    resetToDefault,
-  } = usePortfolioTypesStore()
-  const [editingTypeId, setEditingTypeId] = useState<string | null>(null)
-  const [iconModalVisible, setIconModalVisible] = useState(false)
-  const [selectedIcon, setSelectedIcon] = useState('📄')
+  useEffect(() => {
+    basicForm.setFieldsValue(localSettingsService.getBasicSettings())
+  }, [basicForm])
 
   const loadOptions = async (groupKey: string) => {
     setOptionsLoading(true)
     try {
       const data = await getDropdownOptions(groupKey, false)
       setOptions(data)
-    } catch (error) {
+    } catch {
       message.error('加载下拉选项失败')
     } finally {
       setOptionsLoading(false)
@@ -78,32 +77,38 @@ const Settings: React.FC = () => {
   }, [selectedGroup])
 
   useEffect(() => {
-    if (!editingId && optionForm) {
+    if (!editingId) {
       optionForm.resetFields()
       optionForm.setFieldsValue({
         is_active: true,
         sort_order: options.length,
       })
     }
-  }, [editingId, optionForm, options.length, selectedGroup])
+  }, [editingId, optionForm, options.length])
 
   const handleSaveBasic = async (values: BasicSettingsFormData) => {
     setLoading(true)
     try {
-      console.log('Saving settings:', values)
-      message.success('设置保存成功')
-    } catch (error) {
+      localSettingsService.saveBasicSettings(values)
+      message.success('设置已保存')
+    } catch {
       message.error('保存失败')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSaveOption = async (values: any) => {
+  const handleSaveOption = async (values: {
+    label: string
+    value: string
+    description?: string
+    sort_order?: number
+    is_active?: boolean
+  }) => {
     try {
       if (editingId) {
         await updateDropdownOption(editingId, values)
-        message.success('选项更新成功')
+        message.success('选项已更新')
       } else {
         await createDropdownOption({
           group_key: selectedGroup,
@@ -113,8 +118,9 @@ const Settings: React.FC = () => {
           sort_order: values.sort_order || 0,
           is_active: values.is_active ?? true,
         })
-        message.success('选项创建成功')
+        message.success('选项已创建')
       }
+
       setEditingId(null)
       optionForm.resetFields()
       loadOptions(selectedGroup)
@@ -137,92 +143,26 @@ const Settings: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await deleteDropdownOption(id)
-      message.success('选项删除成功')
+      message.success('选项已删除')
       if (editingId === id) {
         setEditingId(null)
         optionForm.resetFields()
       }
       loadOptions(selectedGroup)
-    } catch (error) {
+    } catch {
       message.error('删除选项失败')
     }
   }
 
-  // 成长档案类型管理函数
-  const handleSavePortfolioType = (values: { name: string }) => {
-    if (editingTypeId) {
-      const success = updateType(editingTypeId, { name: values.name, icon: selectedIcon })
-      if (success) {
-        message.success('类型更新成功')
-        setEditingTypeId(null)
-        portfolioTypeForm.resetFields()
-        setSelectedIcon('📄')
-      } else {
-        message.error('类型名称已存在')
-      }
-    } else {
-      const newType = addType(values.name, selectedIcon)
-      if (newType) {
-        message.success('类型添加成功')
-        portfolioTypeForm.resetFields()
-        setSelectedIcon('📄')
-      } else {
-        message.error('类型名称已存在')
-      }
-    }
-  }
-
-  const handleEditPortfolioType = (type: PortfolioType) => {
-    setEditingTypeId(type.id)
-    portfolioTypeForm.setFieldsValue({ name: type.name })
-    setSelectedIcon(type.icon)
-  }
-
-  const handleDeletePortfolioType = (id: string) => {
-    const success = deleteType(id)
-    if (success) {
-      message.success('类型删除成功')
-      if (editingTypeId === id) {
-        setEditingTypeId(null)
-        portfolioTypeForm.resetFields()
-        setSelectedIcon('📄')
-      }
-    } else {
-      message.error('默认类型不能删除')
-    }
-  }
-
   const handleResetPortfolioTypes = () => {
-    Modal.confirm({
-      title: '确认重置',
-      content: '确定要重置为默认类型吗？所有自定义类型将被删除。',
-      onOk: () => {
-        resetToDefault()
-        message.success('已重置为默认类型')
-        setEditingTypeId(null)
-        portfolioTypeForm.resetFields()
-        setSelectedIcon('📄')
-      },
-    })
+    resetToDefault()
+    message.success('已恢复为后端支持的默认记录类型')
   }
 
   const optionColumns = [
-    {
-      title: '显示名称',
-      dataIndex: 'label',
-      key: 'label',
-    },
-    {
-      title: '存储值',
-      dataIndex: 'value',
-      key: 'value',
-    },
-    {
-      title: '排序',
-      dataIndex: 'sort_order',
-      key: 'sort_order',
-      width: 80,
-    },
+    { title: '显示名称', dataIndex: 'label', key: 'label' },
+    { title: '存储值', dataIndex: 'value', key: 'value' },
+    { title: '排序', dataIndex: 'sort_order', key: 'sort_order', width: 80 },
     {
       title: '状态',
       key: 'is_active',
@@ -253,12 +193,7 @@ const Settings: React.FC = () => {
       key: 'basic',
       label: '基本设置',
       children: (
-        <Form
-          form={basicForm}
-          layout="vertical"
-          onFinish={handleSaveBasic}
-          style={{ maxWidth: 600 }}
-        >
+        <Form form={basicForm} layout="vertical" onFinish={handleSaveBasic} style={{ maxWidth: 600 }}>
           <Form.Item
             name="schoolName"
             label="学校名称"
@@ -301,107 +236,95 @@ const Settings: React.FC = () => {
       key: 'dropdowns',
       label: '下拉选项',
       children: (
-        <div>
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
-            {returnTo && (
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(returnTo)}>
-                返回上一页
-              </Button>
-            )}
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          {returnTo && (
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(returnTo)}>
+              返回上一页
+            </Button>
+          )}
 
-            <Card size="small" title="选择选项分组">
-              <Select
-                value={selectedGroup}
-                style={{ width: 320 }}
-                onChange={(value) => {
-                  setSelectedGroup(value)
-                  setEditingId(null)
-                }}
-                options={DROPDOWN_GROUPS.map((group) => ({
-                  label: group.label,
-                  value: group.key,
-                }))}
-              />
-            </Card>
+          <Card size="small" title="选择选项分组">
+            <Select
+              value={selectedGroup}
+              style={{ width: 320 }}
+              onChange={(value) => {
+                setSelectedGroup(value)
+                setEditingId(null)
+              }}
+              options={DROPDOWN_GROUPS.map((group) => ({
+                label: group.label,
+                value: group.key,
+              }))}
+            />
+          </Card>
 
-            <Card
-              size="small"
-              title={`${DROPDOWN_GROUP_MAP[selectedGroup]?.label || '选项'}管理`}
-            >
-              <Form
-                form={optionForm}
-                layout="vertical"
-                onFinish={handleSaveOption}
-              >
-                <Space align="start" wrap style={{ width: '100%' }}>
-                  <Form.Item
-                    name="label"
-                    label="显示名称"
-                    rules={[{ required: true, message: '请输入显示名称' }]}
-                  >
-                    <Input placeholder="例如：培智七年级" style={{ width: 220 }} />
-                  </Form.Item>
-                  <Form.Item
-                    name="value"
-                    label="存储值"
-                    rules={[{ required: true, message: '请输入存储值' }]}
-                  >
-                    <Input placeholder="例如：培智七年级" style={{ width: 220 }} />
-                  </Form.Item>
-                  <Form.Item name="sort_order" label="排序">
-                    <InputNumber min={0} style={{ width: 100 }} />
-                  </Form.Item>
-                  <Form.Item name="is_active" label="状态" initialValue={true}>
-                    <Select
-                      style={{ width: 120 }}
-                      options={[
-                        { label: '启用', value: true },
-                        { label: '停用', value: false },
-                      ]}
-                    />
-                  </Form.Item>
-                </Space>
-
-                <Form.Item name="description" label="备注">
-                  <Input placeholder="可选备注" />
+          <Card size="small" title={`${DROPDOWN_GROUP_MAP[selectedGroup]?.label || '选项'}管理`}>
+            <Form form={optionForm} layout="vertical" onFinish={handleSaveOption}>
+              <Space align="start" wrap style={{ width: '100%' }}>
+                <Form.Item
+                  name="label"
+                  label="显示名称"
+                  rules={[{ required: true, message: '请输入显示名称' }]}
+                >
+                  <Input placeholder="例如：七年级" style={{ width: 220 }} />
                 </Form.Item>
+                <Form.Item
+                  name="value"
+                  label="存储值"
+                  rules={[{ required: true, message: '请输入存储值' }]}
+                >
+                  <Input placeholder="例如：grade-7" style={{ width: 220 }} />
+                </Form.Item>
+                <Form.Item name="sort_order" label="排序">
+                  <InputNumber min={0} style={{ width: 100 }} />
+                </Form.Item>
+                <Form.Item name="is_active" label="状态" initialValue={true}>
+                  <Select
+                    style={{ width: 120 }}
+                    options={[
+                      { label: '启用', value: true },
+                      { label: '停用', value: false },
+                    ]}
+                  />
+                </Form.Item>
+              </Space>
 
-                <Space>
-                  <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                    {editingId ? '保存修改' : '新增选项'}
+              <Form.Item name="description" label="备注">
+                <Input placeholder="可选备注" />
+              </Form.Item>
+
+              <Space>
+                <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+                  {editingId ? '保存修改' : '新增选项'}
+                </Button>
+                {editingId ? (
+                  <Button
+                    onClick={() => {
+                      setEditingId(null)
+                      optionForm.resetFields()
+                    }}
+                  >
+                    取消编辑
                   </Button>
-                  {editingId ? (
-                    <Button
-                      onClick={() => {
-                        setEditingId(null)
-                        optionForm.resetFields()
-                      }}
-                    >
-                      取消编辑
-                    </Button>
-                  ) : (
-                    <Button
-                      icon={<PlusOutlined />}
-                      onClick={() => optionForm.resetFields()}
-                    >
-                      清空
-                    </Button>
-                  )}
-                </Space>
-              </Form>
-            </Card>
+                ) : (
+                  <Button icon={<PlusOutlined />} onClick={() => optionForm.resetFields()}>
+                    清空
+                  </Button>
+                )}
+              </Space>
+            </Form>
+          </Card>
 
-            <Card size="small" title="当前选项">
-              <Table
-                rowKey="id"
-                columns={optionColumns}
-                dataSource={options}
-                loading={optionsLoading}
-                pagination={false}
-              />
-            </Card>
-          </Space>
-        </div>
+          <Card size="small" title="当前选项">
+            <Table
+              rowKey="id"
+              columns={optionColumns}
+              dataSource={options}
+              loading={optionsLoading}
+              pagination={false}
+            />
+          </Card>
+        </Space>
       ),
     },
     {
@@ -413,151 +336,51 @@ const Settings: React.FC = () => {
         </span>
       ),
       children: (
-        <div>
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
-            <Card size="small" title="类型管理">
-              <Form
-                form={portfolioTypeForm}
-                layout="vertical"
-                onFinish={handleSavePortfolioType}
-              >
-                <Space align="start" wrap style={{ width: '100%' }}>
-                  <Form.Item
-                    name="name"
-                    label="类型名称"
-                    rules={[{ required: true, message: '请输入类型名称' }]}
-                  >
-                    <Input placeholder="例如：实验报告" style={{ width: 220 }} />
-                  </Form.Item>
-                  <Form.Item label="图标">
-                    <Button
-                      onClick={() => setIconModalVisible(true)}
-                      style={{ width: 120 }}
-                    >
-                      <span style={{ marginRight: 8, fontSize: 18 }}>{selectedIcon}</span>
-                      选择图标
-                    </Button>
-                  </Form.Item>
-                </Space>
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Card size="small" title="类型说明">
+            <Space direction="vertical" size={8}>
+              <Text>当前记录类型已收口为后端支持的 4 种内置类型，避免提交时出现校验失败。</Text>
+              <Text type="secondary">
+                如需新增类型，需要先同步扩展后端 `portfolio` schema、接口和数据映射。
+              </Text>
+              <Button onClick={handleResetPortfolioTypes}>恢复默认类型显示</Button>
+            </Space>
+          </Card>
 
-                <Space>
-                  <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                    {editingTypeId ? '保存修改' : '新增类型'}
-                  </Button>
-                  {editingTypeId ? (
-                    <Button
-                      onClick={() => {
-                        setEditingTypeId(null)
-                        portfolioTypeForm.resetFields()
-                        setSelectedIcon('📄')
-                      }}
-                    >
-                      取消编辑
-                    </Button>
-                  ) : (
-                    <Button
-                      icon={<PlusOutlined />}
-                      onClick={() => {
-                        portfolioTypeForm.resetFields()
-                        setSelectedIcon('📄')
-                      }}
-                    >
-                      清空
-                    </Button>
-                  )}
-                  <Button danger onClick={handleResetPortfolioTypes}>
-                    重置为默认
-                  </Button>
-                </Space>
-              </Form>
-            </Card>
-
-            <Card size="small" title="当前类型">
-              <Table
-                rowKey="id"
-                dataSource={portfolioTypes}
-                pagination={false}
-                columns={[
-                  {
-                    title: '图标',
-                    key: 'icon',
-                    width: 80,
-                    render: (_: unknown, record: PortfolioType) => (
-                      <span style={{ fontSize: 24 }}>{record.icon}</span>
-                    ),
-                  },
-                  {
-                    title: '类型名称',
-                    dataIndex: 'name',
-                    key: 'name',
-                  },
-                  {
-                    title: '类型',
-                    key: 'isDefault',
-                    width: 100,
-                    render: (_: unknown, record: PortfolioType) => (
-                      record.isDefault ? <Text type="secondary">系统默认</Text> : <Text>自定义</Text>
-                    ),
-                  },
-                  {
-                    title: '操作',
-                    key: 'action',
-                    width: 180,
-                    render: (_: unknown, record: PortfolioType) => (
-                      <Space>
-                        <Button size="small" onClick={() => handleEditPortfolioType(record)}>
-                          编辑
-                        </Button>
-                        <Popconfirm
-                          title="确定删除这个类型吗？"
-                          description="系统默认类型不能删除"
-                          onConfirm={() => handleDeletePortfolioType(record.id)}
-                          disabled={record.isDefault}
-                        >
-                          <Button size="small" danger icon={<DeleteOutlined />} disabled={record.isDefault}>
-                            删除
-                          </Button>
-                        </Popconfirm>
-                      </Space>
-                    ),
-                  },
-                ]}
-              />
-            </Card>
-          </Space>
-
-          {/* 图标选择弹窗 */}
-          <Modal
-            title="选择图标"
-            open={iconModalVisible}
-            onCancel={() => setIconModalVisible(false)}
-            footer={null}
-            width={600}
-          >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 16 }}>
-              {availableIcons.map((icon) => (
-                <Button
-                  key={icon}
-                  type={selectedIcon === icon ? 'primary' : 'default'}
-                  onClick={() => {
-                    setSelectedIcon(icon)
-                    setIconModalVisible(false)
-                  }}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    fontSize: 24,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {icon}
-                </Button>
-              ))}
-            </div>
-          </Modal>
-        </div>
+          <Card size="small" title="当前类型">
+            <Table
+              rowKey="id"
+              dataSource={portfolioTypes}
+              pagination={false}
+              columns={[
+                {
+                  title: '图标',
+                  key: 'icon',
+                  width: 80,
+                  render: (_: unknown, record: { icon: string }) => (
+                    <span style={{ fontSize: 24 }}>{record.icon}</span>
+                  ),
+                },
+                {
+                  title: '类型名称',
+                  dataIndex: 'name',
+                  key: 'name',
+                },
+                {
+                  title: '类型值',
+                  dataIndex: 'id',
+                  key: 'id',
+                },
+                {
+                  title: '说明',
+                  key: 'isDefault',
+                  width: 160,
+                  render: () => <Text type="secondary">后端内置类型</Text>,
+                },
+              ]}
+            />
+          </Card>
+        </Space>
       ),
     },
   ]

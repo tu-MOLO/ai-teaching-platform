@@ -8,7 +8,7 @@ export interface CourseFormData {
   grade: string
   teacher: string
   schedule: string
-  status: 'active' | 'inactive'
+  status: 'active' | 'inactive' | 'draft'
 }
 
 interface CourseFormProps {
