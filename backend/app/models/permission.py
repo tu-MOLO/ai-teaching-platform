@@ -75,7 +75,7 @@ class Role(BaseModel):
     """
     __tablename__ = "roles"
     
-    # 角色代码（如 teacher, student, admin）
+    # 角色代码（如 teacher）
     code: Mapped[str] = mapped_column(
         String(50),
         unique=True,
