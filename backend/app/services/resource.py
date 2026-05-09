@@ -205,23 +205,17 @@ class ResourceService:
     async def update_resource(
         db: AsyncSession,
         resource_id: str,
-        resource_data: ResourceUpdate
+        resource_data: ResourceUpdate,
+        user_id: str
     ) -> Optional[Resource]:
-        """
-        更新资源
-        
-        Args:
-            db: 数据库会话
-            resource_id: 资源ID
-            resource_data: 资源更新数据
-            
-        Returns:
-            更新后的资源对象，如果不存在则返回None
-        """
         try:
             db_resource = await ResourceService.get_resource_by_id(db, resource_id)
             if not db_resource:
                 return None
+            
+            if db_resource.user_id != user_id:
+                from app.core.exceptions import AuthorizationException
+                raise AuthorizationException("无权操作此资源")
             
             # 更新基本信息
             update_data = resource_data.model_dump(exclude_unset=True)
@@ -246,21 +240,15 @@ class ResourceService:
             raise
     
     @staticmethod
-    async def delete_resource(db: AsyncSession, resource_id: str) -> bool:
-        """
-        删除资源（软删除）
-        
-        Args:
-            db: 数据库会话
-            resource_id: 资源ID
-            
-        Returns:
-            是否删除成功
-        """
+    async def delete_resource(db: AsyncSession, resource_id: str, user_id: str) -> bool:
         try:
             db_resource = await ResourceService.get_resource_by_id(db, resource_id)
             if not db_resource:
                 return False
+            
+            if db_resource.user_id != user_id:
+                from app.core.exceptions import AuthorizationException
+                raise AuthorizationException("无权操作此资源")
             
             # 删除MinIO中的文件
             try:

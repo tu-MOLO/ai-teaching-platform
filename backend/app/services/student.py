@@ -31,7 +31,7 @@ class StudentService:
             db_student = Student(**student_in.model_dump(), user_id=user_id)
             db.add(db_student)
             await db.flush()
-        await db.refresh(db_student)
+            await db.refresh(db_student)
         return db_student
 
     @staticmethod
@@ -97,9 +97,22 @@ class StudentService:
         result = await db.execute(query)
         students = result.scalars().all()
 
-        # 为每个学生计算进度
+        student_ids = [s.id for s in students]
+        if student_ids:
+            progress_query = select(
+                Portfolio.student_id,
+                func.count().label('count')
+            ).where(
+                Portfolio.student_id.in_(student_ids),
+                Portfolio.is_deleted == False
+            ).group_by(Portfolio.student_id)
+            progress_result = await db.execute(progress_query)
+            progress_map = {row.student_id: min(row.count * 10, 100) for row in progress_result}
+        else:
+            progress_map = {}
+
         for student in students:
-            student.progress = await StudentService.calculate_progress(db, student.id)
+            student.progress = progress_map.get(student.id, 0)
 
         return students
 
@@ -130,7 +143,7 @@ class StudentService:
         async with db.begin():
             for field, value in update_data.items():
                 setattr(db_student, field, value)
-        await db.refresh(db_student)
+            await db.refresh(db_student)
         return db_student
 
     @staticmethod

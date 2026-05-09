@@ -6,7 +6,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -19,6 +19,7 @@ from app.core.logging import get_logger, setup_logging
 from app.core.rate_limiter import init_rate_limiter
 from app.core.query_filters import setup_soft_delete_filter
 from app.core.exceptions import BusinessException, ErrorCode, get_error_message
+from app.core.security import get_current_user_id_with_version_check
 
 # 设置日志
 setup_logging()
@@ -129,8 +130,15 @@ def register_middlewares(app: FastAPI) -> None:
     
     # GZip压缩中间件
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-    
-    # 请求日志中间件
+
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        return response
+
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         """记录请求日志"""
@@ -209,19 +217,16 @@ def register_routers(app: FastAPI) -> None:
             health_status["status"] = "unhealthy"
             health_status["checks"]["database"] = {
                 "status": "unhealthy",
-                "message": f"Database connection failed: {str(e)}"
+                "message": "Database connection failed"
             }
         
         # 检查缓存状态
         try:
             cache = get_cache()
-            cache_stats = {
-                "size": len(cache._cache),
-                "expired": cache.cleanup_expired()
-            }
+            cache.cleanup_expired()
             health_status["checks"]["cache"] = {
                 "status": "healthy",
-                "message": f"Cache size: {cache_stats['size']}"
+                "message": "Cache OK"
             }
         except Exception as e:
             health_status["checks"]["cache"] = {
@@ -233,7 +238,9 @@ def register_routers(app: FastAPI) -> None:
     
     # 详细健康检查端点（需要认证）
     @app.get("/health/detailed", tags=["健康检查"], summary="详细健康检查")
-    async def health_check_detailed():
+    async def health_check_detailed(
+        user_id: str = Depends(get_current_user_id_with_version_check),
+    ):
         """
         详细健康检查端点
         包含更多系统信息

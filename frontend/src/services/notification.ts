@@ -24,9 +24,12 @@ export interface Notification {
 }
 
 export interface NotificationListResponse {
-  items: Notification[]
+  data: Notification[]
   total: number
   unread_count: number
+  page: number
+  page_size: number
+  pages: number
 }
 
 export interface NotificationStats {
@@ -39,20 +42,20 @@ export interface NotificationStats {
 export interface NotificationQueryParams {
   type?: NotificationType
   read?: boolean
-  skip?: number
-  limit?: number
+  page?: number
+  page_size?: number
 }
 
 export const getNotifications = async (
   params: NotificationQueryParams = {}
 ): Promise<NotificationListResponse> => {
-  const { type, read, skip = 0, limit = 20 } = params
+  const { type, read, page = 1, page_size = 20 } = params
   const queryParams = new URLSearchParams()
 
   if (type) queryParams.append('type', type)
   if (read !== undefined) queryParams.append('read', String(read))
-  queryParams.append('skip', String(skip))
-  queryParams.append('limit', String(limit))
+  queryParams.append('page', String(page))
+  queryParams.append('page_size', String(page_size))
 
   const response = await api.get(`/notifications?${queryParams.toString()}`)
   return toItem<NotificationListResponse>(response)

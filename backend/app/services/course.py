@@ -31,7 +31,7 @@ class CourseService:
             db_course.user_id = user_id
             db.add(db_course)
             await db.flush()
-        await db.refresh(db_course)
+            await db.refresh(db_course)
         return db_course
 
     @staticmethod
@@ -174,7 +174,7 @@ class CourseService:
         async with db.begin():
             for field, value in update_data.items():
                 setattr(db_course, field, value)
-        await db.refresh(db_course)
+            await db.refresh(db_course)
         return db_course
 
     @staticmethod

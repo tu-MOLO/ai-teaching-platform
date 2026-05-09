@@ -1,7 +1,7 @@
 """
 标签数据模型
 """
-from sqlalchemy import String, Text
+from sqlalchemy import String, Text, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -17,7 +17,6 @@ class Tag(BaseModel):
     name: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
-        unique=True,
         comment="标签名称"
     )
     
@@ -38,6 +37,10 @@ class Tag(BaseModel):
         "Resource",
         secondary=resource_tag_association,
         back_populates="tags"
+    )
+    
+    __table_args__ = (
+        Index('ix_tags_name_unique', 'name', unique=True, postgresql_where=text('is_deleted = false')),
     )
     
     def __repr__(self) -> str:

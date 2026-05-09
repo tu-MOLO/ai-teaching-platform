@@ -51,12 +51,14 @@ class LessonPlan(BaseModel):
     subject: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
+        index=True,
         comment="学科"
     )
 
     grade: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
+        index=True,
         comment="年级"
     )
 
@@ -101,6 +103,7 @@ class LessonPlan(BaseModel):
         SQLEnum(LessonPlanStatus, native_enum=False),
         default=LessonPlanStatus.DRAFT,
         nullable=False,
+        index=True,
         comment="教案状态"
     )
 

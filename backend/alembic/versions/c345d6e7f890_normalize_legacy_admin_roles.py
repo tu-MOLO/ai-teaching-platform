@@ -35,7 +35,7 @@ def upgrade() -> None:
                     """
                 ),
                 {
-                    "teacher_role": "TEACHER",
+                    "teacher_role": "teacher",
                     "admin_role_upper": "ADMIN",
                     "admin_role_lower": "admin",
                 },

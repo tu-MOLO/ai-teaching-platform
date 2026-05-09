@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.core.exceptions import (
     BadRequestException,
     InternalException,
@@ -24,7 +24,7 @@ from app.services.storage import is_allowed_file
 router = APIRouter(tags=["资源"])
 
 # 依赖注入类型
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.post("/", response_model=DataResponse[ResourceResponse], status_code=status.HTTP_201_CREATED)
@@ -54,7 +54,9 @@ async def create_resource(
     """
     try:
         # 检查文件类型
-        if not is_allowed_file(file.filename):
+        file_content = await file.read()
+        await file.seek(0)
+        if not is_allowed_file(file.filename, file_content):
             raise BadRequestException("不支持的文件类型")
         
         # 检查文件大小
@@ -94,6 +96,7 @@ async def create_resource(
 
 @router.get("/", response_model=ListResponse[ResourceListResponse])
 async def get_resources(
+    current_user_id: CurrentUser,
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     keyword: str = Query(None, description="搜索关键词"),
@@ -103,7 +106,7 @@ async def get_resources(
     resource_service: ResourceService = Depends(get_resource_service)
 ):
     """
-    获取资源列表（支持搜索和筛选，公开接口）
+    获取资源列表（支持搜索和筛选）
 
     Args:
         page: 页码
@@ -118,7 +121,6 @@ async def get_resources(
         资源列表和分页信息
     """
     try:
-        # 构建搜索参数（公开接口，不限制用户）
         params = ResourceSearchParams(
             page=page,
             page_size=page_size,
@@ -162,12 +164,13 @@ async def get_resources(
 
 @router.get("/{resource_id}", response_model=DataResponse[ResourceResponse])
 async def get_resource(
+    current_user_id: CurrentUser,
     resource_id: str,
     db: AsyncSession = Depends(get_async_session),
     resource_service: ResourceService = Depends(get_resource_service)
 ):
     """
-    根据ID获取资源（公开接口）
+    根据ID获取资源
 
     Args:
         resource_id: 资源ID
@@ -215,7 +218,7 @@ async def update_resource(
         更新后的资源详情
     """
     try:
-        resource = await resource_service.update_resource(db, resource_id, resource_data)
+        resource = await resource_service.update_resource(db, resource_id, resource_data, current_user_id)
         if not resource:
             raise NotFoundException("Resource", resource_id)
 
@@ -250,7 +253,7 @@ async def delete_resource(
         成功消息
     """
     try:
-        success = await resource_service.delete_resource(db, resource_id)
+        success = await resource_service.delete_resource(db, resource_id, current_user_id)
         if not success:
             raise NotFoundException("Resource", resource_id)
     except (BadRequestException, NotFoundException):

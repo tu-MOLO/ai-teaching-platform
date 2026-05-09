@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.models.course import Course
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
@@ -21,7 +21,7 @@ router = APIRouter(tags=["课程管理"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.post(

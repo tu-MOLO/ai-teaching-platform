@@ -11,23 +11,16 @@ from sqlalchemy import select, func
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.models.student import Student
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.student import Student as StudentSchema, StudentCreate, StudentUpdate
 from app.services.student import StudentService
 
 
-def calculate_age(birth_date: date) -> int:
-    """
-    根据出生日期计算年龄
-
-    Args:
-        birth_date: 出生日期
-
-    Returns:
-        年龄（当前年份 - 出生年份）
-    """
+def calculate_age(birth_date: Optional[date]) -> Optional[int]:
+    if birth_date is None:
+        return None
     today = date.today()
     return today.year - birth_date.year
 
@@ -36,7 +29,7 @@ router = APIRouter(tags=["学生管理"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.post("", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生")

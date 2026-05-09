@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
@@ -34,7 +34,6 @@ class User(BaseModel):
     # 基本信息
     email: Mapped[str] = mapped_column(
         String(255),
-        unique=True,
         index=True,
         nullable=False,
         comment="邮箱地址"
@@ -42,7 +41,6 @@ class User(BaseModel):
     
     username: Mapped[str] = mapped_column(
         String(50),
-        unique=True,
         index=True,
         nullable=False,
         comment="用户名"
@@ -140,6 +138,11 @@ class User(BaseModel):
         default=1,
         nullable=False,
         comment="令牌版本号"
+    )
+    
+    __table_args__ = (
+        Index('ix_users_email_unique', 'email', unique=True, postgresql_where=text('is_deleted = false')),
+        Index('ix_users_username_unique', 'username', unique=True, postgresql_where=text('is_deleted = false')),
     )
     
     def __repr__(self) -> str:

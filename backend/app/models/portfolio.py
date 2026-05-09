@@ -1,7 +1,7 @@
 """
 成长档案数据模型
 """
-from sqlalchemy import ForeignKey, Text, Integer, CheckConstraint
+from sqlalchemy import ForeignKey, String, Text, Integer, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -26,11 +26,13 @@ class Portfolio(BaseModel):
     )
     
     type: Mapped[str] = mapped_column(
+        String(50),
         nullable=False,
         comment="记录类型: work(作品), evaluation(评价), observation(观察), milestone(里程碑)"
     )
     
     title: Mapped[str] = mapped_column(
+        String(200),
         nullable=False,
         comment="标题"
     )

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import InternalException, NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.schemas.tag import TagListResponse, TagResponse
 from app.schemas.base import ListResponse, DataResponse
 from app.services.tag import get_tag_service, TagService
@@ -16,7 +16,7 @@ from app.services.tag import get_tag_service, TagService
 router = APIRouter(tags=["标签"])
 
 # 依赖注入类型
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.get("/", response_model=ListResponse[TagListResponse])

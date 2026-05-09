@@ -1,85 +1,59 @@
 #!/bin/bash
 
-echo "=========================================="
-echo "   AI教学平台 - 本地启动脚本"
-echo "=========================================="
-echo ""
+set -e
 
-# 检查Python
-if ! command -v python3 &> /dev/null; then
-    echo "[错误] 未找到Python3，请先安装Python 3.11+"
-    exit 1
+echo "=========================================="
+echo "  AI Teaching Platform - Local Startup"
+echo "=========================================="
+echo
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "[ERROR] Python 3.11+ is required."
+  exit 1
 fi
 
-# 检查Node.js
-if ! command -v node &> /dev/null; then
-    echo "[错误] 未找到Node.js，请先安装Node.js 18+"
-    exit 1
+if ! command -v node >/dev/null 2>&1; then
+  echo "[ERROR] Node.js 18+ is required."
+  exit 1
 fi
 
-echo "[1/5] 检查环境完成"
-echo ""
-
-# 创建存储目录
 mkdir -p backend/storage
-echo "[2/5] 创建存储目录完成"
-echo ""
 
-# 启动后端
-echo "[3/5] 启动后端服务..."
+echo "[1/5] Preparing backend environment..."
 cd backend
 
-# 检查虚拟环境
 if [ ! -d "venv" ]; then
-    echo "创建Python虚拟环境..."
-    python3 -m venv venv
+  python3 -m venv venv
 fi
 
-# 激活虚拟环境并安装依赖
 source venv/bin/activate
 pip install -q -r requirements.txt
 
-# 初始化数据（如果数据库不存在）
-if [ ! -f "ai_teaching.db" ]; then
-    echo "首次运行，初始化数据..."
-    python scripts/init_data.py
-fi
+echo "[2/5] Applying database migrations..."
+python -m alembic upgrade head
 
-# 启动后端（后台运行）
+echo "[3/5] Seeding local teacher data..."
+python scripts/init_data.py
+
 nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload > backend.log 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > .backend.pid
-
 cd ..
-echo "后端服务已启动: http://localhost:8000 (PID: $BACKEND_PID)"
-echo ""
 
-# 启动前端
-echo "[4/5] 启动前端服务..."
+echo "[4/5] Preparing frontend environment..."
 cd frontend
-
-# 检查node_modules
 if [ ! -d "node_modules" ]; then
-    echo "安装前端依赖..."
-    npm install
+  npm install
 fi
 
-# 启动前端（后台运行）
 nohup npm run dev > frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo $FRONTEND_PID > .frontend.pid
-
 cd ..
-echo "前端服务已启动: http://localhost:5173 (PID: $FRONTEND_PID)"
-echo ""
 
-echo "[5/5] 所有服务已启动！"
-echo ""
-echo "=========================================="
-echo " 访问地址:"
-echo "  - 前端应用: http://localhost:5173"
-echo "  - API文档:  http://localhost:8000/docs"
-echo "  - 健康检查: http://localhost:8000/health"
-echo "=========================================="
-echo ""
-echo "运行 ./stop.sh 关闭所有服务"
+echo "[5/5] Services started."
+echo "Frontend: http://localhost:5173"
+echo "Backend:  http://localhost:8000"
+echo "Docs:     http://localhost:8000/docs"
+echo
+echo "Run ./stop.sh to stop both services."

@@ -4,6 +4,7 @@
 """
 import io
 import mimetypes
+import re
 import socket
 from datetime import timedelta
 from pathlib import Path
@@ -37,6 +38,11 @@ class LocalFileStorage:
     def upload_file(self, file_data, object_name, content_type=None, metadata=None):
         """上传文件到本地存储"""
         file_path = self.base_path / object_name
+        if '..' in object_name:
+            raise ValueError("Invalid object name: path traversal detected")
+        resolved = file_path.resolve()
+        if not str(resolved).startswith(str(self.base_path.resolve())):
+            raise ValueError("Invalid object name: path traversal detected")
         file_path.parent.mkdir(exist_ok=True, parents=True)
 
         if isinstance(file_data, bytes):
@@ -658,7 +664,9 @@ def generate_object_name(
     """
     import uuid
 
-    # 生成唯一文件名
+    if folder and not re.match(r'^[a-zA-Z0-9_-]+$', folder):
+        raise ValueError("Invalid folder name: only alphanumeric characters, underscores and hyphens are allowed")
+
     ext = Path(file_name).suffix
     unique_name = f"{uuid.uuid4().hex}{ext}"
 
@@ -668,16 +676,29 @@ def generate_object_name(
     return f"{user_id}/{unique_name}"
 
 
-def is_allowed_file(filename: str) -> bool:
-    """
-    检查文件扩展名是否允许
-
-    Args:
-        filename: 文件名
-
-    Returns:
-        是否允许
-    """
-    from pathlib import Path
+def is_allowed_file(filename: str, file_content: bytes = None) -> bool:
     ext = Path(filename).suffix.lower()
-    return ext in settings.ALLOWED_EXTENSIONS
+    if ext not in settings.ALLOWED_EXTENSIONS:
+        return False
+
+    if file_content is not None:
+        guessed_type, _ = mimetypes.guess_type(filename)
+        if guessed_type:
+            allowed_mimes = {
+                '.pdf': ['application/pdf'],
+                '.doc': ['application/msword'],
+                '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                '.txt': ['text/plain'],
+                '.md': ['text/markdown', 'text/plain'],
+                '.jpg': ['image/jpeg'],
+                '.jpeg': ['image/jpeg'],
+                '.png': ['image/png'],
+                '.gif': ['image/gif'],
+                '.mp4': ['video/mp4'],
+                '.mp3': ['audio/mpeg'],
+            }
+            expected = allowed_mimes.get(ext)
+            if expected and guessed_type not in expected:
+                return False
+
+    return True

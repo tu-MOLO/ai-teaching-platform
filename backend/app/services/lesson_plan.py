@@ -45,7 +45,7 @@ class LessonPlanService:
         async with self.db.begin():
             self.db.add(lesson_plan)
             await self.db.flush()
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def get_list(
@@ -161,7 +161,7 @@ class LessonPlanService:
         async with self.db.begin():
             for field, value in update_data.items():
                 setattr(lesson_plan, field, value)
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def delete(self, plan_id: str, user_id: str) -> bool:
@@ -200,7 +200,7 @@ class LessonPlanService:
 
         async with self.db.begin():
             lesson_plan.status = LessonPlanStatus.PUBLISHED
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def unpublish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -220,7 +220,7 @@ class LessonPlanService:
 
         async with self.db.begin():
             lesson_plan.status = LessonPlanStatus.DRAFT
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def archive(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -240,7 +240,7 @@ class LessonPlanService:
 
         async with self.db.begin():
             lesson_plan.status = LessonPlanStatus.ARCHIVED
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def restore(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -260,7 +260,7 @@ class LessonPlanService:
 
         async with self.db.begin():
             lesson_plan.status = LessonPlanStatus.DRAFT
-        await self.db.refresh(lesson_plan)
+            await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def get_monthly_count(self, user_id: str, year: int, month: int) -> int:

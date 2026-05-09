@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.schemas.base import DataResponse
 from app.services.report import ReportService
 
@@ -16,7 +16,7 @@ router = APIRouter(tags=["报告分析"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.get(

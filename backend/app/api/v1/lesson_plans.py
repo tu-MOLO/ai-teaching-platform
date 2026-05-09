@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
 from app.core.database import get_async_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.core.exceptions import NotFoundException
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
 from app.schemas.lesson_plan import (
@@ -20,7 +20,7 @@ from app.services.lesson_plan import LessonPlanService
 
 # 依赖注入
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 router = APIRouter(tags=["教案管理"])
 

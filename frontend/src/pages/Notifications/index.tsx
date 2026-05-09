@@ -45,11 +45,11 @@ const NotificationsPage: React.FC = () => {
     try {
       setLoading(true)
       const response = await getNotifications({
-        limit: 100,
+        page_size: 100,
         type: typeFilter,
         read: readFilter === 'all' ? undefined : readFilter === 'read',
       })
-      setItems(response.items)
+      setItems(response.data)
     } catch {
       message.error('获取通知失败')
     } finally {

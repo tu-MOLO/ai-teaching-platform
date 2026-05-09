@@ -72,8 +72,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
   const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await getNotifications({ limit: 20 })
-      setNotifications(response.items)
+      const response = await getNotifications({ page_size: 20 })
+      setNotifications(response.data)
     } catch (error) {
       console.error('获取通知失败:', error)
     } finally {

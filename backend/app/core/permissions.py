@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.services.permission import PermissionService
 
 
@@ -30,7 +30,7 @@ class PermissionChecker:
     
     async def __call__(
         self,
-        user_id: str = Depends(get_current_user_id),
+        user_id: str = Depends(get_current_user_id_with_version_check),
         db: AsyncSession = Depends(get_async_session)
     ) -> bool:
         """
@@ -76,7 +76,7 @@ class AnyPermissionChecker:
     
     async def __call__(
         self,
-        user_id: str = Depends(get_current_user_id),
+        user_id: str = Depends(get_current_user_id_with_version_check),
         db: AsyncSession = Depends(get_async_session)
     ) -> bool:
         """

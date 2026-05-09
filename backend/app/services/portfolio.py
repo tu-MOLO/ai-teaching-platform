@@ -30,7 +30,7 @@ class PortfolioService:
             db_portfolio = Portfolio(**portfolio_in.model_dump(), user_id=user_id)
             db.add(db_portfolio)
             await db.flush()
-        await db.refresh(db_portfolio)
+            await db.refresh(db_portfolio)
         return db_portfolio
 
     @staticmethod
@@ -120,7 +120,7 @@ class PortfolioService:
         async with db.begin():
             for field, value in update_data.items():
                 setattr(db_portfolio, field, value)
-        await db.refresh(db_portfolio)
+            await db.refresh(db_portfolio)
         return db_portfolio
 
     @staticmethod

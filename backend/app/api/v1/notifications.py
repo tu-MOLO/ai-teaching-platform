@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.models.notification import NotificationType
 from app.schemas.base import MessageResponse
 from app.schemas.notification import (
@@ -25,7 +25,7 @@ router = APIRouter(tags=["通知"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.get("", response_model=NotificationListResponse, summary="获取通知列表")
@@ -34,20 +34,20 @@ async def get_notifications(
     current_user: CurrentUser,
     type: Optional[NotificationType] = Query(None, description="通知类型筛选"),
     read: Optional[bool] = Query(None, description="已读状态筛选"),
-    skip: int = Query(0, ge=0, description="跳过的记录数"),
-    limit: int = Query(20, ge=1, le=100, description="返回的记录数")
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量")
 ) -> NotificationListResponse:
     """
     获取当前用户的通知列表
     
     支持按类型和已读状态筛选，按创建时间倒序排列
     """
-    # 使用异步服务直接调用
+    offset = (page - 1) * page_size
     notifications = await NotificationService.get_list(
         db,
         user_id=current_user,
-        skip=skip,
-        limit=limit,
+        skip=offset,
+        limit=page_size,
         notification_type=type,
         read=read
     )
@@ -63,15 +63,19 @@ async def get_notifications(
     # 获取未读数量
     unread_count = await NotificationService.get_unread_count(db, current_user)
     
-    # 转换为响应模型
     notification_responses = [
         NotificationResponse.model_validate(n) for n in notifications
     ]
     
+    pages = (total + page_size - 1) // page_size
+    
     return NotificationListResponse(
-        items=notification_responses,
+        data=notification_responses,
         total=total,
-        unread_count=unread_count
+        unread_count=unread_count,
+        page=page,
+        page_size=page_size,
+        pages=pages
     )
 
 

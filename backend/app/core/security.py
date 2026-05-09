@@ -7,7 +7,8 @@ from typing import Any, Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import jwt
+from jwt.exceptions import InvalidTokenError as JWTError
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -111,18 +112,9 @@ def create_access_token(
 
 def create_refresh_token(
     subject: Union[str, Any],
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    token_version: Optional[str] = None
 ) -> str:
-    """
-    创建刷新令牌
-    
-    Args:
-        subject: 令牌主题（通常是用户ID）
-        expires_delta: 过期时间增量
-        
-    Returns:
-        JWT刷新令牌字符串
-    """
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -136,6 +128,9 @@ def create_refresh_token(
         "type": "refresh",
         "iat": datetime.now(timezone.utc)
     }
+
+    if token_version:
+        to_encode["jti"] = str(token_version)
     
     encoded_jwt = jwt.encode(
         to_encode,
@@ -162,7 +157,7 @@ def decode_token(token: str) -> Optional[TokenPayload]:
             algorithms=[settings.ALGORITHM]
         )
         return TokenPayload(**payload)
-    except JWTError:
+    except jwt.exceptions.InvalidTokenError:
         return None
 
 

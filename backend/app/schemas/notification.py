@@ -71,9 +71,12 @@ class NotificationResponse(AuditSchema):
 
 class NotificationListResponse(BaseSchema):
     """通知列表响应"""
-    items: List[NotificationResponse] = Field(default=[], description="通知列表")
+    data: List[NotificationResponse] = Field(default=[], description="通知列表")
     total: int = Field(default=0, description="总数量")
     unread_count: int = Field(default=0, description="未读数量")
+    page: int = Field(default=1, description="页码")
+    page_size: int = Field(default=20, description="每页数量")
+    pages: int = Field(default=0, description="总页数")
 
 
 # ============== 查询参数 ==============
@@ -82,8 +85,8 @@ class NotificationQueryParams(BaseSchema):
     """通知查询参数"""
     type: Optional[NotificationType] = Field(default=None, description="通知类型")
     read: Optional[bool] = Field(default=None, description="是否已读")
-    skip: int = Field(default=0, ge=0, description="跳过的记录数")
-    limit: int = Field(default=20, ge=1, le=100, description="返回的记录数")
+    page: int = Field(default=1, ge=1, description="页码")
+    page_size: int = Field(default=20, ge=1, le=100, description="每页数量")
 
 
 # ============== 统计信息 ==============

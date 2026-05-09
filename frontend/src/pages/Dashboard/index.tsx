@@ -75,17 +75,20 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<APINotification[]>([])
   const [notificationsLoading, setNotificationsLoading] = useState(false)
+  const isMountedRef = React.useRef(true)
 
   // 使用 Zustand store
   const { stats, loading, fetchStats, refreshStats, startAutoRefresh, stopAutoRefresh } = useDashboardStore()
 
   // 获取仪表盘数据和启动自动刷新
   useEffect(() => {
+    isMountedRef.current = true
     fetchStats()
     fetchNotifications()
     startAutoRefresh()
 
     return () => {
+      isMountedRef.current = false
       stopAutoRefresh()
     }
   }, [fetchStats, startAutoRefresh, stopAutoRefresh])
@@ -126,13 +129,16 @@ const Dashboard: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       setNotificationsLoading(true)
-      const data = await getNotifications({ limit: 5 })
-      setNotifications(data.items || [])
+      const data = await getNotifications({ page_size: 5 })
+      if (isMountedRef.current) {
+        setNotifications(data.data || [])
+      }
     } catch (error) {
       console.error('获取通知失败:', error)
-      // 不显示错误消息，因为通知不是核心功能
     } finally {
-      setNotificationsLoading(false)
+      if (isMountedRef.current) {
+        setNotificationsLoading(false)
+      }
     }
   }
 

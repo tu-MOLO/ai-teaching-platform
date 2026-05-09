@@ -3,6 +3,7 @@
 """
 from typing import Optional
 from io import BytesIO
+from html import escape
 
 
 class ExportService:
@@ -89,8 +90,8 @@ class ExportService:
         
         # 添加基本信息
         doc.add_heading('基本信息', level=1)
-        doc.add_paragraph(f'学科: {lesson_plan.subject}')
-        doc.add_paragraph(f'年级: {lesson_plan.grade}')
+        doc.add_paragraph(f'学科: {escape(lesson_plan.subject or "")}')
+        doc.add_paragraph(f'年级: {escape(lesson_plan.grade or "")}')
         doc.add_paragraph(f'课时时长: {lesson_plan.duration}分钟')
         doc.add_paragraph(f'状态: {lesson_plan.status.value}')
         
@@ -98,43 +99,43 @@ class ExportService:
         doc.add_heading('教学目标', level=1)
         if lesson_plan.teaching_goals_a:
             doc.add_heading('A层（基础）', level=2)
-            doc.add_paragraph(lesson_plan.teaching_goals_a)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_a or ''))
         if lesson_plan.teaching_goals_b:
             doc.add_heading('B层（提高）', level=2)
-            doc.add_paragraph(lesson_plan.teaching_goals_b)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_b or ''))
         if lesson_plan.teaching_goals_c:
             doc.add_heading('C层（拓展）', level=2)
-            doc.add_paragraph(lesson_plan.teaching_goals_c)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_c or ''))
         
         # 添加教学内容
         if lesson_plan.teaching_content:
             doc.add_heading('教学内容', level=1)
-            doc.add_paragraph(lesson_plan.teaching_content)
+            doc.add_paragraph(escape(lesson_plan.teaching_content or ''))
         
         # 添加教学方法
         if lesson_plan.teaching_methods:
             doc.add_heading('教学方法', level=1)
-            doc.add_paragraph(lesson_plan.teaching_methods)
+            doc.add_paragraph(escape(lesson_plan.teaching_methods or ''))
         
         # 添加教学过程
         if lesson_plan.teaching_process:
             doc.add_heading('教学过程', level=1)
-            doc.add_paragraph(lesson_plan.teaching_process)
+            doc.add_paragraph(escape(lesson_plan.teaching_process or ''))
         
         # 添加教学资源
         if lesson_plan.teaching_resources:
             doc.add_heading('教学资源', level=1)
-            doc.add_paragraph(lesson_plan.teaching_resources)
+            doc.add_paragraph(escape(lesson_plan.teaching_resources or ''))
         
         # 添加评价方式
         if lesson_plan.assessment:
             doc.add_heading('评价方式', level=1)
-            doc.add_paragraph(lesson_plan.assessment)
+            doc.add_paragraph(escape(lesson_plan.assessment or ''))
         
         # 添加备注
         if lesson_plan.notes:
             doc.add_heading('备注', level=1)
-            doc.add_paragraph(lesson_plan.notes)
+            doc.add_paragraph(escape(lesson_plan.notes or ''))
         
         # 保存为字节流
         stream = BytesIO()
@@ -157,17 +158,17 @@ class ExportService:
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>{lesson_plan.title}</title>
+            <title>{escape(lesson_plan.title or '')}</title>
         </head>
         <body>
-            <h1>{lesson_plan.title}</h1>
+            <h1>{escape(lesson_plan.title or '')}</h1>
             
             <div class="section">
                 <h2>基本信息</h2>
-                <p>学科: {lesson_plan.subject}</p>
-                <p>年级: {lesson_plan.grade}</p>
+                <p>学科: {escape(lesson_plan.subject or '')}</p>
+                <p>年级: {escape(lesson_plan.grade or '')}</p>
                 <p>课时时长: {lesson_plan.duration}分钟</p>
-                <p>状态: {lesson_plan.status.value}</p>
+                <p>状态: {escape(str(lesson_plan.status.value))}</p>
             </div>
             
             <div class="section">
@@ -179,7 +180,7 @@ class ExportService:
             html += f"""
                 <div class="goal-level">
                     <h3>A层（基础）</h3>
-                    <p>{lesson_plan.teaching_goals_a}</p>
+                    <p>{escape(lesson_plan.teaching_goals_a or '')}</p>
                 </div>
             """
         
@@ -187,7 +188,7 @@ class ExportService:
             html += f"""
                 <div class="goal-level">
                     <h3>B层（提高）</h3>
-                    <p>{lesson_plan.teaching_goals_b}</p>
+                    <p>{escape(lesson_plan.teaching_goals_b or '')}</p>
                 </div>
             """
         
@@ -195,7 +196,7 @@ class ExportService:
             html += f"""
                 <div class="goal-level">
                     <h3>C层（拓展）</h3>
-                    <p>{lesson_plan.teaching_goals_c}</p>
+                    <p>{escape(lesson_plan.teaching_goals_c or '')}</p>
                 </div>
             """
         
@@ -214,7 +215,7 @@ class ExportService:
                 html += f"""
             <div class="section">
                 <h2>{section_name}</h2>
-                <p>{content}</p>
+                <p>{escape(content or '')}</p>
             </div>
         """
         
@@ -332,19 +333,19 @@ class ExportService:
         <html>
         <head>
             <meta charset="UTF-8">
-            <title>{student.name}的成长报告</title>
+            <title>{escape(student.name or '')}的成长报告</title>
         </head>
         <body>
-            <h1>{student.name}的成长报告</h1>
+            <h1>{escape(student.name or '')}的成长报告</h1>
             
             <div class="student-info">
                 <h2>学生基本信息</h2>
-                <p>姓名: {student.name}</p>
-                <p>性别: {student.gender}</p>
+                <p>姓名: {escape(student.name or '')}</p>
+                <p>性别: {escape(student.gender or '')}</p>
                 <p>出生日期: {student.birth_date}</p>
-                <p>年级: {student.grade}</p>
-                <p>班级: {student.class_name}</p>
-                <p>家长联系方式: {student.parent_contact or '未提供'}</p>
+                <p>年级: {escape(student.grade or '')}</p>
+                <p>班级: {escape(student.class_name or '')}</p>
+                <p>家长联系方式: {escape(student.parent_contact or '未提供')}</p>
             </div>
         """
         
@@ -368,15 +369,15 @@ class ExportService:
             type_name = type_names.get(type_key, type_key)
             html += f"""
             <div class="section">
-                <h2>{type_name}</h2>
+                <h2>{escape(type_name)}</h2>
             """
             
             for portfolio in type_portfolios:
                 html += f"""
                 <div class="portfolio-item">
-                    <div class="portfolio-title">{portfolio.title}</div>
+                    <div class="portfolio-title">{escape(portfolio.title or '')}</div>
                     <div class="portfolio-meta">创建时间: {portfolio.created_at.strftime('%Y-%m-%d %H:%M:%S')}</div>
-                    {f'<p>{portfolio.content}</p>' if portfolio.content else ''}
+                    {f'<p>{escape(portfolio.content or "")}</p>' if portfolio.content else ''}
                 """
                 
                 # 添加评价分数

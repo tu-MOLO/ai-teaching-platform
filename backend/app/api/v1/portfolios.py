@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.portfolio import Portfolio as PortfolioSchema, PortfolioCreate, PortfolioUpdate
 from app.services.portfolio import PortfolioService
@@ -19,7 +19,7 @@ router = APIRouter(tags=["成长档案管理"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.post("", response_model=DataResponse[PortfolioSchema], status_code=status.HTTP_201_CREATED, summary="创建成长档案")

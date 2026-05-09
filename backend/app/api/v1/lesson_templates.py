@@ -8,7 +8,7 @@ from typing import List, Annotated
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.models.lesson_template import LessonTemplate
 from app.schemas.lesson_template import LessonTemplateResponse
 from app.schemas.base import ListResponse, DataResponse
@@ -18,7 +18,7 @@ router = APIRouter(tags=["教案模板"])
 
 # 依赖注入类型
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.get("", response_model=ListResponse[LessonTemplateResponse])

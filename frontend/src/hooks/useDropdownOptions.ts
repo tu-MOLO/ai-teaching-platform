@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createDropdownOption,
   getDropdownOptions,
@@ -9,14 +9,21 @@ import {
 export function useDropdownOptions(groupKey: string, activeOnly: boolean = true) {
   const [options, setOptions] = useState<DropdownOption[]>([])
   const [loading, setLoading] = useState(false)
+  const isMountedRef = useRef(true)
 
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
       const nextOptions = await getDropdownOptions(groupKey, activeOnly)
-      setOptions(nextOptions)
+      if (isMountedRef.current) {
+        setOptions(nextOptions)
+      }
+    } catch (error) {
+      console.error('Failed to fetch dropdown options:', error)
     } finally {
-      setLoading(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+      }
     }
   }, [activeOnly, groupKey])
 
@@ -37,7 +44,11 @@ export function useDropdownOptions(groupKey: string, activeOnly: boolean = true)
   )
 
   useEffect(() => {
+    isMountedRef.current = true
     refresh()
+    return () => {
+      isMountedRef.current = false
+    }
   }, [refresh])
 
   return {

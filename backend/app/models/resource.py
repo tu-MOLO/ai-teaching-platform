@@ -57,6 +57,7 @@ class Resource(BaseModel):
     file_type: Mapped[str] = mapped_column(
         String(50),
         nullable=False,
+        index=True,
         comment="文件类型"
     )
     

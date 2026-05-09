@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         raise ValueError(v)
     
     # 数据库配置
-    DATABASE_URL: str = "postgresql+asyncpg://user:password@localhost:5432/ai_teaching"
+    DATABASE_URL: str = "sqlite+aiosqlite:///./ai_teaching.db"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
     DATABASE_POOL_RECYCLE: int = 3600
@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     
     # Redis配置（可选，用于缓存和会话）
     REDIS_URL: Optional[str] = None
-    
+
     # 日志配置
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

@@ -59,6 +59,7 @@ class Notification(BaseModel):
         SQLEnum(NotificationType, native_enum=False),
         default=NotificationType.SYSTEM,
         nullable=False,
+        index=True,
         comment="通知类型"
     )
     
@@ -67,6 +68,7 @@ class Notification(BaseModel):
         Boolean,
         default=False,
         nullable=False,
+        index=True,
         comment="是否已读"
     )
     
