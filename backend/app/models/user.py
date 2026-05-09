@@ -132,6 +132,31 @@ class User(BaseModel):
         comment="账户锁定截止时间"
     )
     
+    security_question: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+        comment="密保问题"
+    )
+    
+    hashed_security_answer: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        comment="哈希后的密保答案"
+    )
+    
+    failed_reset_attempts: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        nullable=False,
+        comment="密码重置连续失败次数"
+    )
+    
+    reset_locked_until: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="密码重置锁定截止时间"
+    )
+    
     # 令牌相关（用于实现单点登录或令牌黑名单）
     token_version: Mapped[int] = mapped_column(
         Integer,
@@ -187,3 +212,27 @@ class User(BaseModel):
     def has_any_role(self, roles: List[UserRole]) -> bool:
         """检查是否具有任一指定角色"""
         return self.role in roles
+
+    def verify_security_answer(self, answer: str) -> bool:
+        from app.core.security import pwd_context
+        return pwd_context.verify(answer, self.hashed_security_answer)
+
+    def is_reset_locked(self) -> bool:
+        if self.reset_locked_until:
+            now = datetime.now(timezone.utc)
+            reset_locked_until = self.reset_locked_until
+            if reset_locked_until.tzinfo is None:
+                reset_locked_until = reset_locked_until.replace(tzinfo=timezone.utc)
+            if reset_locked_until > now:
+                return True
+        return False
+
+    def record_failed_reset_attempt(self) -> None:
+        self.failed_reset_attempts += 1
+        if self.failed_reset_attempts >= 5:
+            from datetime import timedelta
+            self.reset_locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+    def reset_reset_lock(self) -> None:
+        self.failed_reset_attempts = 0
+        self.reset_locked_until = None

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, message, Space } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Form, Input, Button, Divider, message, Space, Select, Collapse } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { PlusOutlined } from '@ant-design/icons';
 import MDEditor from '@uiw/react-md-editor';
 import FileUpload from '../../components/ResourceCenter/FileUpload';
 import { uploadResource } from '../../services/resource';
-import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
+import { createTag, getTags, type Tag } from '../../services/tag';
 import { refreshDashboardStats } from '../../stores/dashboard';
 import './index.css';
 
@@ -29,7 +30,60 @@ const UploadPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [fileList, setFileList] = useState<any[]>([]);
   const [description, setDescription] = useState<string>('');
+  const [tagOptions, setTagOptions] = useState<Tag[]>([]);
+  const [tagLoading, setTagLoading] = useState<boolean>(false);
+  const [creatingTag, setCreatingTag] = useState<boolean>(false);
+  const [draftTag, setDraftTag] = useState<string>('');
   const navigate = useNavigate();
+  const selectedFile = fileList[0];
+
+  const loadTags = async () => {
+    setTagLoading(true);
+    try {
+      const items = await getTags();
+      setTagOptions(items);
+    } catch (error) {
+      message.error('加载标签失败');
+    } finally {
+      setTagLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTags();
+  }, []);
+
+  const tagSelectOptions = useMemo(
+    () => tagOptions.map((tag) => ({ label: tag.name, value: tag.id })),
+    [tagOptions]
+  );
+
+  const handleCreateTag = async (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const duplicate = tagOptions.find((tag) => tag.name === trimmed);
+    if (duplicate) {
+      const currentValues = form.getFieldValue('tags') || [];
+      form.setFieldValue('tags', Array.from(new Set([...currentValues, duplicate.id])));
+      return;
+    }
+
+    try {
+      setCreatingTag(true);
+      const created = await createTag({ name: trimmed });
+      setTagOptions((prev) => [...prev, created]);
+      const currentValues = form.getFieldValue('tags') || [];
+      form.setFieldValue('tags', [...currentValues, created.id]);
+      message.success('标签已新增');
+    } catch (error: any) {
+      message.error(error?.message || '新增标签失败');
+    } finally {
+      setCreatingTag(false);
+    }
+  };
 
   const handleFileChange = (files: any[]) => {
     // 再次验证文件大小
@@ -43,6 +97,13 @@ const UploadPage: React.FC = () => {
       return true;
     });
     setFileList(validFiles);
+
+    const nextFile = validFiles[0];
+    const currentTitle = form.getFieldValue('title');
+    if (nextFile && !currentTitle?.trim()) {
+      const inferredTitle = nextFile.name.replace(/\.[^.]+$/, '');
+      form.setFieldValue('title', inferredTitle);
+    }
   };
 
   const handleSubmit = async (values: any) => {
@@ -65,7 +126,7 @@ const UploadPage: React.FC = () => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('name', values.title);
+      formData.append('name', (values.title || selectedFile?.name || '').trim());
       formData.append('description', description || values.description || '');
       for (const tagId of values.tags || []) {
         formData.append('tag_ids', tagId);
@@ -125,32 +186,88 @@ const UploadPage: React.FC = () => {
             label="资源标题"
             rules={[{ required: true, message: '请输入资源标题' }]}
           >
-            <Input placeholder="请输入资源标题" />
+            <Input placeholder={selectedFile ? `留空请先参考文件名：${selectedFile.name}` : '请输入资源标题'} />
           </Form.Item>
+          <div style={{ marginTop: -12, marginBottom: 16, color: '#666', fontSize: 12 }}>
+            建议直接使用文件原名或稍作修改，先完成上传即可。
+          </div>
 
           <Form.Item
             name="tags"
             label="标签"
-            rules={[{ required: true, message: '请选择至少一个标签' }]}
           >
-            <ConfigurableSelect
-              groupKey="resource_tag"
+            <Select
               mode="multiple"
-              placeholder="请选择标签"
+              placeholder="可选；输入后按回车可快捷新增"
               style={{ width: '100%' }}
+              loading={tagLoading}
+              options={tagSelectOptions}
+              showSearch
+              allowClear
+              notFoundContent={tagLoading ? '加载中...' : '暂无标签'}
+              popupRender={(menu) => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <Space direction="vertical" style={{ padding: 8, width: '100%' }}>
+                    <Space.Compact style={{ width: '100%' }}>
+                      <Input
+                        value={draftTag}
+                        placeholder="快捷新增标签"
+                        onChange={(event) => setDraftTag(event.target.value)}
+                        onPressEnter={async () => {
+                          await handleCreateTag(draftTag);
+                          setDraftTag('');
+                        }}
+                      />
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        loading={creatingTag}
+                        onClick={async () => {
+                          await handleCreateTag(draftTag);
+                          setDraftTag('');
+                        }}
+                      >
+                        新增
+                      </Button>
+                    </Space.Compact>
+                  </Space>
+                </>
+              )}
             />
           </Form.Item>
+          <div style={{ marginTop: -12, marginBottom: 16, color: '#666', fontSize: 12 }}>
+            标签不是必填项；输入标签名称后按回车可快捷新增真实标签
+            {creatingTag ? '，正在创建...' : ''}
+          </div>
         </div>
 
         <div className="upload-section">
-          <h3 className="upload-section-title">资源描述</h3>
-          <Form.Item
-            name="description"
-          >
-            <div className="markdown-editor">
-              <MDEditor value={description} onChange={(val) => setDescription(val || '')} />
-            </div>
-          </Form.Item>
+          <Collapse
+            items={[
+              {
+                key: 'description',
+                label: '补充资源描述（可选）',
+                children: (
+                  <>
+                    <div style={{ marginBottom: 12, color: '#666', fontSize: 12 }}>
+                      需要补充说明时再填写，留空也可直接上传。
+                    </div>
+                    <Form.Item name="description" style={{ marginBottom: 0 }}>
+                      <div className="markdown-editor">
+                        <MDEditor
+                          value={description}
+                          onChange={(val) => setDescription(val || '')}
+                          textareaProps={{ placeholder: '可填写适用场景、使用说明、课节建议等' }}
+                        />
+                      </div>
+                    </Form.Item>
+                  </>
+                ),
+              },
+            ]}
+          />
         </div>
 
         <Form.Item>

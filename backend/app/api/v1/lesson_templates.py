@@ -21,6 +21,7 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
+@router.get("/", response_model=ListResponse[LessonTemplateResponse], include_in_schema=False)
 @router.get("", response_model=ListResponse[LessonTemplateResponse])
 async def get_lesson_templates(
     db: DBSession,

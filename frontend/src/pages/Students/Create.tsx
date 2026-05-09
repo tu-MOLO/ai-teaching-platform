@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, message, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StudentForm, StudentFormData } from '@/components';
 import { studentService } from '../../services/student';
 import { refreshDashboardStats } from '../../stores/dashboard';
@@ -12,7 +12,10 @@ const toDateString = (value?: { format: (template: string) => string }) =>
 
 const CreateStudent: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
+
+  const returnTo = searchParams.get('returnTo') || '/students';
 
   const handleSubmit = async (values: StudentFormData) => {
     setLoading(true);
@@ -27,9 +30,8 @@ const CreateStudent: React.FC = () => {
         is_active: values.is_active,
       });
       message.success('创建成功');
-      // 刷新仪表盘数据
       refreshDashboardStats();
-      navigate('/students');
+      navigate(returnTo);
     } catch (error) {
       message.error('添加失败，请重试');
       console.error('Create student error:', error);
@@ -39,7 +41,7 @@ const CreateStudent: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/students');
+    navigate(returnTo);
   };
 
   return (

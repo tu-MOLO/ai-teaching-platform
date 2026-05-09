@@ -82,7 +82,8 @@ class Portfolio(BaseModel):
     
     # 关系
     student = relationship(
-        "Student"
+        "Student",
+        back_populates="portfolios",
     )
     
     user = relationship(

@@ -93,6 +93,7 @@ class Student(BaseModel):
 
     portfolios = relationship(
         "Portfolio",
+        back_populates="student",
         cascade="all, delete-orphan"
     )
 

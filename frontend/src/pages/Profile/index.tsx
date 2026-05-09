@@ -557,7 +557,11 @@ const Profile: React.FC = () => {
             label="新密码"
             rules={[
               { required: true, message: '请输入新密码' },
-              { min: 8, message: '密码至少8位' }
+              { min: 8, message: '密码至少8位' },
+              {
+                pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/,
+                message: '需同时包含字母和数字',
+              },
             ]}
           >
             <Input.Password placeholder="请输入新密码" />

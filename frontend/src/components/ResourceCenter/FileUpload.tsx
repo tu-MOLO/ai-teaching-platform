@@ -2,7 +2,7 @@
  * FileUpload 文件上传组件
  *
  * 基于 react-dropzone 的文件上传组件，支持拖拽和点击选择文件。
- * 提供文件大小验证（最大100MB）和数量限制（最多5个文件）。
+ * 提供文件大小验证（最大100MB）和数量限制（单文件上传）。
  *
  * @component
  * @example
@@ -27,9 +27,6 @@ import { message } from 'antd';
 
 /** 最大文件大小：100MB（与后端配置保持一致） */
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
-/** 最大文件数量 */
-const MAX_FILES = 5;
-
 /**
  * 格式化文件大小
  * @param bytes - 字节数
@@ -84,7 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
     // 通知父组件文件变化
     if (validFiles.length > 0) {
       onFileChange(validFiles);
-      message.success(`成功选择 ${validFiles.length} 个文件`);
+        message.success(`已选择文件：${validFiles[0].name}`);
     }
   }, [onFileChange]);
 
@@ -93,7 +90,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
     onDrop,
     onDragEnter: () => setIsDragging(true),
     onDragLeave: () => setIsDragging(false),
-    maxFiles: MAX_FILES,
+    maxFiles: 1,
     maxSize: MAX_FILE_SIZE,
   });
 
@@ -107,7 +104,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
               `文件 ${file.name} 超过100MB限制（当前大小: ${formatFileSize(file.size)}）`
             );
           } else if (error.code === 'too-many-files') {
-            message.error(`最多只能选择 ${MAX_FILES} 个文件`);
+            message.error('一次只能上传 1 个文件');
           }
         });
       });
@@ -135,7 +132,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
           <strong>点击或拖拽文件到此处上传</strong>
         </p>
         <p style={{ fontSize: '14px', color: '#999' }}>
-          支持图片、视频、文档等多种格式，单个文件不超过100MB，最多5个文件
+          支持图片、视频、文档等多种格式，单个文件不超过100MB
         </p>
       </div>
     </div>

@@ -24,7 +24,7 @@ class ExportService:
         try:
             from weasyprint import HTML, CSS
         except ImportError:
-            raise ImportError("PDF export not supported: WeasyPrint dependencies missing")
+            return self._render_simple_pdf(self._build_lesson_plan_lines(lesson_plan))
         
         # 构建HTML内容
         html_content = self._generate_html(lesson_plan)
@@ -240,7 +240,7 @@ class ExportService:
         try:
             from weasyprint import HTML, CSS
         except ImportError:
-            raise ImportError("PDF export not supported: WeasyPrint dependencies missing")
+            return self._render_simple_pdf(self._build_portfolio_report_lines(student, portfolios))
         
         # 构建HTML内容
         html_content = self._generate_portfolio_html(student, portfolios)
@@ -411,3 +411,152 @@ class ExportService:
         """
         
         return html
+
+    def _build_lesson_plan_lines(self, lesson_plan) -> list[str]:
+        lines = [
+            f"教案导出: {lesson_plan.title or ''}",
+            "",
+            f"学科: {lesson_plan.subject or ''}",
+            f"年级: {lesson_plan.grade or ''}",
+            f"课时时长: {lesson_plan.duration} 分钟",
+            f"状态: {getattr(lesson_plan.status, 'value', lesson_plan.status)}",
+            "",
+            "教学目标:",
+            lesson_plan.teaching_objectives or "无",
+            "",
+            "教学内容:",
+            lesson_plan.teaching_content or "无",
+            "",
+            "教学方法:",
+            lesson_plan.teaching_methods or "无",
+            "",
+            "教学过程:",
+            lesson_plan.teaching_process or "无",
+            "",
+            "教学资源:",
+            lesson_plan.teaching_resources or "无",
+            "",
+            "备注:",
+            lesson_plan.notes or "无",
+        ]
+        return lines
+
+    def _build_portfolio_report_lines(self, student, portfolios) -> list[str]:
+        lines = [
+            f"{student.name or ''} 的成长报告",
+            "",
+            "学生基本信息",
+            f"姓名: {student.name or ''}",
+            f"性别: {student.gender or ''}",
+            f"出生日期: {student.birth_date}",
+            f"年级: {student.grade or ''}",
+            f"班级: {student.class_name or ''}",
+            f"家长联系方式: {student.parent_contact or '未提供'}",
+            "",
+            "成长记录",
+        ]
+
+        type_names = {
+            'work': '作品',
+            'evaluation': '评价',
+            'observation': '观察',
+            'milestone': '里程碑'
+        }
+
+        for index, portfolio in enumerate(portfolios, start=1):
+            lines.extend(
+                [
+                    "",
+                    f"{index}. {portfolio.title or ''}",
+                    f"类型: {type_names.get(portfolio.type, portfolio.type)}",
+                    f"创建时间: {portfolio.created_at.strftime('%Y-%m-%d %H:%M:%S')}",
+                    f"内容: {portfolio.content or '无'}",
+                ]
+            )
+
+            scores = [
+                ("认知", portfolio.cognitive_score),
+                ("技能", portfolio.skill_score),
+                ("创意", portfolio.creativity_score),
+                ("合作", portfolio.cooperation_score),
+                ("注意力", portfolio.attention_score),
+            ]
+            valid_scores = [f"{label}: {value}" for label, value in scores if value is not None]
+            if valid_scores:
+                lines.append("评分: " + " / ".join(valid_scores))
+
+        if len(portfolios) == 0:
+            lines.append("暂无成长记录")
+
+        return lines
+
+    def _render_simple_pdf(self, lines: list[str]) -> bytes:
+        page_width = 595
+        page_height = 842
+        margin_left = 50
+        start_y = 792
+        line_height = 18
+        max_lines_per_page = 38
+
+        pages = [lines[i:i + max_lines_per_page] for i in range(0, len(lines), max_lines_per_page)] or [[]]
+
+        objects: list[bytes] = []
+
+        def add_object(content: str) -> int:
+            objects.append(content.encode("utf-8"))
+            return len(objects)
+
+        catalog_id = add_object("<< /Type /Catalog /Pages 2 0 R >>")
+        pages_id = 2
+        font_id = add_object(
+            "<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [4 0 R] >>"
+        )
+        descendant_font_id = add_object(
+            "<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 >>"
+        )
+
+        page_object_ids: list[int] = []
+        content_object_ids: list[int] = []
+
+        for page_lines in pages:
+            stream_lines = ["BT", f"/F1 12 Tf", f"1 0 0 1 {margin_left} {start_y} Tm"]
+            for index, line in enumerate(page_lines):
+                safe_line = (line or "").replace("\r", " ").replace("\n", " ")
+                hex_text = safe_line.encode("utf-16-be").hex().upper()
+                if index > 0:
+                    stream_lines.append(f"1 0 0 1 {margin_left} {start_y - line_height * index} Tm")
+                stream_lines.append(f"<{hex_text}> Tj")
+            stream_lines.append("ET")
+            stream = "\n".join(stream_lines).encode("utf-8")
+            content_id = add_object(f"<< /Length {len(stream)} >>\nstream\n{stream.decode('utf-8')}\nendstream")
+            content_object_ids.append(content_id)
+            page_id = add_object(
+                f"<< /Type /Page /Parent {pages_id} 0 R /MediaBox [0 0 {page_width} {page_height}] "
+                f"/Resources << /Font << /F1 {font_id} 0 R >> >> /Contents {content_id} 0 R >>"
+            )
+            page_object_ids.append(page_id)
+
+        kids = " ".join(f"{page_id} 0 R" for page_id in page_object_ids)
+        objects[pages_id - 1] = f"<< /Type /Pages /Kids [{kids}] /Count {len(page_object_ids)} >>".encode("utf-8")
+
+        pdf = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+        offsets = [0]
+        for index, obj in enumerate(objects, start=1):
+            offsets.append(len(pdf))
+            pdf.extend(f"{index} 0 obj\n".encode("utf-8"))
+            pdf.extend(obj)
+            pdf.extend(b"\nendobj\n")
+
+        xref_start = len(pdf)
+        pdf.extend(f"xref\n0 {len(objects) + 1}\n".encode("utf-8"))
+        pdf.extend(b"0000000000 65535 f \n")
+        for offset in offsets[1:]:
+            pdf.extend(f"{offset:010d} 00000 n \n".encode("utf-8"))
+
+        pdf.extend(
+            (
+                f"trailer\n<< /Size {len(objects) + 1} /Root {catalog_id} 0 R >>\n"
+                f"startxref\n{xref_start}\n%%EOF"
+            ).encode("utf-8")
+        )
+        return bytes(pdf)

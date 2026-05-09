@@ -3,6 +3,8 @@ import { Empty, Input, Pagination, Spin, message } from 'antd'
 import { FileOutlined, FileImageOutlined, FilePdfOutlined, SearchOutlined, UploadOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getResources, type ResourceListItem } from '../../services/resource'
+import { getTags } from '../../services/tag'
+import { BusinessError } from '../../types/error'
 import './index.css'
 
 const { Search } = Input
@@ -16,6 +18,11 @@ type ResourceRow = {
   created_at: string
 }
 
+type TagFilterOption = {
+  id: string
+  name: string
+}
+
 const mapApiResourceToResource = (apiResource: ResourceListItem): ResourceRow => {
   const getType = (fileType: string): ResourceRow['type'] => {
     if (!fileType) return 'other'
@@ -27,12 +34,12 @@ const mapApiResourceToResource = (apiResource: ResourceListItem): ResourceRow =>
   }
 
   return {
-    id: apiResource.id,
-    name: apiResource.name,
+    id: apiResource?.id || '',
+    name: apiResource?.name || '未命名资源',
     description: '',
-    type: getType(apiResource.file_type),
-    tags: (apiResource.tags || []).map((tag) => tag.name),
-    created_at: apiResource.created_at ? apiResource.created_at.split('T')[0] : '',
+    type: getType(apiResource?.file_type),
+    tags: (apiResource?.tags || []).map((tag) => tag?.name || '').filter(Boolean),
+    created_at: apiResource?.created_at ? apiResource.created_at.split('T')[0] : '',
   }
 }
 
@@ -42,29 +49,47 @@ const ResourceCenter: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [searchText, setSearchText] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [tagOptions, setTagOptions] = useState<TagFilterOption[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(8)
+  const [total, setTotal] = useState(0)
 
   useEffect(() => {
     const fetchResources = async () => {
       setLoading(true)
       try {
-        const response = await getResources({})
-        const items = response.data || []
+        const [resourceResponse, tagResponse] = await Promise.all([
+          getResources({
+            page: currentPage,
+            page_size: pageSize,
+            keyword: searchText || undefined,
+            tag_ids: selectedTags.length > 0 ? selectedTags : undefined,
+          }),
+          getTags(),
+        ])
+        const items = resourceResponse?.data || []
         setResources(items.map(mapApiResourceToResource))
+        setTotal(resourceResponse?.total || 0)
+        setTagOptions((tagResponse || []).map((tag) => ({ id: tag.id, name: tag.name })))
       } catch (error) {
-        message.error('获取资源列表失败')
-        console.error('Failed to fetch resources:', error)
+        if (!(error instanceof BusinessError && error.statusCode === 401)) {
+          message.error('获取资源列表失败')
+          console.error('Failed to fetch resources:', error)
+        }
+        setResources([])
+        setTotal(0)
+        setTagOptions([])
       } finally {
         setLoading(false)
       }
     }
 
     fetchResources()
-  }, [])
+  }, [currentPage, pageSize, searchText, selectedTags])
 
   const tags = useMemo(
-    () => ['全部', ...Array.from(new Set(resources.flatMap((resource) => resource.tags)))],
-    [resources]
+    () => [{ id: 'all', name: '全部' }, ...tagOptions],
+    [tagOptions]
   )
 
   const getFileIcon = (type: ResourceRow['type']) => {
@@ -81,18 +106,6 @@ const ResourceCenter: React.FC = () => {
         return <FileOutlined />
     }
   }
-
-  const filteredResources = resources.filter((resource) => {
-    const keyword = searchText.toLowerCase()
-    const matchesSearch =
-      resource.name.toLowerCase().includes(keyword) || resource.description.toLowerCase().includes(keyword)
-    const matchesTags = selectedTags.length === 0 || selectedTags.some((tag) => resource.tags.includes(tag))
-    return matchesSearch && matchesTags
-  })
-
-  const pageSize = 8
-  const total = filteredResources.length
-  const paginatedResources = filteredResources.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   return (
     <div className="resource-center">
@@ -122,7 +135,10 @@ const ResourceCenter: React.FC = () => {
               setSearchText(value)
               setCurrentPage(1)
             }}
-            onChange={(event) => setSearchText(event.target.value)}
+            onChange={(event) => {
+              setSearchText(event.target.value)
+              setCurrentPage(1)
+            }}
             className="search-input-large"
           />
         </div>
@@ -132,22 +148,22 @@ const ResourceCenter: React.FC = () => {
           <div className="tag-filter">
             {tags.map((tag) => (
               <button
-                key={tag}
+                key={tag.id}
                 className={`filter-tag ${
-                  (tag === '全部' && selectedTags.length === 0) || selectedTags.includes(tag) ? 'active' : ''
+                  (tag.id === 'all' && selectedTags.length === 0) || selectedTags.includes(tag.id) ? 'active' : ''
                 }`}
                 onClick={() => {
-                  if (tag === '全部') {
+                  if (tag.id === 'all') {
                     setSelectedTags([])
                   } else {
                     setSelectedTags((prev) =>
-                      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
+                      prev.includes(tag.id) ? prev.filter((item) => item !== tag.id) : [...prev, tag.id]
                     )
                   }
                   setCurrentPage(1)
                 }}
               >
-                {tag}
+                {tag.name}
               </button>
             ))}
           </div>
@@ -160,7 +176,7 @@ const ResourceCenter: React.FC = () => {
           <span className="stats-label">资源总数</span>
         </div>
         <div className="stats-item">
-          <span className="stats-value">{tags.length - 1}</span>
+          <span className="stats-value">{tagOptions.length}</span>
           <span className="stats-label">标签数量</span>
         </div>
       </div>
@@ -170,10 +186,10 @@ const ResourceCenter: React.FC = () => {
           <Spin size="large" />
           <p>加载资源中...</p>
         </div>
-      ) : paginatedResources.length > 0 ? (
+      ) : resources.length > 0 ? (
         <>
           <div className="resource-grid">
-            {paginatedResources.map((resource) => (
+            {resources.map((resource) => (
               <div key={resource.id} className="resource-card" onClick={() => navigate(`/resource-center/${resource.id}`)}>
                 <div className="resource-card-cover">
                   <div className="resource-type-icon">{getFileIcon(resource.type)}</div>
@@ -182,7 +198,7 @@ const ResourceCenter: React.FC = () => {
                   <h3 className="resource-card-title">{resource.name}</h3>
                   <p className="resource-card-desc">{resource.description || '暂无描述'}</p>
                   <div className="resource-card-tags">
-                    {resource.tags.slice(0, 3).map((tag) => (
+                    {(resource.tags || []).slice(0, 3).map((tag) => (
                       <span key={tag} className="resource-tag">
                         {tag}
                       </span>

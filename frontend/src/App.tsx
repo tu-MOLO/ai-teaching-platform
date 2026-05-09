@@ -2,11 +2,12 @@ import { useEffect } from 'react'
 import { useRoutes } from 'react-router-dom'
 import router from './router/index'
 import { initTheme } from './stores/theme'
+import { useAuthStore } from './stores/auth'
 
 function App() {
-  // 初始化主题
   useEffect(() => {
     initTheme()
+    useAuthStore.getState().initializeAuth()
   }, [])
 
   const element = useRoutes(router)

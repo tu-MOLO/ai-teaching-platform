@@ -2,12 +2,12 @@ import api from './api'
 import { toItem } from './response'
 
 export enum NotificationType {
-  SYSTEM = 'SYSTEM',
-  COURSE = 'COURSE',
-  HOMEWORK = 'HOMEWORK',
-  EXAM = 'EXAM',
-  MESSAGE = 'MESSAGE',
-  REMINDER = 'REMINDER'
+  SYSTEM = 'system',
+  COURSE = 'course',
+  HOMEWORK = 'homework',
+  EXAM = 'exam',
+  MESSAGE = 'message',
+  REMINDER = 'reminder'
 }
 
 export interface Notification {

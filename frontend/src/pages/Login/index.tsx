@@ -11,15 +11,22 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [resetVisible, setResetVisible] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
+  const [resetStep, setResetStep] = useState(1)
+  const [securityQuestion, setSecurityQuestion] = useState('')
+  const [getQuestionLoading, setGetQuestionLoading] = useState(false)
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const { setUser } = useUserStore()
   const [resetForm] = Form.useForm()
 
-  const onFinish = async (values: { username: string; password: string }) => {
+  const onFinish = async (values: { username: string; password: string; remember?: boolean }) => {
     try {
       setLoading(true)
-      const response = await authService.login(values)
+      const response = await authService.login({
+        username: values.username,
+        password: values.password,
+        remember_me: values.remember ?? true,
+      })
       login(response.access_token, response.refresh_token)
       setUser(response.user)
       message.success('欢迎回来')
@@ -37,17 +44,40 @@ const Login: React.FC = () => {
     { icon: <RocketOutlined />, text: '教学数据分析' },
   ]
 
+  const [isLegacy, setIsLegacy] = useState(false)
+
+  const handleGetSecurityQuestion = async () => {
+    try {
+      const values = await resetForm.validateFields(['username'])
+      setGetQuestionLoading(true)
+      const response = await authService.getSecurityQuestion({ username: values.username })
+      setSecurityQuestion(response.security_question)
+      setIsLegacy(response.is_legacy)
+      setResetStep(2)
+      if (response.is_legacy) {
+        message.warning('该账户未设置密保问题，无法通过密保重置密码，请联系管理员')
+      }
+    } catch (error: any) {
+      if (error?.errorFields) {
+        return
+      }
+      message.error(error?.message || '获取密保问题失败')
+    } finally {
+      setGetQuestionLoading(false)
+    }
+  }
+
   const handleResetPassword = async () => {
     try {
-      const values = await resetForm.validateFields()
+      const values = await resetForm.validateFields(['security_answer', 'new_password', 'confirm_password'])
       setResetLoading(true)
       await authService.resetPassword({
-        username: values.username,
+        username: resetForm.getFieldValue('username'),
+        security_answer: values.security_answer,
         new_password: values.new_password,
       })
-      message.success('密码已重置，请使用新密码登录')
-      setResetVisible(false)
-      resetForm.resetFields()
+      message.success('密码重置成功')
+      handleResetModalClose()
     } catch (error: any) {
       if (error?.errorFields) {
         return
@@ -56,6 +86,14 @@ const Login: React.FC = () => {
     } finally {
       setResetLoading(false)
     }
+  }
+
+  const handleResetModalClose = () => {
+    setResetVisible(false)
+    setResetStep(1)
+    setSecurityQuestion('')
+    setIsLegacy(false)
+    resetForm.resetFields()
   }
 
   return (
@@ -135,57 +173,104 @@ const Login: React.FC = () => {
       </div>
 
       <Modal
-        title="重置密码"
+        title={`重置密码 - 步骤${resetStep}/2`}
         open={resetVisible}
-        onOk={handleResetPassword}
-        onCancel={() => {
-          setResetVisible(false)
-          resetForm.resetFields()
-        }}
-        confirmLoading={resetLoading}
-        okText="确认重置"
-        cancelText="取消"
+        destroyOnHidden
+        onCancel={handleResetModalClose}
+        footer={
+          resetStep === 1
+            ? [
+                <Button key="cancel" onClick={handleResetModalClose}>
+                  取消
+                </Button>,
+                <Button key="next" type="primary" loading={getQuestionLoading} onClick={handleGetSecurityQuestion}>
+                  获取密保问题
+                </Button>,
+              ]
+            : [
+                <Button key="back" onClick={() => { setResetStep(1); setIsLegacy(false) }}>
+                  返回
+                </Button>,
+                <Button key="cancel" onClick={handleResetModalClose}>
+                  取消
+                </Button>,
+                ...(!isLegacy ? [
+                  <Button key="submit" type="primary" loading={resetLoading} onClick={handleResetPassword}>
+                    重置密码
+                  </Button>,
+                ] : []),
+              ]
+        }
       >
-        <Form form={resetForm} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item
-            name="username"
-            label="用户名或邮箱"
-            rules={[{ required: true, message: '请输入用户名或邮箱' }]}
-          >
-            <Input placeholder="请输入用户名或邮箱" />
-          </Form.Item>
-          <Form.Item
-            name="new_password"
-            label="新密码"
-            rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 8, message: '密码至少8位' },
-              {
-                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
-                message: '需包含大写字母、小写字母和数字',
-              },
-            ]}
-          >
-            <Input.Password placeholder="请输入新密码" />
-          </Form.Item>
-          <Form.Item
-            name="confirm_password"
-            label="确认新密码"
-            dependencies={['new_password']}
-            rules={[
-              { required: true, message: '请再次输入新密码' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue('new_password') === value) {
-                    return Promise.resolve()
-                  }
-                  return Promise.reject(new Error('两次输入的密码不一致'))
-                },
-              }),
-            ]}
-          >
-            <Input.Password placeholder="请再次输入新密码" />
-          </Form.Item>
+        <Form
+          form={resetForm}
+          layout="vertical"
+          preserve={false}
+          style={{ marginTop: 16 }}
+        >
+          {resetStep === 1 && (
+            <Form.Item
+              name="username"
+              label="用户名或邮箱"
+              rules={[{ required: true, message: '请输入用户名或邮箱' }]}
+            >
+              <Input placeholder="请输入用户名或邮箱" />
+            </Form.Item>
+          )}
+          {resetStep === 2 && (
+            <>
+              <Form.Item label="密保问题">
+                <Input value={securityQuestion} readOnly />
+              </Form.Item>
+              {isLegacy ? (
+                <div style={{ color: '#faad14', marginBottom: 16 }}>
+                  该账户未设置密保问题，无法通过密保重置密码，请联系管理员重置。
+                </div>
+              ) : (
+                <>
+                  <Form.Item
+                    name="security_answer"
+                    label="密保答案"
+                    rules={[{ required: true, message: '请输入密保答案' }]}
+                  >
+                    <Input placeholder="请输入密保答案" />
+                  </Form.Item>
+                  <Form.Item
+                    name="new_password"
+                    label="新密码"
+                    rules={[
+                      { required: true, message: '请输入新密码' },
+                      { min: 8, message: '密码至少8位' },
+                      {
+                        pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/,
+                        message: '需同时包含字母和数字',
+                      },
+                    ]}
+                  >
+                    <Input.Password placeholder="请输入新密码" />
+                  </Form.Item>
+                  <Form.Item
+                    name="confirm_password"
+                    label="确认新密码"
+                    dependencies={['new_password']}
+                    rules={[
+                      { required: true, message: '请再次输入新密码' },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          if (!value || getFieldValue('new_password') === value) {
+                            return Promise.resolve()
+                          }
+                          return Promise.reject(new Error('两次输入的密码不一致'))
+                        },
+                      }),
+                    ]}
+                  >
+                    <Input.Password placeholder="请再次输入新密码" />
+                  </Form.Item>
+                </>
+              )}
+            </>
+          )}
         </Form>
       </Modal>
     </div>

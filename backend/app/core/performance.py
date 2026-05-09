@@ -5,11 +5,10 @@
 import functools
 import time
 from contextlib import contextmanager
-from typing import Optional, Callable, Any, List, TypeVar, Type
+from typing import Optional, Callable, Any, List, TypeVar
 
-from sqlalchemy import event, select
-from sqlalchemy.orm import selectinload, joinedload, Query, Session
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import event
+from sqlalchemy.orm import selectinload, joinedload
 
 from app.core.logging import get_logger
 
@@ -20,64 +19,6 @@ T = TypeVar("T")
 
 class QueryOptimizer:
     """查询优化器"""
-    
-    @staticmethod
-    def eager_load_relations(model_class: Type[T], *relation_paths: str) -> Callable:
-        """
-        装饰器：自动预加载指定的关联关系
-        
-        使用示例：
-            @QueryOptimizer.eager_load_relations(Student, "portfolios")
-            async def get_student_with_portfolios(db, student_id):
-                return await db.get(Student, student_id)
-        
-        Args:
-            model_class: 模型类
-            relation_paths: 关联关系路径
-            
-        Returns:
-            装饰器函数
-        """
-        def decorator(func: Callable) -> Callable:
-            @functools.wraps(func)
-            async def wrapper(*args, **kwargs):
-                # 获取数据库会话（假设第一个参数或 kwargs 中有 db）
-                db = kwargs.get('db') or (args[0] if args else None)
-                
-                if db and isinstance(db, AsyncSession):
-                    # 构建预加载选项
-                    options = []
-                    for path in relation_paths:
-                        parts = path.split('.')
-                        if len(parts) == 1:
-                            options.append(selectinload(getattr(model_class, path)))
-                        else:
-                            # 处理嵌套关系
-                            current_path = getattr(model_class, parts[0])
-                            for part in parts[1:]:
-                                current_path = getattr(current_path, part)
-                            options.append(selectinload(current_path))
-                    
-                    # 修改查询以包含预加载
-                    original_get = db.get
-                    
-                    async def optimized_get(model, ident, **kwargs):
-                        stmt = select(model).where(model.id == ident).options(*options)
-                        result = await db.execute(stmt)
-                        return result.scalar_one_or_none()
-                    
-                    # 临时替换 get 方法
-                    db.get = optimized_get
-                    try:
-                        result = await func(*args, **kwargs)
-                    finally:
-                        db.get = original_get
-                    
-                    return result
-                
-                return await func(*args, **kwargs)
-            return wrapper
-        return decorator
     
     @staticmethod
     def selectinload_chain(*paths: str):

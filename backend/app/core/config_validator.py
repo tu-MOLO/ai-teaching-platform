@@ -25,18 +25,19 @@ class ConfigValidator:
     MIN_SECRET_KEY_LENGTH = 32
     
     # 弱密钥模式（不应在生产环境使用）
+    # 使用全词匹配，避免误判正常密钥中包含这些常见单词子串的情况
     WEAK_SECRET_PATTERNS = [
-        r'password',
-        r'secret',
-        r'123456',
-        r'qwerty',
-        r'admin',
-        r'change',
-        r'default',
-        r'test',
-        r'example',
-        r'your-',
-        r'min-32',
+        r'^password$',
+        r'^secret$',
+        r'^123456$',
+        r'^qwerty$',
+        r'^admin$',
+        r'^change$',
+        r'^default$',
+        r'^test$',
+        r'^example$',
+        r'^your-$',
+        r'^min-32',
     ]
     
     @staticmethod
@@ -59,10 +60,10 @@ class ConfigValidator:
                 f"需要至少 {ConfigValidator.MIN_SECRET_KEY_LENGTH} 字符"
             )
         
-        # 检查是否包含弱密钥模式
+        # 检查是否包含弱密钥模式（全词匹配）
         secret_lower = secret_key.lower()
         for pattern in ConfigValidator.WEAK_SECRET_PATTERNS:
-            if pattern in secret_lower:
+            if re.search(pattern, secret_lower):
                 errors.append(f"SECRET_KEY 包含弱密钥模式: '{pattern}'")
         
         # 检查熵值（字符多样性）

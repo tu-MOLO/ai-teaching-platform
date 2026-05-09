@@ -45,15 +45,25 @@ class Settings(BaseSettings):
     DATABASE_POOL_RECYCLE: int = 3600
     
     # JWT配置
-    SECRET_KEY: str = "your-secret-key-here-change-in-production"
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
+
+    @field_validator("SECRET_KEY", mode="after")
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        """验证SECRET_KEY不为空且长度>=32"""
+        if not v:
+            raise ValueError("SECRET_KEY 不能为空，请设置一个安全的密钥")
+        if len(v) < 32:
+            raise ValueError(f"SECRET_KEY 长度不足: 当前 {len(v)} 字符, 需要至少 32 字符")
+        return v
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # MinIO配置
     MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_ACCESS_KEY: str = "aiteachingminio"
+    MINIO_SECRET_KEY: str = "MinioLocal@2026Store"
     MINIO_BUCKET_NAME: str = "ai-teaching"
     MINIO_SECURE: bool = False
     MINIO_REGION: str = "us-east-1"

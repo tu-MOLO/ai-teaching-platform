@@ -32,6 +32,8 @@ import ReactECharts from 'echarts-for-react';
 import { portfolioService } from '@/services/portfolio';
 import type { PortfolioItem } from '@/types/portfolio';
 
+const PORTFOLIO_PAGE_SIZE = 100;
+
 /**
  * 能力数据接口
  */
@@ -75,8 +77,20 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
    */
   const fetchPortfolio = async () => {
     try {
-      const response = await portfolioService.getPortfolios({ student_id: studentId });
-      const items = response.data || [];
+      const items: PortfolioItem[] = [];
+      let page = 1;
+      let totalPages = 1;
+
+      do {
+        const response = await portfolioService.getPortfolios({
+          student_id: studentId,
+          page,
+          page_size: PORTFOLIO_PAGE_SIZE,
+        });
+        items.push(...(response.data || []));
+        totalPages = response.pages || 1;
+        page += 1;
+      } while (page <= totalPages);
 
       // 筛选评价类型的记录
       const filteredItems = items.filter((item: PortfolioItem) => item.type === 'evaluation');
@@ -108,7 +122,7 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
 
       // 计算平均值
       Object.keys(avgScores).forEach((key) => {
-        (avgScores as any)[key] = (avgScores as any)[key] / filteredItems.length;
+        (avgScores as any)[key] = ((avgScores as any)[key] / filteredItems.length) / 20;
       });
 
       // 设置图表数据

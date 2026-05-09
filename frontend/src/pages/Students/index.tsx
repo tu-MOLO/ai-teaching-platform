@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Space, Tag, message, Typography, Input, Select, Modal } from 'antd';
+import { Card, Button, Table, Space, Tag, message, Typography, Input, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
 
 const { Title } = Typography;
 const { Search } = Input;
-const { Option } = Select;
-
 interface Student {
   id: string;
   name: string;
@@ -29,13 +28,18 @@ const Students: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);
     try {
-      const response = await studentService.getStudents();
+      const response = await studentService.getStudents({
+        page,
+        page_size: pageSize,
+        keyword: searchText || undefined,
+        grade: gradeFilter || undefined,
+      });
       const items = response.data || [];
-      // 将后端数据格式转换为前端需要的格式
       const formattedStudents: Student[] = items.map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -45,6 +49,11 @@ const Students: React.FC = () => {
         status: (item.is_active ? 'active' : 'inactive') as 'active' | 'inactive',
       }));
       setStudents(formattedStudents);
+      setPagination({
+        current: response.page || page,
+        pageSize: response.page_size || pageSize,
+        total: response.total || 0,
+      });
     } catch (error) {
       message.error('获取学生列表失败');
       console.error('Fetch students error:', error);
@@ -54,8 +63,8 @@ const Students: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    fetchStudents(1);
+  }, [searchText, gradeFilter]);
 
   const handleDelete = (id: string, name: string) => {
     Modal.confirm({
@@ -68,8 +77,7 @@ const Students: React.FC = () => {
         try {
           await studentService.deleteStudent(id);
           message.success('删除成功');
-          fetchStudents(); // 刷新列表
-          // 刷新仪表盘数据
+          fetchStudents(pagination.current, pagination.pageSize);
           refreshDashboardStats();
         } catch (error) {
           message.error('删除失败，请重试');
@@ -136,12 +144,6 @@ const Students: React.FC = () => {
     },
   ];
 
-  const filteredData = students.filter(student =>
-    (student.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    student.class_name.toLowerCase().includes(searchText.toLowerCase())) &&
-    (gradeFilter === '' || student.grade === gradeFilter)
-  );
-
   return (
     <div style={{ padding: 24 }}>
       <Card
@@ -167,24 +169,27 @@ const Students: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             style={{ width: 300, marginRight: 16 }}
           />
-          <Select
+          <ConfigurableSelect
+            groupKey="student_grade"
             placeholder="选择年级"
             value={gradeFilter || undefined}
-            onChange={(value) => setGradeFilter(value)}
+            onChange={(value) => setGradeFilter((value as string) || '')}
+            allowClear
             style={{ width: 200 }}
-          >
-            <Option value="">全部年级</Option>
-            <Option value="培智一年级">培智一年级</Option>
-            <Option value="培智二年级">培智二年级</Option>
-            <Option value="培智三年级">培智三年级</Option>
-          </Select>
+          />
         </div>
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={students}
           rowKey="id"
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: false,
+            onChange: (page, pageSize) => fetchStudents(page, pageSize),
+          }}
         />
       </Card>
     </div>

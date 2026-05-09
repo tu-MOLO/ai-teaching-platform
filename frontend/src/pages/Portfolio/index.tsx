@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Input, Select, Table, Space, message, Empty, Modal } from 'antd';
+import { Card, Input, Table, Space, message, Empty, Modal } from 'antd';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -13,10 +13,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
+import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
 import type { Student } from '../../types/student';
 import './index.css';
-
-const { Option } = Select;
 
 // 扩展Student类型用于页面展示
 interface StudentDisplay extends Student {
@@ -66,27 +65,34 @@ const Portfolio: React.FC = () => {
   const [students, setStudents] = useState<StudentDisplay[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [className, setClassName] = useState('');
+  const [gradeFilter, setGradeFilter] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
-  // 获取学生列表
-  const fetchStudents = async () => {
+  const fetchStudents = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);
     try {
-      const response = await studentService.getStudents();
+      const response = await studentService.getStudents({
+        page,
+        page_size: pageSize,
+        keyword: searchText || undefined,
+        grade: gradeFilter || undefined,
+      });
       const studentList = response.data || [];
-      // 处理数据转换
       const processedStudents = studentList.map((student: Student) => {
         const displayStudent: StudentDisplay = { ...student };
-        // 转换性别
         displayStudent.gender = formatGender(student.gender);
-        // 计算年龄（如果没有返回 age 字段但有 birth_date）
         if (!displayStudent.age && student.birth_date) {
           displayStudent.age = calculateAge(student.birth_date);
         }
         return displayStudent;
       });
       setStudents(processedStudents);
+      setPagination({
+        current: response.page || page,
+        pageSize: response.page_size || pageSize,
+        total: response.total || 0,
+      });
     } catch (error) {
       message.error('获取学生档案失败');
       console.error('Fetch students error:', error);
@@ -96,8 +102,8 @@ const Portfolio: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    fetchStudents(1);
+  }, [searchText, gradeFilter]);
 
   const handleDelete = async (id: string, name: string) => {
     Modal.confirm({
@@ -110,8 +116,7 @@ const Portfolio: React.FC = () => {
         try {
           await studentService.deleteStudent(id);
           message.success('删除成功');
-          // 刷新列表
-          fetchStudents();
+          fetchStudents(pagination.current, pagination.pageSize);
         } catch (error) {
           message.error('删除学生失败');
           console.error('Delete student error:', error);
@@ -120,12 +125,7 @@ const Portfolio: React.FC = () => {
     });
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = student.name.toLowerCase().includes(searchText.toLowerCase());
-    const matchesClass = !className || student.class_name === className;
-    const isActive = student.is_active !== false; // 只显示在读学生
-    return matchesSearch && matchesClass && isActive;
-  });
+  const filteredStudents = students.filter(student => student.is_active !== false);
 
   // 卡片视图
   const renderCardView = () => (
@@ -187,7 +187,7 @@ const Portfolio: React.FC = () => {
               className="action-btn action-btn-edit"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/portfolio/${student.id}/edit`);
+                navigate(`/students/${student.id}/edit?returnTo=/portfolio`);
               }}
             >
               <EditOutlined /> 编辑
@@ -266,7 +266,7 @@ const Portfolio: React.FC = () => {
           </button>
           <button 
             className="action-btn action-btn-edit"
-            onClick={() => navigate(`/portfolio/${record.id}/edit`)}
+            onClick={() => navigate(`/students/${record.id}/edit?returnTo=/portfolio`)}
           >
             <EditOutlined /> 编辑
           </button>
@@ -289,12 +289,12 @@ const Portfolio: React.FC = () => {
           <h1 className="page-title">学生档案</h1>
           <p className="page-subtitle">管理学生信息和成长记录</p>
         </div>
-        <button 
-          className="btn-add"
-          onClick={() => navigate('/portfolio/create')}
-        >
-          <PlusOutlined />
-          添加学生
+          <button 
+            className="btn-add"
+            onClick={() => navigate('/students/create?returnTo=/portfolio')}
+          >
+            <PlusOutlined />
+            添加学生
         </button>
       </div>
 
@@ -309,17 +309,14 @@ const Portfolio: React.FC = () => {
             onChange={(e) => setSearchText(e.target.value)}
             className="filter-input"
           />
-          <Select
-            placeholder="选择班级"
-            value={className || undefined}
-            onChange={(value) => setClassName(value)}
+          <ConfigurableSelect
+            groupKey="student_grade"
+            placeholder="选择年级"
+            value={gradeFilter || undefined}
+            onChange={(value) => setGradeFilter((value as string) || '')}
             className="filter-select"
             allowClear
-          >
-            <Option value="培智四年级">培智四年级</Option>
-            <Option value="培智五年级">培智五年级</Option>
-            <Option value="培智六年级">培智六年级</Option>
-          </Select>
+          />
           
           {/* 视图切换 */}
           <div className="view-toggle">
@@ -349,9 +346,12 @@ const Portfolio: React.FC = () => {
               rowKey="id"
               loading={loading}
               pagination={{ 
-                pageSize: 10,
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: pagination.total,
                 showSizeChanger: false,
-                showTotal: (total) => `共 ${total} 名学生`
+                showTotal: (total) => `共 ${total} 名学生`,
+                onChange: (page, pageSize) => fetchStudents(page, pageSize),
               }}
               className="portfolio-table"
             />

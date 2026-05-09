@@ -3,16 +3,18 @@
 提供资源的CRUD操作、文件上传下载、搜索筛选等功能
 """
 import mimetypes
+from pathlib import Path
 from typing import List, Optional, Tuple, BinaryIO
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, and_
+from sqlalchemy import select, or_, and_, func
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import AuthorizationException
 from app.models.resource import Resource
 from app.models.tag import Tag
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceSearchParams
-from app.services.storage import get_storage, generate_object_name
+from app.services.storage import get_storage, generate_object_name, MinIOStorage
 from app.core.config import settings
 from app.core.logging import get_logger
 
@@ -58,8 +60,7 @@ class ResourceService:
             file_size = file_data.tell()
             file_data.seek(0)
             
-            # 上传文件到MinIO
-            get_storage().upload_file(
+            await get_storage().upload_file_async(
                 file_data=file_data,
                 object_name=object_name,
                 content_type=content_type
@@ -134,7 +135,6 @@ class ResourceService:
                 query = query.where(Resource.user_id == params.user_id)
             
             # 计算总记录数
-            from sqlalchemy import func
             count_query = select(func.count()).select_from(Resource).where(Resource.is_deleted == False)
             
             # 重新应用筛选条件到count_query
@@ -151,7 +151,7 @@ class ResourceService:
                     resource_tag_association
                 ).where(
                     resource_tag_association.c.tag_id.in_(params.tag_ids)
-                )
+                ).group_by(Resource.id)
             
             if params.file_type:
                 count_query = count_query.where(Resource.file_type.ilike(f"%{params.file_type}%"))
@@ -159,8 +159,12 @@ class ResourceService:
             if params.user_id:
                 count_query = count_query.where(Resource.user_id == params.user_id)
             
-            count_result = await db.execute(count_query)
-            total = count_result.scalar() or 0
+            if params.tag_ids:
+                count_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
+                total = count_result.scalar() or 0
+            else:
+                count_result = await db.execute(count_query)
+                total = count_result.scalar() or 0
             
             # 应用分页
             query = query.offset(params.offset).limit(params.page_size)
@@ -178,7 +182,11 @@ class ResourceService:
             raise
     
     @staticmethod
-    async def get_resource_by_id(db: AsyncSession, resource_id: str) -> Optional[Resource]:
+    async def get_resource_by_id(
+        db: AsyncSession,
+        resource_id: str,
+        user_id: Optional[str] = None
+    ) -> Optional[Resource]:
         """
         根据ID获取资源
         
@@ -193,7 +201,10 @@ class ResourceService:
             query = select(Resource).where(
                 Resource.id == resource_id,
                 Resource.is_deleted == False
-            ).options(selectinload(Resource.tags))
+            )
+            if user_id:
+                query = query.where(Resource.user_id == user_id)
+            query = query.options(selectinload(Resource.tags))
             result = await db.execute(query)
             resource = result.scalar_one_or_none()
             return resource
@@ -214,7 +225,6 @@ class ResourceService:
                 return None
             
             if db_resource.user_id != user_id:
-                from app.core.exceptions import AuthorizationException
                 raise AuthorizationException("无权操作此资源")
             
             # 更新基本信息
@@ -247,12 +257,11 @@ class ResourceService:
                 return False
             
             if db_resource.user_id != user_id:
-                from app.core.exceptions import AuthorizationException
                 raise AuthorizationException("无权操作此资源")
             
             # 删除MinIO中的文件
             try:
-                get_storage().delete_file(db_resource.file_path)
+                await get_storage().delete_file_async(db_resource.file_path)
             except Exception as e:
                 logger.warning(f"Failed to delete file from storage: {e}")
             
@@ -269,21 +278,19 @@ class ResourceService:
     @staticmethod
     async def get_resource_file_url(resource: Resource, expires: timedelta = timedelta(hours=1)) -> str:
         """
-        获取资源文件的预签名URL
-        
+        获取资源文件的预签名URL或API路径
+
         Args:
             resource: 资源对象
             expires: URL有效期
-            
+
         Returns:
-            预签名URL
+            预签名URL（MinIO）或API路径（LocalFileStorage）
         """
-        try:
-            url = get_storage().get_file_url(resource.file_path, expires=expires)
-            return url
-        except Exception as e:
-            logger.error(f"Failed to get resource file url: {e}")
-            raise
+        storage = get_storage()
+        if isinstance(storage, MinIOStorage):
+            return storage.get_file_url(resource.file_path, expires)
+        return f"{settings.API_V1_STR}/resources/{resource.id}/file"
     
     @staticmethod
     async def download_resource(db: AsyncSession, resource_id: str, file_path: str) -> str:
@@ -303,12 +310,40 @@ class ResourceService:
             if not resource:
                 raise ValueError("Resource not found")
             
-            get_storage().download_file(resource.file_path, file_path)
+            await get_storage().download_file_async(resource.file_path, file_path)
             logger.info(f"Downloaded resource: {resource.name} to {file_path}")
             return file_path
         except Exception as e:
             logger.error(f"Failed to download resource: {e}")
             raise
+
+    @staticmethod
+    async def get_resource_file_content(
+        db: AsyncSession,
+        resource_id: str,
+        user_id: str
+    ) -> tuple[Resource, bytes, str]:
+        """
+        读取当前用户拥有的资源文件内容
+
+        Args:
+            db: 数据库会话
+            resource_id: 资源ID
+            user_id: 当前用户ID
+
+        Returns:
+            资源对象、文件内容、建议下载文件名
+        """
+        if not user_id:
+            raise AuthorizationException("需要用户认证")
+
+        resource = await ResourceService.get_resource_by_id(db, resource_id, user_id=user_id)
+        if not resource:
+            raise ValueError("Resource not found")
+
+        file_bytes = await get_storage().download_file_async(resource.file_path)
+        filename = resource.file_name or Path(resource.file_path).name
+        return resource, file_bytes, filename
     
     @staticmethod
     async def _get_tags_by_ids(db: AsyncSession, tag_ids: List[str]) -> List[Tag]:

@@ -27,6 +27,8 @@ const formatGender = (gender: string): string => {
   return genderMap[gender] || gender;
 };
 
+const PORTFOLIO_PAGE_SIZE = 100;
+
 const StudentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -58,8 +60,22 @@ const StudentDetail: React.FC = () => {
     if (!id) return
 
     try {
-      const response = await portfolioService.getPortfolios({ student_id: id })
-      setPortfolioItems(response.data || [])
+      const allItems: PortfolioItem[] = []
+      let page = 1
+      let totalPages = 1
+
+      do {
+        const response = await portfolioService.getPortfolios({
+          student_id: id,
+          page,
+          page_size: PORTFOLIO_PAGE_SIZE,
+        })
+        allItems.push(...(response.data || []))
+        totalPages = response.pages || 1
+        page += 1
+      } while (page <= totalPages)
+
+      setPortfolioItems(allItems)
     } catch (error) {
       message.error('获取成长档案失败')
     }
@@ -148,7 +164,7 @@ const StudentDetail: React.FC = () => {
             <Button icon={<FileTextOutlined />} onClick={handleExportReport}>
               导出报告
             </Button>
-            <Button icon={<EditOutlined />} onClick={() => navigate(`/portfolio/${id}/edit`)}>
+            <Button icon={<EditOutlined />} onClick={() => navigate(`/students/${id}/edit?returnTo=/portfolio/${id}`)}>
               编辑
             </Button>
           </Space>

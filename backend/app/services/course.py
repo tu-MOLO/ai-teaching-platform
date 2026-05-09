@@ -3,7 +3,7 @@
 """
 from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
@@ -26,12 +26,11 @@ class CourseService:
         Returns:
             创建的课程对象
         """
-        async with db.begin():
-            db_course = Course(**course_in.model_dump())
-            db_course.user_id = user_id
-            db.add(db_course)
-            await db.flush()
-            await db.refresh(db_course)
+        db_course = Course(**course_in.model_dump())
+        db_course.user_id = user_id
+        db.add(db_course)
+        await db.flush()
+        await db.refresh(db_course)
         return db_course
 
     @staticmethod
@@ -62,6 +61,7 @@ class CourseService:
         user_id: str,
         skip: int = 0,
         limit: int = 100,
+        keyword: Optional[str] = None,
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         status: Optional[str] = None,
@@ -88,6 +88,13 @@ class CourseService:
             Course.is_deleted == False
         )
 
+        if keyword:
+            keyword_filter = or_(
+                Course.name.ilike(f"%{keyword}%"),
+                Course.teacher.ilike(f"%{keyword}%"),
+            )
+            query = query.where(keyword_filter)
+
         if subject:
             query = query.where(Course.subject == subject)
 
@@ -108,6 +115,7 @@ class CourseService:
     async def count(
         db: AsyncSession,
         user_id: str,
+        keyword: Optional[str] = None,
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         status: Optional[str] = None,
@@ -131,6 +139,13 @@ class CourseService:
             Course.user_id == user_id,
             Course.is_deleted == False
         )
+
+        if keyword:
+            keyword_filter = or_(
+                Course.name.ilike(f"%{keyword}%"),
+                Course.teacher.ilike(f"%{keyword}%"),
+            )
+            query = query.where(keyword_filter)
 
         if subject:
             query = query.where(Course.subject == subject)
@@ -171,10 +186,10 @@ class CourseService:
             return None
 
         update_data = course_in.model_dump(exclude_unset=True)
-        async with db.begin():
-            for field, value in update_data.items():
-                setattr(db_course, field, value)
-            await db.refresh(db_course)
+        for field, value in update_data.items():
+            setattr(db_course, field, value)
+        await db.flush()
+        await db.refresh(db_course)
         return db_course
 
     @staticmethod
@@ -194,6 +209,6 @@ class CourseService:
         if not db_course:
             return False
 
-        async with db.begin():
-            db_course.soft_delete()
+        db_course.soft_delete()
+        await db.flush()
         return True

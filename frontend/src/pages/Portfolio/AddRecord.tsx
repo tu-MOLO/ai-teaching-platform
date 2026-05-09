@@ -5,12 +5,19 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { EvaluationForm } from '@/components'
 import PortfolioTypeSelect from '@/components/Portfolio/PortfolioTypeSelect'
 import { portfolioService } from '@/services/portfolio'
-import { uploadResource } from '@/services/resource'
+import { extractResourceIdFromFileUrl, uploadResource } from '@/services/resource'
 import type { PortfolioItemCreate } from '@/types/portfolio'
 import './index.css'
 
 const { Title } = Typography
 const { TextArea } = Input
+
+const toScore = (value?: number): number | undefined => {
+  if (typeof value !== 'number') {
+    return undefined
+  }
+  return Math.round(value * 20)
+}
 
 const AddRecord: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -34,11 +41,11 @@ const AddRecord: React.FC = () => {
         title: values.title,
         content: values.content,
         attachments: JSON.stringify(attachments),
-        cognitive_score: values.evaluation?.cognitive,
-        skill_score: values.evaluation?.skill,
-        creativity_score: values.evaluation?.creativity,
-        cooperation_score: values.evaluation?.cooperation,
-        attention_score: values.evaluation?.attention,
+        cognitive_score: toScore(values.evaluation?.['认知理解']),
+        skill_score: toScore(values.evaluation?.['操作技能']),
+        creativity_score: toScore(values.evaluation?.['创意表达']),
+        cooperation_score: toScore(values.evaluation?.['合作参与']),
+        attention_score: toScore(values.evaluation?.['注意力维持']),
       }
 
       await portfolioService.createPortfolioItem(data)
@@ -68,7 +75,12 @@ const AddRecord: React.FC = () => {
         throw new Error('上传响应中没有文件 URL')
       }
 
-      setAttachments((prev) => [...prev, response.file_url as string])
+      const resourceId = extractResourceIdFromFileUrl(response.file_url)
+      if (!resourceId) {
+        throw new Error('上传响应中缺少资源标识')
+      }
+
+      setAttachments((prev) => [...prev, resourceId])
       message.success(`文件“${file.name}”上传成功`)
       onSuccess?.(response)
     } catch (error: any) {

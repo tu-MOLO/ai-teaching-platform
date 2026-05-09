@@ -2,10 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
+  SettingOutlined,
   PlusOutlined,
   SaveOutlined,
   SkinOutlined,
   TagsOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -191,7 +193,12 @@ const Settings: React.FC = () => {
   const items = [
     {
       key: 'basic',
-      label: '基本设置',
+      label: (
+        <span>
+          <SettingOutlined style={{ marginRight: 4 }} />
+          基本设置
+        </span>
+      ),
       children: (
         <Form form={basicForm} layout="vertical" onFinish={handleSaveBasic} style={{ maxWidth: 600 }}>
           <Form.Item
@@ -234,7 +241,12 @@ const Settings: React.FC = () => {
     },
     {
       key: 'dropdowns',
-      label: '下拉选项',
+      label: (
+        <span>
+          <UnorderedListOutlined style={{ marginRight: 4 }} />
+          下拉选项
+        </span>
+      ),
       children: (
         <Space direction="vertical" size={16} style={{ width: '100%' }}>
           {returnTo && (

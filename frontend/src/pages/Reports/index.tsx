@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card, Row, Col, Typography, List, Tag, Spin, message, Empty } from 'antd';
 import {
   BookOutlined,
@@ -20,6 +20,7 @@ import {
   CheckCircleOutlined,
   StarOutlined
 } from '@ant-design/icons';
+import * as echarts from 'echarts';
 import { getDashboardReport, getCourseReport, getStudentReport, getMonthlyTrends } from '../../services/report';
 import type { DashboardReport, CourseReport, StudentReport, ActivityItem, MonthlyTrendItem } from '../../services/report';
 import './index.css';
@@ -74,6 +75,14 @@ const Reports: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const refreshIntervalRef = React.useRef<number | null>(null);
+
+  // ECharts 实例引用
+  const pieChartRef = useRef<echarts.ECharts | null>(null);
+  const barChartRef = useRef<echarts.ECharts | null>(null);
+  const lineChartRef = useRef<echarts.ECharts | null>(null);
+  const pieChartContainerRef = useRef<HTMLDivElement>(null);
+  const barChartContainerRef = useRef<HTMLDivElement>(null);
+  const lineChartContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchReportData = async (silent: boolean = false) => {
     try {
@@ -148,6 +157,257 @@ const Reports: React.FC = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
+  // 初始化ECharts图表
+  useEffect(() => {
+    if (loading || error) return;
+
+    // 初始化饼图 - 课程分类统计
+    if (pieChartContainerRef.current && courseData?.categoryStats) {
+      if (pieChartRef.current) {
+        pieChartRef.current.dispose();
+      }
+      pieChartRef.current = echarts.init(pieChartContainerRef.current);
+      
+      const pieOption: echarts.EChartsOption = {
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}: {c}门 ({d}%)'
+        },
+        legend: {
+          orient: 'vertical',
+          right: '5%',
+          top: 'center',
+          itemWidth: 12,
+          itemHeight: 12,
+          textStyle: {
+            fontSize: 12
+          }
+        },
+        series: [
+          {
+            name: '课程分类',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            center: ['35%', '50%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+              borderRadius: 6,
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            label: {
+              show: false
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: 14,
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data: courseData.categoryStats.map(item => ({
+              value: item.value,
+              name: item.name,
+              itemStyle: { color: item.color }
+            }))
+          }
+        ]
+      };
+      pieChartRef.current.setOption(pieOption);
+    }
+
+    // 初始化柱状图 - 学生年级分布
+    if (barChartContainerRef.current && studentData?.gradeDistribution) {
+      if (barChartRef.current) {
+        barChartRef.current.dispose();
+      }
+      barChartRef.current = echarts.init(barChartContainerRef.current);
+      
+      const barOption: echarts.EChartsOption = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          },
+          formatter: '{b}: {c}人'
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          top: '3%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'value',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: studentData.gradeDistribution.map(item => item.grade).reverse(),
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        series: [
+          {
+            name: '学生人数',
+            type: 'bar',
+            data: studentData.gradeDistribution.map(item => ({
+              value: item.count,
+              itemStyle: { 
+                color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                  { offset: 0, color: item.color + '80' },
+                  { offset: 1, color: item.color }
+                ]),
+                borderRadius: [0, 4, 4, 0]
+              }
+            })).reverse(),
+            barWidth: '60%'
+          }
+        ]
+      };
+      barChartRef.current.setOption(barOption);
+    }
+
+    // 初始化折线图 - 月度教学趋势
+    if (lineChartContainerRef.current && monthlyTrends.length > 0) {
+      if (lineChartRef.current) {
+        lineChartRef.current.dispose();
+      }
+      lineChartRef.current = echarts.init(lineChartContainerRef.current);
+      
+      const months = monthlyTrends.map(t => t.month.slice(5) + '月');
+      const lineOption: echarts.EChartsOption = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'cross'
+          }
+        },
+        legend: {
+          data: ['课程', '学生', '教案'],
+          bottom: 0,
+          itemWidth: 12,
+          itemHeight: 12,
+          textStyle: {
+            fontSize: 11
+          }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '15%',
+          top: '10%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: months,
+          axisLine: {
+            lineStyle: {
+              color: '#e0e0e0'
+            }
+          },
+          axisLabel: {
+            color: '#999',
+            fontSize: 10
+          }
+        },
+        yAxis: {
+          type: 'value',
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: {
+            lineStyle: {
+              color: '#f0f0f0'
+            }
+          },
+          axisLabel: {
+            color: '#999',
+            fontSize: 10
+          }
+        },
+        series: [
+          {
+            name: '课程',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            data: monthlyTrends.map(t => t.newCourses),
+            itemStyle: { color: '#c9a87c' },
+            lineStyle: { width: 2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#c9a87c40' },
+                { offset: 1, color: '#c9a87c05' }
+              ])
+            }
+          },
+          {
+            name: '学生',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            data: monthlyTrends.map(t => t.newStudents),
+            itemStyle: { color: '#6b9b7a' },
+            lineStyle: { width: 2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#6b9b7a40' },
+                { offset: 1, color: '#6b9b7a05' }
+              ])
+            }
+          },
+          {
+            name: '教案',
+            type: 'line',
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            data: monthlyTrends.map(t => t.newLessonPlans),
+            itemStyle: { color: '#7a9ab8' },
+            lineStyle: { width: 2 },
+            areaStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#7a9ab840' },
+                { offset: 1, color: '#7a9ab805' }
+              ])
+            }
+          }
+        ]
+      };
+      lineChartRef.current.setOption(lineOption);
+    }
+
+    // 监听窗口大小变化，调整图表大小
+    const handleResize = () => {
+      pieChartRef.current?.resize();
+      barChartRef.current?.resize();
+      lineChartRef.current?.resize();
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      pieChartRef.current?.dispose();
+      barChartRef.current?.dispose();
+      lineChartRef.current?.dispose();
+    };
+  }, [courseData, studentData, monthlyTrends, loading, error]);
 
   // 统计卡片数据
   const statCards = [
@@ -242,129 +502,56 @@ const Reports: React.FC = () => {
 
       {/* 图表区域 */}
       <Row gutter={[24, 24]} className="charts-row">
-        {/* 课程分类统计 */}
+        {/* 课程分类统计 - ECharts饼图 */}
         <Col xs={24} lg={8}>
           <Card
             title={<span><PieChartOutlined /> 课程分类统计</span>}
             className="chart-card"
             variant="borderless"
           >
-            <div className="chart-placeholder pie-chart">
-              {courseData?.categoryStats && courseData.categoryStats.length > 0 ? (
-                courseData.categoryStats.map((item, index) => (
-                  <div key={index} className="chart-legend-item">
-                    <span
-                      className="legend-color"
-                      style={{ background: item.color }}
-                    />
-                    <span className="legend-label">{item.name}</span>
-                    <span className="legend-value">{item.value}门</span>
-                    <span className="legend-percent">({item.percent}%)</span>
-                  </div>
-                ))
-              ) : (
+            <div 
+              ref={pieChartContainerRef} 
+              style={{ width: '100%', height: '280px' }}
+            >
+              {!courseData?.categoryStats?.length && (
                 <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
             </div>
           </Card>
         </Col>
 
-        {/* 学生年级分布 */}
+        {/* 学生年级分布 - ECharts柱状图 */}
         <Col xs={24} lg={8}>
           <Card
             title={<span><BarChartOutlined /> 学生年级分布</span>}
             className="chart-card"
             variant="borderless"
           >
-            <div className="chart-placeholder bar-chart">
-              {studentData?.gradeDistribution && studentData.gradeDistribution.length > 0 ? (
-                studentData.gradeDistribution.map((item, index) => (
-                  <div key={index} className="bar-chart-item">
-                    <span className="bar-label">{item.grade}</span>
-                    <div className="bar-wrapper">
-                      <div
-                        className="bar-fill"
-                        style={{
-                          width: `${item.percent}%`,
-                          background: item.color
-                        }}
-                      />
-                    </div>
-                    <span className="bar-value">{item.count}人</span>
-                  </div>
-                ))
-              ) : (
+            <div 
+              ref={barChartContainerRef} 
+              style={{ width: '100%', height: '280px' }}
+            >
+              {!studentData?.gradeDistribution?.length && (
                 <Empty description="暂无数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
             </div>
           </Card>
         </Col>
 
-        {/* 月度教学趋势 */}
+        {/* 月度教学趋势 - ECharts折线图 */}
         <Col xs={24} lg={8}>
           <Card
             title={<span><LineChartOutlined /> 月度教学趋势</span>}
             className="chart-card"
             variant="borderless"
           >
-            <div className="chart-placeholder line-chart">
-              <div className="trend-summary">
-                <div className="trend-item">
-                  <Text className="trend-label">本月课程</Text>
-                  <Text className="trend-value" style={{ color: '#c9a87c' }}>
-                    {dashboardData?.monthlyCourses || 0}门
-                  </Text>
-                </div>
-                <div className="trend-item">
-                  <Text className="trend-label">本月学生</Text>
-                  <Text className="trend-value" style={{ color: '#6b9b7a' }}>
-                    {dashboardData?.monthlyStudents || 0}人
-                  </Text>
-                </div>
-                <div className="trend-item">
-                  <Text className="trend-label">本月教案</Text>
-                  <Text className="trend-value" style={{ color: '#7a9ab8' }}>
-                    {(monthlyTrends[monthlyTrends.length - 1]?.newLessonPlans || 0)}个
-                  </Text>
-                </div>
-              </div>
-              <div className="mini-chart">
-                {monthlyTrends.length > 0 ? (
-                  <>
-                    <div className="mini-chart-bars">
-                      {(() => {
-                        // 计算最大值用于归一化
-                        const maxValue = Math.max(
-                          ...monthlyTrends.map(t => Math.max(t.newCourses, t.newStudents, t.newLessonPlans || 0)),
-                          1 // 避免除以0
-                        );
-                        return monthlyTrends.map((trend, index) => {
-                          const height = Math.max((trend.newCourses / maxValue) * 100, 10);
-                          const isLast = index === monthlyTrends.length - 1;
-                          return (
-                            <div
-                              key={index}
-                              className="mini-bar"
-                              style={{
-                                height: `${height}%`,
-                                background: isLast ? '#c9a87c' : '#e0e0e0'
-                              }}
-                              title={`${trend.month}: 新增${trend.newCourses}门课程, ${trend.newStudents}名学生, ${trend.newLessonPlans || 0}个教案`}
-                            />
-                          );
-                        });
-                      })()}
-                    </div>
-                    <div className="mini-chart-labels">
-                      {monthlyTrends.map((trend, index) => (
-                        <span key={index}>{trend.month.slice(5).replace('月', '')}月</span>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <Empty description="暂无趋势数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
-              </div>
+            <div 
+              ref={lineChartContainerRef} 
+              style={{ width: '100%', height: '280px' }}
+            >
+              {monthlyTrends.length === 0 && (
+                <Empty description="暂无趋势数据" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
             </div>
           </Card>
         </Col>

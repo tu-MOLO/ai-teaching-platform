@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status
@@ -35,11 +35,15 @@ from app.schemas.auth import (
     PasswordResetRequest,
     RefreshTokenRequest,
     RegisterRequest,
+    SecurityQuestionRequest,
+    SecurityQuestionResponse,
+    SECURITY_QUESTIONS,
     TokenData,
     UserAuthInfo,
 )
 from app.schemas.base import MessageResponse
 from app.services.permission import PermissionService
+from app.core.rate_limiter import rate_limit_dep
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,6 +55,7 @@ async def login(
     request: Request,
     login_data: LoginRequest,
     db: DBSession,
+    _: None = Depends(rate_limit_dep("login")),
 ) -> LoginResponse:
     stmt = select(User).where(
         or_(
@@ -87,8 +92,11 @@ async def login(
     await db.commit()
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
     if login_data.remember_me:
-        access_token_expires = timedelta(days=7)
+        refresh_token_expires = timedelta(days=7)
+    else:
+        refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     access_token = create_access_token(
         subject=user.id,
@@ -97,7 +105,7 @@ async def login(
     )
     refresh_token = create_refresh_token(
         subject=user.id,
-        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+        expires_delta=refresh_token_expires,
         token_version=str(user.token_version),
     )
 
@@ -107,7 +115,7 @@ async def login(
             refresh_token=refresh_token,
             token_type="bearer",
             expires_in=int(access_token_expires.total_seconds()),
-            refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+            refresh_expires_in=int(refresh_token_expires.total_seconds()),
         ),
         user=UserAuthInfo.model_validate(user),
     )
@@ -120,8 +128,10 @@ async def login(
     summary="用户注册",
 )
 async def register(
+    request: Request,
     register_data: RegisterRequest,
     db: DBSession,
+    _: None = Depends(rate_limit_dep("register")),
 ) -> MessageResponse:
     username_stmt = select(User).where(
         User.username == register_data.username,
@@ -145,6 +155,8 @@ async def register(
         role=UserRole.TEACHER,
         status=UserStatus.ACTIVE,
         is_active=True,
+        security_question=register_data.security_question,
+        hashed_security_answer=get_password_hash(register_data.security_answer),
     )
     db.add(new_user)
     await db.commit()
@@ -160,14 +172,24 @@ async def refresh_token(
     refresh_data: RefreshTokenRequest,
     db: DBSession,
 ) -> TokenData:
-    user_id = verify_token(refresh_data.refresh_token, token_type="refresh")
-    if not user_id:
+    payload = decode_token(refresh_data.refresh_token)
+    if not payload or payload.type != "refresh":
         raise AuthenticationException(
             message="无效的刷新令牌",
             error_code=ErrorCode.TOKEN_INVALID,
         )
+    if not payload.sub:
+        raise AuthenticationException(
+            message="无效的刷新令牌",
+            error_code=ErrorCode.TOKEN_INVALID,
+        )
+    if payload.exp and datetime.now(timezone.utc) > payload.exp:
+        raise AuthenticationException(
+            message="刷新令牌已过期",
+            error_code=ErrorCode.TOKEN_EXPIRED,
+        )
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == payload.sub, User.is_deleted == False)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user or not user.is_active:
@@ -176,11 +198,10 @@ async def refresh_token(
             error_code=ErrorCode.UNAUTHORIZED,
         )
 
-    payload = decode_token(refresh_data.refresh_token)
-    if payload and payload.jti and str(user.token_version) != payload.jti:
+    if payload.jti and str(user.token_version) != payload.jti:
         raise AuthenticationException(
             message="刷新令牌已失效，请重新登录",
-            error_code=ErrorCode.TOKEN_INVALID,
+            error_code=ErrorCode.TOKEN_REVOKED,
         )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -269,10 +290,38 @@ async def change_password(
     return MessageResponse(message="密码修改成功，请重新登录", code="success")
 
 
+@router.post("/password/reset/question", response_model=SecurityQuestionResponse, summary="获取密保问题")
+async def get_security_question(
+    request: Request,
+    question_data: SecurityQuestionRequest,
+    db: DBSession,
+    _: None = Depends(rate_limit_dep("password_reset")),
+) -> SecurityQuestionResponse:
+    stmt = select(User).where(
+        or_(
+            User.username == question_data.username,
+            User.email == question_data.username,
+        ),
+        User.is_deleted == False,
+    )
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise NotFoundException("用户")
+
+    return SecurityQuestionResponse(
+        username=user.username,
+        security_question=user.security_question,
+        is_legacy=(user.security_question == "未设置密保问题"),
+    )
+
+
 @router.post("/password/reset", response_model=MessageResponse, summary="重置密码")
 async def reset_password(
+    request: Request,
     reset_data: PasswordResetRequest,
     db: DBSession,
+    _: None = Depends(rate_limit_dep("password_reset")),
 ) -> MessageResponse:
     stmt = select(User).where(
         or_(
@@ -286,6 +335,15 @@ async def reset_password(
     if not user:
         raise NotFoundException("用户")
 
+    if user.is_reset_locked():
+        raise AuthorizationException("密码重置已被锁定，请稍后再试")
+
+    if not user.verify_security_answer(reset_data.security_answer):
+        user.record_failed_reset_attempt()
+        await db.commit()
+        raise BadRequestException("密保答案错误")
+
+    user.reset_reset_lock()
     user.hashed_password = get_password_hash(reset_data.new_password)
     user.increment_token_version()
     user.failed_login_attempts = 0

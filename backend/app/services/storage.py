@@ -2,6 +2,7 @@
 文件存储服务模块
 封装MinIO客户端，提供文件上传、下载、删除等功能
 """
+import asyncio
 import io
 import mimetypes
 import re
@@ -55,6 +56,18 @@ class LocalFileStorage:
 
         logger.info(f"Uploaded file: {object_name}")
         return None
+
+    async def upload_file_async(self, file_data, object_name, content_type=None, metadata=None):
+        """异步上传文件到本地存储"""
+        return await asyncio.to_thread(
+            self.upload_file, file_data, object_name, content_type, metadata
+        )
+
+    async def download_file_async(self, object_name, file_path=None):
+        """异步从本地存储下载文件"""
+        return await asyncio.to_thread(
+            self.download_file, object_name, file_path
+        )
 
     def download_file(self, object_name, file_path=None):
         """从本地存储下载文件"""
@@ -284,6 +297,28 @@ class MinIOStorage:
             logger.error(f"Unexpected error uploading file {object_name}: {e}. Falling back to local storage.")
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
 
+    async def upload_file_async(
+        self,
+        file_data: Union[bytes, BinaryIO, str, Path],
+        object_name: str,
+        content_type: Optional[str] = None,
+        metadata: Optional[dict] = None
+    ) -> Optional[ObjectWriteResult]:
+        """异步上传文件到MinIO或本地存储"""
+        return await asyncio.to_thread(
+            self.upload_file, file_data, object_name, content_type, metadata
+        )
+
+    async def download_file_async(
+        self,
+        object_name: str,
+        file_path: Optional[Union[str, Path]] = None
+    ) -> Union[bytes, Path]:
+        """异步从MinIO或本地存储下载文件"""
+        return await asyncio.to_thread(
+            self.download_file, object_name, file_path
+        )
+
     def download_file(
         self,
         object_name: str,
@@ -378,7 +413,6 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        # 检查连接
         if not self._check_connection():
             logger.info(f"Using local storage fallback for batch delete")
             for object_name in object_names:
@@ -398,13 +432,16 @@ class MinIOStorage:
             logger.info(f"Deleted {len(object_names)} files from MinIO")
         except S3Error as e:
             logger.error(f"Failed to delete files from MinIO: {e}. Trying local storage.")
-            # MinIO失败时尝试本地存储
             for object_name in object_names:
                 self._get_fallback_storage().delete_file(object_name)
         except Exception as e:
             logger.error(f"Unexpected error deleting files: {e}. Trying local storage.")
             for object_name in object_names:
                 self._get_fallback_storage().delete_file(object_name)
+
+    async def delete_file_async(self, object_name):
+        """异步从MinIO或本地存储删除文件"""
+        return await asyncio.to_thread(self.delete_file, object_name)
 
     def get_file_url(
         self,
@@ -676,29 +713,117 @@ def generate_object_name(
     return f"{user_id}/{unique_name}"
 
 
+MAGIC_BYTES_MAP = {
+    '.pdf': b'%PDF',
+    '.jpg': b'\xff\xd8\xff',
+    '.jpeg': b'\xff\xd8\xff',
+    '.png': b'\x89PNG\r\n\x1a\n',
+    '.gif': b'GIF',
+    '.doc': b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1',
+    '.docx': b'PK\x03\x04',
+    '.mp3': None,
+    '.mp4': None,
+    '.txt': None,
+    '.md': None,
+}
+
+
+def _verify_magic_bytes(ext: str, file_content: bytes) -> bool:
+    """
+    验证文件魔数（magic bytes）是否匹配扩展名
+    
+    Args:
+        ext: 文件扩展名
+        file_content: 文件内容
+        
+    Returns:
+        校验通过返回True，否则返回False
+    """
+    header = file_content[:32]
+    magic = MAGIC_BYTES_MAP.get(ext)
+    
+    if magic is not None:
+        if not header.startswith(magic):
+            if ext == '.mp3':
+                # mp3魔数校验：ID3 tag 或 frame sync
+                if header[:3] == b'ID3' or header[:2] in (b'\xff\xfb', b'\xff\xf3', b'\xff\xf2'):
+                    pass
+                else:
+                    return False
+            else:
+                return False
+    
+    if ext == '.mp4':
+        # mp4 ftyp检查
+        if b'ftyp' not in header[4:8]:
+            return False
+    
+    return True
+
+
+ALLOWED_MIME_TYPES = {
+    '.pdf': ['application/pdf'],
+    '.doc': ['application/msword'],
+    '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    '.txt': ['text/plain'],
+    '.md': ['text/markdown', 'text/plain'],
+    '.jpg': ['image/jpeg'],
+    '.jpeg': ['image/jpeg'],
+    '.png': ['image/png'],
+    '.gif': ['image/gif'],
+    '.mp4': ['video/mp4'],
+    '.mp3': ['audio/mpeg'],
+}
+
+
+def _verify_mime_type(ext: str, filename: str) -> bool:
+    """
+    验证文件的MIME类型是否匹配扩展名
+    
+    Args:
+        ext: 文件扩展名
+        filename: 文件名
+        
+    Returns:
+        校验通过返回True，否则返回False
+    """
+    guessed_type, _ = mimetypes.guess_type(filename)
+    if guessed_type:
+        expected = ALLOWED_MIME_TYPES.get(ext)
+        if expected and guessed_type not in expected:
+            return False
+    return True
+
+
 def is_allowed_file(filename: str, file_content: bytes = None) -> bool:
+    """
+    检查文件是否允许上传
+    
+    验证步骤：
+        1. 检查扩展名是否在允许列表中
+        2. 检查文件魔数是否匹配
+        3. 检查MIME类型是否匹配
+    
+    Args:
+        filename: 文件名
+        file_content: 文件内容（可选，用于魔数和MIME校验）
+        
+    Returns:
+        允许上传返回True，否则返回False
+    """
     ext = Path(filename).suffix.lower()
+    
+    # 1. 检查扩展名
     if ext not in settings.ALLOWED_EXTENSIONS:
         return False
 
     if file_content is not None:
-        guessed_type, _ = mimetypes.guess_type(filename)
-        if guessed_type:
-            allowed_mimes = {
-                '.pdf': ['application/pdf'],
-                '.doc': ['application/msword'],
-                '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-                '.txt': ['text/plain'],
-                '.md': ['text/markdown', 'text/plain'],
-                '.jpg': ['image/jpeg'],
-                '.jpeg': ['image/jpeg'],
-                '.png': ['image/png'],
-                '.gif': ['image/gif'],
-                '.mp4': ['video/mp4'],
-                '.mp3': ['audio/mpeg'],
-            }
-            expected = allowed_mimes.get(ext)
-            if expected and guessed_type not in expected:
-                return False
+        # 2. 检查魔数
+        if not _verify_magic_bytes(ext, file_content):
+            return False
+
+        # 3. 检查MIME类型
+        if not _verify_mime_type(ext, filename):
+            return False
 
     return True

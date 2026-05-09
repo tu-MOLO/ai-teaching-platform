@@ -52,6 +52,7 @@ class ResourceListResponse(BaseSchema):
     """
     id: str = Field(..., description="资源ID")
     name: str = Field(..., description="资源名称")
+    description: Optional[str] = Field(None, description="资源描述")
     file_name: str = Field(..., description="原始文件名")
     file_size: int = Field(..., description="文件大小（字节）")
     file_type: str = Field(..., description="文件类型")

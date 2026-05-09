@@ -4,6 +4,22 @@ import type { Resource, ResourceListItem, ResourceQueryParams, ResourceListRespo
 
 export type { Resource, ResourceListItem, ResourceQueryParams, ResourceListResponse } from '@/types/resource';
 
+export const fetchResourceFileBlob = async (resourceId: string): Promise<Blob> => {
+  const response = await api.get(`/resources/${resourceId}/file`, {
+    responseType: 'blob',
+  });
+  return response as unknown as Blob;
+};
+
+export const extractResourceIdFromFileUrl = (fileUrl?: string | null): string | null => {
+  if (!fileUrl) {
+    return null;
+  }
+
+  const match = fileUrl.match(/\/resources\/([^/]+)\/file(?:\?|$)/);
+  return match?.[1] || null;
+};
+
 /**
  * 获取资源列表
  * @param params 查询参数

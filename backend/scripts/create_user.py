@@ -26,6 +26,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--password", default="Teacher123")
     parser.add_argument("--full-name", default="Default Teacher")
     parser.add_argument("--phone", default="")
+    parser.add_argument("--security-question", default="您的母校名称是什么？")
+    parser.add_argument("--security-answer", default="default_answer")
     return parser.parse_args()
 
 
@@ -52,6 +54,8 @@ def main() -> None:
                 role=UserRole.TEACHER,
                 status=UserStatus.ACTIVE,
                 is_active=True,
+                security_question=args.security_question,
+                hashed_security_answer=get_password_hash(args.security_answer),
             )
             db.add(user)
             action = "created"
@@ -64,6 +68,9 @@ def main() -> None:
             user.role = UserRole.TEACHER
             user.status = UserStatus.ACTIVE
             user.is_active = True
+            if not user.security_question or user.security_question == "未设置密保问题":
+                user.security_question = args.security_question
+                user.hashed_security_answer = get_password_hash(args.security_answer)
             action = "updated"
 
         db.commit()

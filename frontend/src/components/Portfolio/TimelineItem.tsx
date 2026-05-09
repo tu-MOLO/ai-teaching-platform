@@ -35,6 +35,7 @@ import { Card, Typography, Tag, Space, Progress, Button, Popconfirm } from 'antd
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { usePortfolioTypesStore } from '@/stores/portfolioTypes';
 import type { PortfolioItem } from '@/types/portfolio';
+import { fetchResourceFileBlob } from '@/services/resource';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -130,7 +131,7 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ item, onDelete, onEdit }) =
                   <Space key={key} style={{ width: '100%', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Text type="secondary" style={{ fontSize: '12px' }}>{label}</Text>
                     <Progress
-                      percent={(value / 5) * 100}
+                      percent={value}
                       size="small"
                       showInfo={false}
                       status="active"
@@ -148,8 +149,24 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ item, onDelete, onEdit }) =
           <div className="attachments">
             <Text strong>附件:</Text>
             <div style={{ marginTop: 4 }}>
-              {attachments.map((_attachment: string, index: number) => (
-                <Tag key={index} style={{ marginRight: 8 }}>
+              {attachments.map((attachment: string, index: number) => (
+                <Tag
+                  key={`${attachment}-${index}`}
+                  style={{ marginRight: 8, cursor: 'pointer' }}
+                  onClick={async () => {
+                    try {
+                      const blob = await fetchResourceFileBlob(attachment);
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = `附件_${index + 1}`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(url);
+                    } catch {}
+                  }}
+                >
                   附件 {index + 1}
                 </Tag>
               ))}

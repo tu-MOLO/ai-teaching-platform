@@ -1,13 +1,23 @@
 import axios, { AxiosError } from 'axios'
 import { useAuthStore } from '../stores/auth'
+import { useUserStore } from '../stores/user'
 import { BusinessError, getHttpErrorMessage, ApiErrorResponse } from '../types/error'
 
 const request = axios.create({
-  baseURL: '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 10000
 })
 
 let refreshPromise: Promise<string | null> | null = null
+
+function handleAuthExpired(): void {
+  if (refreshPromise) return
+  const { logout } = useAuthStore.getState()
+  const { clearUser } = useUserStore.getState()
+
+  logout()
+  clearUser()
+}
 
 async function refreshAccessToken(): Promise<string | null> {
   const { refreshToken } = useAuthStore.getState()
@@ -21,8 +31,17 @@ async function refreshAccessToken(): Promise<string | null> {
       refresh_token: refreshToken
     })
 
-    const { access_token, refresh_token } = response.data
+    const tokenPayload =
+      response.data && typeof response.data === 'object' && response.data.data
+        ? response.data.data
+        : response.data
+
+    const { access_token, refresh_token } = tokenPayload ?? {}
     const { login, refreshToken: oldRefreshToken } = useAuthStore.getState()
+
+    if (!access_token) {
+      return null
+    }
 
     login(access_token, refresh_token || oldRefreshToken)
     return access_token
@@ -111,15 +130,32 @@ request.interceptors.response.use(
         })
       }
 
-      const newToken = await refreshPromise
+      try {
+        const newToken = await refreshPromise
 
-      if (newToken) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
-        return request(originalRequest)
+        if (newToken) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          return request(originalRequest)
+        }
+      } catch {
       }
 
-      const { logout } = useAuthStore.getState()
-      logout()
+      handleAuthExpired()
+      return Promise.reject(handleApiError(error as AxiosError))
+    }
+
+    if (error.response?.status === 401) {
+      if (refreshPromise) {
+        try {
+          const newToken = await refreshPromise
+          if (newToken && originalRequest) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+            return request(originalRequest)
+          }
+        } catch {
+        }
+      }
+      handleAuthExpired()
     }
 
     return Promise.reject(handleApiError(error as AxiosError))

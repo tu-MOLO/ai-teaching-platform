@@ -71,6 +71,7 @@ async def get_courses(
     user_id: CurrentUser,
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    keyword: Optional[str] = Query(None, description="关键词搜索"),
     subject: Optional[str] = Query(None, description="学科筛选"),
     grade: Optional[str] = Query(None, description="年级筛选"),
     status: Optional[str] = Query(None, description="状态筛选")
@@ -85,6 +86,7 @@ async def get_courses(
     total = await CourseService.count(
         db,
         user_id,
+        keyword=keyword,
         subject=subject,
         grade=grade,
         status=status
@@ -96,6 +98,7 @@ async def get_courses(
         user_id,
         skip=offset,
         limit=page_size,
+        keyword=keyword,
         subject=subject,
         grade=grade,
         status=status

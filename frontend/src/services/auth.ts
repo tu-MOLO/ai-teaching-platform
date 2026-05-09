@@ -34,6 +34,8 @@ export interface RegisterData {
   email: string
   password: string
   full_name?: string
+  security_question: string
+  security_answer: string
 }
 
 export interface PasswordChangeData {
@@ -44,6 +46,17 @@ export interface PasswordChangeData {
 export interface PasswordResetData {
   username: string
   new_password: string
+  security_answer: string
+}
+
+export interface SecurityQuestionData {
+  username: string
+}
+
+export interface SecurityQuestionResponse {
+  username: string
+  security_question: string
+  is_legacy: boolean
 }
 
 export interface RefreshTokenData {
@@ -103,6 +116,13 @@ export const authService = {
    */
   resetPassword: async (data: PasswordResetData): Promise<{ message: string; code: string }> => {
     return api.post('/auth/password/reset', data)
+  },
+
+  /**
+   * 获取安全问题
+   */
+  getSecurityQuestion: async (data: SecurityQuestionData): Promise<SecurityQuestionResponse> => {
+    return api.post('/auth/password/reset/question', data)
   }
 }
 

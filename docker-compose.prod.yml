@@ -1,0 +1,44 @@
+# ============================================
+# AI教学平台 - 生产环境覆盖配置
+# 与 docker-compose.yml 合并使用:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================
+
+services:
+  backend:
+    environment:
+      DEBUG: "false"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  frontend:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  db:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  minio:
+    restart: always
+
+  redis:
+    restart: always

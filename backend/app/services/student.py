@@ -3,7 +3,7 @@
 """
 from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.student import Student
@@ -27,11 +27,10 @@ class StudentService:
         Returns:
             创建的学生对象
         """
-        async with db.begin():
-            db_student = Student(**student_in.model_dump(), user_id=user_id)
-            db.add(db_student)
-            await db.flush()
-            await db.refresh(db_student)
+        db_student = Student(**student_in.model_dump(), user_id=user_id)
+        db.add(db_student)
+        await db.flush()
+        await db.refresh(db_student)
         return db_student
 
     @staticmethod
@@ -65,6 +64,7 @@ class StudentService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
+        keyword: Optional[str] = None,
         grade: Optional[str] = None,
         class_name: Optional[str] = None
     ) -> List[Student]:
@@ -86,6 +86,13 @@ class StudentService:
             Student.user_id == user_id,
             Student.is_deleted == False
         )
+
+        if keyword:
+            keyword_filter = or_(
+                Student.name.ilike(f"%{keyword}%"),
+                Student.class_name.ilike(f"%{keyword}%"),
+            )
+            query = query.where(keyword_filter)
 
         if grade:
             query = query.where(Student.grade == grade)
@@ -140,10 +147,10 @@ class StudentService:
             return None
 
         update_data = student_in.model_dump(exclude_unset=True)
-        async with db.begin():
-            for field, value in update_data.items():
-                setattr(db_student, field, value)
-            await db.refresh(db_student)
+        for field, value in update_data.items():
+            setattr(db_student, field, value)
+        await db.flush()
+        await db.refresh(db_student)
         return db_student
 
     @staticmethod
@@ -163,14 +170,15 @@ class StudentService:
         if not db_student:
             return False
 
-        async with db.begin():
-            db_student.soft_delete()
+        db_student.soft_delete()
+        await db.flush()
         return True
 
     @staticmethod
     async def count(
         db: AsyncSession,
         user_id: int,
+        keyword: Optional[str] = None,
         grade: Optional[str] = None,
         class_name: Optional[str] = None
     ) -> int:
@@ -190,6 +198,13 @@ class StudentService:
             Student.user_id == user_id,
             Student.is_deleted == False
         )
+
+        if keyword:
+            keyword_filter = or_(
+                Student.name.ilike(f"%{keyword}%"),
+                Student.class_name.ilike(f"%{keyword}%"),
+            )
+            query = query.where(keyword_filter)
 
         if grade:
             query = query.where(Student.grade == grade)

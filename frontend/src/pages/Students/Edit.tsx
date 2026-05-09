@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Card, Spin, Typography, message } from 'antd'
 import dayjs from 'dayjs'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { StudentForm, type StudentFormData } from '@/components'
 import { studentService } from '../../services/student'
 import { refreshDashboardStats } from '../../stores/dashboard'
@@ -15,9 +15,12 @@ const toDateString = (value?: { format: (template: string) => string }) =>
 const EditStudent: React.FC = () => {
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [student, setStudent] = useState<Student | null>(null)
+
+  const returnTo = searchParams.get('returnTo') || '/students'
 
   useEffect(() => {
     if (!id) {
@@ -32,14 +35,14 @@ const EditStudent: React.FC = () => {
       } catch (error) {
         message.error('获取学生信息失败')
         console.error('Fetch student error:', error)
-        navigate('/students')
+        navigate(returnTo)
       } finally {
         setFetchLoading(false)
       }
     }
 
     fetchStudent()
-  }, [id, navigate])
+  }, [id, navigate, returnTo])
 
   const handleSubmit = async (values: StudentFormData) => {
     if (!id) {
@@ -59,7 +62,7 @@ const EditStudent: React.FC = () => {
       })
       message.success('学生信息更新成功')
       refreshDashboardStats()
-      navigate('/students')
+      navigate(returnTo)
     } catch (error) {
       message.error('更新失败，请重试')
       console.error('Update student error:', error)
@@ -98,7 +101,7 @@ const EditStudent: React.FC = () => {
         <StudentForm
           initialData={getInitialData()}
           onSubmit={handleSubmit}
-          onCancel={() => navigate('/students')}
+          onCancel={() => navigate(returnTo)}
           loading={loading}
         />
       </Card>

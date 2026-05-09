@@ -4,6 +4,7 @@
 """
 from typing import Annotated, Optional
 from datetime import datetime, timezone, date
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +23,10 @@ def calculate_age(birth_date: Optional[date]) -> Optional[int]:
     if birth_date is None:
         return None
     today = date.today()
-    return today.year - birth_date.year
+    age = today.year - birth_date.year
+    if (today.month, today.day) < (birth_date.month, birth_date.day):
+        age -= 1
+    return age
 
 router = APIRouter(tags=["学生管理"])
 
@@ -32,6 +36,7 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
+@router.post("/", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生", include_in_schema=False)
 @router.post("", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生")
 async def create_student(
     student_in: StudentCreate,
@@ -73,12 +78,14 @@ async def get_student(
     return DataResponse(data=StudentSchema.model_validate(student))
 
 
+@router.get("/", response_model=ListResponse[StudentSchema], summary="获取学生列表", include_in_schema=False)
 @router.get("", response_model=ListResponse[StudentSchema], summary="获取学生列表")
 async def get_students(
     db: DBSession,
     user_id: CurrentUser,
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    keyword: Optional[str] = Query(None, description="关键词搜索"),
     grade: Optional[str] = Query(None, description="年级筛选"),
     class_name: Optional[str] = Query(None, description="班级筛选")
 ) -> ListResponse[StudentSchema]:
@@ -89,11 +96,23 @@ async def get_students(
     offset = (page - 1) * page_size
 
     # 获取总数
-    total = await StudentService.count(db, user_id=user_id, grade=grade, class_name=class_name)
+    total = await StudentService.count(
+        db,
+        user_id=user_id,
+        keyword=keyword,
+        grade=grade,
+        class_name=class_name,
+    )
 
     # 获取分页数据
     students = await StudentService.get_list(
-        db, user_id=user_id, skip=offset, limit=page_size, grade=grade, class_name=class_name
+        db,
+        user_id=user_id,
+        skip=offset,
+        limit=page_size,
+        keyword=keyword,
+        grade=grade,
+        class_name=class_name,
     )
 
     # 为每个学生计算年龄
@@ -175,10 +194,11 @@ async def export_student_portfolio(
 
     # 返回PDF文件
     from fastapi.responses import Response
+    filename = f"{student.name}_成长报告.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename={student.name}_成长报告.pdf"
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
         }
     )

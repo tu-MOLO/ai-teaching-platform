@@ -106,11 +106,11 @@ def register_middlewares(app: FastAPI) -> None:
         app: FastAPI应用实例
     """
     # CORS中间件
-    # 开发环境下允许所有来源
+    # 开发环境下仅允许本地开发服务器来源
     if settings.DEBUG:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -130,6 +130,21 @@ def register_middlewares(app: FastAPI) -> None:
     
     # GZip压缩中间件
     app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+    @app.middleware("http")
+    async def limit_body_size(request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > settings.MAX_UPLOAD_SIZE:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "error": "FILE_TOO_LARGE",
+                    "code": "FILE_TOO_LARGE",
+                    "message": f"文件超过大小限制（最大{settings.MAX_UPLOAD_SIZE // 1024 // 1024}MB）",
+                    "request_id": str(uuid.uuid4())[:8]
+                }
+            )
+        return await call_next(request)
 
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):

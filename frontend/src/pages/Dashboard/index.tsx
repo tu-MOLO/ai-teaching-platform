@@ -18,18 +18,22 @@ import {
   ReloadOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { getNotifications, type Notification as APINotification } from '../../services/notification'
+import {
+  getNotifications,
+  NotificationType,
+  type Notification as APINotification,
+} from '../../services/notification'
 import { useDashboardStore } from '../../stores/dashboard'
 import './index.css'
 
 // 图标映射
 const iconMapping: Record<string, React.ReactNode> = {
-  'SYSTEM': <InfoCircleOutlined />,
-  'COURSE': <BookOutlined />,
-  'HOMEWORK': <FileTextIcon />,
-  'EXAM': <TrophyIcon />,
-  'MESSAGE': <BellOutlined />,
-  'REMINDER': <CalendarOutlined />,
+  [NotificationType.SYSTEM]: <InfoCircleOutlined />,
+  [NotificationType.COURSE]: <BookOutlined />,
+  [NotificationType.HOMEWORK]: <FileTextIcon />,
+  [NotificationType.EXAM]: <TrophyIcon />,
+  [NotificationType.MESSAGE]: <BellOutlined />,
+  [NotificationType.REMINDER]: <CalendarOutlined />,
   'new-feature': <GiftOutlined />,
   'maintenance': <ToolOutlined />,
   'achievement': <TrophyOutlined />,
@@ -37,12 +41,12 @@ const iconMapping: Record<string, React.ReactNode> = {
 
 // 类型样式映射
 const typeStyleMapping: Record<string, string> = {
-  'SYSTEM': 'maintenance',
-  'COURSE': 'new-feature',
-  'HOMEWORK': 'achievement',
-  'EXAM': 'achievement',
-  'MESSAGE': 'new-feature',
-  'REMINDER': 'maintenance',
+  [NotificationType.SYSTEM]: 'maintenance',
+  [NotificationType.COURSE]: 'new-feature',
+  [NotificationType.HOMEWORK]: 'achievement',
+  [NotificationType.EXAM]: 'achievement',
+  [NotificationType.MESSAGE]: 'new-feature',
+  [NotificationType.REMINDER]: 'maintenance',
 }
 
 // 格式化时间显示

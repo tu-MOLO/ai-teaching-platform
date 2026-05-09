@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import { authService } from '../../services/auth'
 import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
+import { BusinessError } from '../../types/error'
 import { 
   getNotifications, 
   markAsRead, 
@@ -75,7 +76,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
       const response = await getNotifications({ page_size: 20 })
       setNotifications(response.data)
     } catch (error) {
-      console.error('获取通知失败:', error)
+      if (!(error instanceof BusinessError && error.statusCode === 401)) {
+        console.error('获取通知失败:', error)
+      }
+      setNotifications([])
     } finally {
       setLoading(false)
     }
@@ -154,7 +158,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
         navigate('/profile')
         break
       case 'settings':
-        navigate('/settings')
+        navigate('/profile')
         break
       case 'help':
         showHelpModal()
@@ -171,11 +175,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
       icon: <ProfileOutlined />,
       label: '个人资料'
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '账户设置'
-    },
+      {
+        key: 'settings',
+        icon: <SettingOutlined />,
+        label: '个人设置'
+      },
     {
       type: 'divider' as const
     },
@@ -324,9 +328,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
         width={600}
         centered={isMobile}
       >
-        <div className="help-content">
-          <h4>欢迎使用AI教学平台</h4>
-          <p>本平台提供以下核心功能：</p>
+          <div className="help-content">
+            <h4>欢迎使用AI教学平台</h4>
+            <p>本平台提供以下核心功能：</p>
           <ul>
             <li><strong>课程管理：</strong>创建、编辑和管理您的课程</li>
             <li><strong>教案管理：</strong>创建、整理和复用日常备课内容</li>
@@ -334,7 +338,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
             <li><strong>成长档案：</strong>记录学生表现并沉淀过程性材料</li>
             <li><strong>资源中心：</strong>统一管理教学资源与文件预览</li>
           </ul>
-          <p>建议先在系统设置中维护学校信息、下拉选项和主题方案，再开始正式录入。</p>
+          <p>建议先在个人资料中完善信息，再到系统设置维护学校信息、下拉选项和主题方案。</p>
         </div>
       </Modal>
     </AntHeader>

@@ -22,6 +22,7 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
+@router.post("/", response_model=DataResponse[PortfolioSchema], status_code=status.HTTP_201_CREATED, summary="创建成长档案", include_in_schema=False)
 @router.post("", response_model=DataResponse[PortfolioSchema], status_code=status.HTTP_201_CREATED, summary="创建成长档案")
 async def create_portfolio(
     portfolio_in: PortfolioCreate,
@@ -50,6 +51,7 @@ async def get_portfolio(
     return DataResponse(data=PortfolioSchema.model_validate(portfolio))
 
 
+@router.get("/", response_model=ListResponse[PortfolioSchema], summary="获取成长档案列表", include_in_schema=False)
 @router.get("", response_model=ListResponse[PortfolioSchema], summary="获取成长档案列表")
 async def get_portfolios(
     db: DBSession,

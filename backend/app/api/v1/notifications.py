@@ -28,6 +28,7 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
+@router.get("/", response_model=NotificationListResponse, summary="获取通知列表", include_in_schema=False)
 @router.get("", response_model=NotificationListResponse, summary="获取通知列表")
 async def get_notifications(
     db: DBSession,

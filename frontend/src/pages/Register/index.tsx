@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, Form, Input, message, Typography } from 'antd'
+import { Button, Form, Input, Select, message, Typography } from 'antd'
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../../services/auth'
@@ -7,12 +7,22 @@ import './index.css'
 
 const { Text } = Typography
 
+const SECURITY_QUESTIONS = [
+  "您的母校名称是什么？",
+  "您母亲的姓名是什么？",
+  "您第一只宠物的名字是什么？",
+  "您出生的城市是哪里？",
+  "您最喜欢的书是什么？",
+]
+
 interface RegisterFormData {
   username: string
   email: string
   password: string
   confirmPassword: string
   full_name?: string
+  security_question: string
+  security_answer: string
 }
 
 const Register: React.FC = () => {
@@ -173,6 +183,30 @@ const Register: React.FC = () => {
               />
             </Form.Item>
 
+            <Form.Item
+              name="security_question"
+              label="密保问题"
+              rules={[{ required: true, message: '请选择密保问题' }]}
+            >
+              <Select
+                placeholder="请选择密保问题"
+                size="large"
+                options={SECURITY_QUESTIONS.map(q => ({ label: q, value: q }))}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="security_answer"
+              label="密保答案"
+              rules={[{ required: true, message: '请输入密保答案' }]}
+            >
+              <Input
+                placeholder="请输入密保答案"
+                maxLength={100}
+                size="large"
+              />
+            </Form.Item>
+
             <Form.Item>
               <Button
                 type="primary"
@@ -189,7 +223,7 @@ const Register: React.FC = () => {
 
           <div className="form-footer">
             <Text type="secondary">
-              注册即表示您同意我们的 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a>
+              注册后可在个人设置中补充资料与邮箱信息。
             </Text>
           </div>
         </div>

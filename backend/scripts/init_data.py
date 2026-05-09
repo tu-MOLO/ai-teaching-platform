@@ -27,8 +27,8 @@ from app.services.permission import DEFAULT_TEACHER_PERMISSIONS
 DEFAULT_TEACHER = {
     "username": os.getenv("DEFAULT_TEACHER_USERNAME", "teacher"),
     "email": os.getenv("DEFAULT_TEACHER_EMAIL", "teacher@example.com"),
-    "password": os.getenv("DEFAULT_TEACHER_PASSWORD", "Teacher123"),
-    "full_name": os.getenv("DEFAULT_TEACHER_FULL_NAME", "Default Teacher"),
+    "password": os.getenv("DEFAULT_TEACHER_PASSWORD", "Teacher@Local2026!"),
+    "full_name": os.getenv("DEFAULT_TEACHER_FULL_NAME", "本地教师账号"),
 }
 
 TAGS = [
@@ -136,6 +136,8 @@ def seed_teacher(db: Session) -> tuple[User, bool]:
         role=UserRole.TEACHER,
         status=UserStatus.ACTIVE,
         is_active=True,
+        security_question="您的母校名称是什么？",
+        hashed_security_answer=get_password_hash("default_answer"),
     )
     db.add(user)
     return user, True
@@ -144,21 +146,34 @@ def seed_teacher(db: Session) -> tuple[User, bool]:
 def main() -> None:
     engine = get_engine()
     ensure_schema(engine)
-    session_factory = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
+    session_factory = sessionmaker(
+        bind=engine,
+        autoflush=False,
+        autocommit=False,
+        expire_on_commit=False,
+        future=True,
+    )
 
     with session_factory() as db:
         tag_count = seed_tags(db)
         template_count = seed_templates(db)
         user, created_teacher = seed_teacher(db)
         db.commit()
+        total_tags = db.execute(select(Tag)).scalars().all()
+        total_templates = db.execute(select(LessonTemplate)).scalars().all()
+        teacher_username = user.username
+        teacher_email = user.email
 
     print("Local data initialization completed.")
-    print(f"Seeded tags: {tag_count}")
-    print(f"Seeded lesson templates: {template_count}")
+    print(f"Seeded tags this run: {tag_count}")
+    print(f"Seeded lesson templates this run: {template_count}")
+    print(f"Total tags available: {len(total_tags)}")
+    print(f"Total lesson templates available: {len(total_templates)}")
     print(f"Teacher account created: {'yes' if created_teacher else 'no'}")
-    print(f"Teacher username: {user.username}")
-    print(f"Teacher email: {user.email}")
+    print(f"Teacher username: {teacher_username}")
+    print(f"Teacher email: {teacher_email}")
     print(f"Teacher default password: {DEFAULT_TEACHER['password']}")
+    print("Please change the teacher password after first login if this environment will be shared.")
     print(f"Teacher permissions baseline: {', '.join(DEFAULT_TEACHER_PERMISSIONS[:4])} ...")
 
 

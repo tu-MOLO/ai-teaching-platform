@@ -3,7 +3,7 @@
 """
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.portfolio import Portfolio
@@ -26,11 +26,10 @@ class PortfolioService:
         Returns:
             创建的成长档案对象
         """
-        async with db.begin():
-            db_portfolio = Portfolio(**portfolio_in.model_dump(), user_id=user_id)
-            db.add(db_portfolio)
-            await db.flush()
-            await db.refresh(db_portfolio)
+        db_portfolio = Portfolio(**portfolio_in.model_dump(), user_id=user_id)
+        db.add(db_portfolio)
+        await db.flush()
+        await db.refresh(db_portfolio)
         return db_portfolio
 
     @staticmethod
@@ -89,6 +88,7 @@ class PortfolioService:
         if type:
             query = query.where(Portfolio.type == type)
 
+        query = query.order_by(Portfolio.created_at.desc())
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
@@ -117,10 +117,10 @@ class PortfolioService:
             return None
 
         update_data = portfolio_in.model_dump(exclude_unset=True)
-        async with db.begin():
-            for field, value in update_data.items():
-                setattr(db_portfolio, field, value)
-            await db.refresh(db_portfolio)
+        for field, value in update_data.items():
+            setattr(db_portfolio, field, value)
+        await db.flush()
+        await db.refresh(db_portfolio)
         return db_portfolio
 
     @staticmethod
@@ -140,8 +140,8 @@ class PortfolioService:
         if not db_portfolio:
             return False
 
-        async with db.begin():
-            db_portfolio.soft_delete()
+        db_portfolio.soft_delete()
+        await db.flush()
         return True
 
     @staticmethod
@@ -163,7 +163,7 @@ class PortfolioService:
         Returns:
             成长档案数量
         """
-        query = select(Portfolio).where(
+        query = select(func.count()).select_from(Portfolio).where(
             Portfolio.user_id == user_id,
             Portfolio.is_deleted == False
         )
@@ -175,4 +175,4 @@ class PortfolioService:
             query = query.where(Portfolio.type == type)
 
         result = await db.execute(query)
-        return len(result.scalars().all())
+        return result.scalar() or 0

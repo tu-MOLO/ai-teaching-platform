@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.course import Course
+from app.models.course import Course, CourseStatus
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
 from app.models.resource import Resource
 from app.models.student import Student
@@ -38,6 +38,42 @@ class ReportService:
         total_resources = (
             await db.execute(select(func.count()).select_from(Resource).where(*resource_filters))
         ).scalar() or 0
+
+        # 计算活跃课程数（进行中状态）
+        active_courses = (
+            await db.execute(
+                select(func.count()).select_from(Course).where(
+                    *course_filters,
+                    Course.status == CourseStatus.ACTIVE,
+                )
+            )
+        ).scalar() or 0
+
+        # 计算草稿教案数
+        draft_lesson_plans = (
+            await db.execute(
+                select(func.count()).select_from(LessonPlan).where(
+                    *lesson_plan_filters,
+                    LessonPlan.status == LessonPlanStatus.DRAFT,
+                )
+            )
+        ).scalar() or 0
+
+        # 计算教案完成率（已发布教案 / 总教案）
+        total_lesson_plans = (
+            await db.execute(
+                select(func.count()).select_from(LessonPlan).where(*lesson_plan_filters)
+            )
+        ).scalar() or 0
+        published_lesson_plans = (
+            await db.execute(
+                select(func.count()).select_from(LessonPlan).where(
+                    *lesson_plan_filters,
+                    LessonPlan.status == LessonPlanStatus.PUBLISHED,
+                )
+            )
+        ).scalar() or 0
+        completion_rate = round((published_lesson_plans / total_lesson_plans * 100), 0) if total_lesson_plans > 0 else 0
 
         now = datetime.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -151,6 +187,7 @@ class ReportService:
                     "time": relative_time(course.created_at),
                     "desc": course.subject,
                     "color": "#c9a87c",
+                    "sort_time": course.created_at,
                 }
             )
 
@@ -164,24 +201,31 @@ class ReportService:
                     "time": relative_time(student.created_at),
                     "desc": f"{student.grade} {student.class_name}",
                     "color": "#6b9b7a",
+                    "sort_time": student.created_at,
                 }
             )
 
-        recent_activities = sorted(recent_activities, key=lambda item: item["time"])[:5]
+        recent_activities = sorted(
+            recent_activities,
+            key=lambda item: item["sort_time"],
+            reverse=True,
+        )[:5]
+        for item in recent_activities:
+            item.pop("sort_time", None)
 
         return {
             "totalCourses": total_courses,
             "totalStudents": total_students,
-            "activeCourses": 0,
-            "averageProgress": 0,
+            "activeCourses": active_courses,
+            "averageProgress": completion_rate,
             "courseTrend": format_growth(last_month_courses, two_months_ago_courses),
             "studentTrend": format_growth(last_month_students, two_months_ago_students),
             "recentActivities": recent_activities,
             "monthlyCourses": monthly_courses,
             "monthlyStudents": monthly_students,
             "monthlyLessonPlans": monthly_lesson_plans,
-            "draftLessonPlans": 0,
-            "completionRate": 0,
+            "draftLessonPlans": draft_lesson_plans,
+            "completionRate": completion_rate,
             "aiAssistants": 0,
             "totalResources": total_resources,
         }

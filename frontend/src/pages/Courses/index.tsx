@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Button, Card, Input, Modal, Space, Table, Tag, Typography, message } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { deleteCourse, getCourses, type Course as ApiCourse } from '../../services/course'
 import { refreshDashboardStats } from '../../stores/dashboard'
 
@@ -24,15 +24,26 @@ const statusLabelMap: Record<CourseRow['status'], string> = {
 
 const Courses: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [courses, setCourses] = useState<CourseRow[]>([])
   const [loading, setLoading] = useState(false)
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState(() => searchParams.get('search') || '')
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true)
     try {
-      const response = await getCourses()
+      const response = await getCourses({
+        page,
+        page_size: pageSize,
+        keyword: searchText || undefined,
+      })
       setCourses(response.data || [])
+      setPagination({
+        current: response.page || page,
+        pageSize: response.page_size || pageSize,
+        total: response.total || 0,
+      })
     } catch (error) {
       message.error('获取课程列表失败')
       console.error('Fetch courses error:', error)
@@ -42,8 +53,15 @@ const Courses: React.FC = () => {
   }
 
   useEffect(() => {
-    fetchCourses()
-  }, [])
+    fetchCourses(1)
+  }, [searchText])
+
+  useEffect(() => {
+    const nextSearch = searchParams.get('search') || ''
+    if (nextSearch !== searchText) {
+      setSearchText(nextSearch)
+    }
+  }, [searchParams])
 
   const handleDelete = async (id: string, name: string) => {
     Modal.confirm({
@@ -56,7 +74,7 @@ const Courses: React.FC = () => {
         try {
           await deleteCourse(id)
           message.success('删除成功')
-          fetchCourses()
+          fetchCourses(pagination.current, pagination.pageSize)
           refreshDashboardStats()
         } catch (error) {
           message.error('删除失败，请重试')
@@ -65,11 +83,6 @@ const Courses: React.FC = () => {
       },
     })
   }
-
-  const filteredData = courses.filter((course) => {
-    const keyword = searchText.toLowerCase()
-    return course.name.toLowerCase().includes(keyword) || course.teacher.toLowerCase().includes(keyword)
-  })
 
   const columns = [
     {
@@ -143,11 +156,27 @@ const Courses: React.FC = () => {
             allowClear
             enterButton={<SearchOutlined />}
             value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value
+              setSearchText(value)
+              setSearchParams(value ? { search: value } : {})
+            }}
             style={{ width: 300 }}
           />
         </div>
-        <Table columns={columns} dataSource={filteredData} rowKey="id" loading={loading} pagination={{ pageSize: 10 }} />
+        <Table
+          columns={columns}
+          dataSource={courses}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: false,
+            onChange: (page, pageSize) => fetchCourses(page, pageSize),
+          }}
+        />
       </Card>
     </div>
   )

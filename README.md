@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  一个全栈AI教学管理平台，支持课程管理、教案设计、学生成长档案和资源中心功能
+  一个面向教师本地交付场景的全栈教学管理平台，支持课程、学生、教案、成长档案与资源管理
 </p>
 
 ## 📖 目录
@@ -35,15 +35,15 @@
 ### 📚 课程管理
 
 - 课程信息CRUD操作
-- 课程状态跟踪（计划中/进行中/已完成）
+- 课程状态跟踪（草稿/进行中/已结课）
 - 课程分类和标签管理
 
 ### 📝 教案设计
 
-- 智能教案生成助手
 - 教案模板库
-- 教案版本管理
-- 教案分享与导出（PDF/Word）
+- 教案创建、编辑、发布、归档
+- 教案月度统计
+- 教案导出
 
 ### 👨‍🎓 学生管理
 
@@ -55,15 +55,15 @@
 ### 📂 资源中心
 
 - 文件上传/下载
-- MinIO对象存储集成
-- 资源标签和分类
-- 资源预览功能
+- 默认本地文件存储
+- 可选 MinIO 对象存储
+- 资源标签和预览功能
 
 ### 🔐 用户认证与权限
 
 - JWT Token认证
-- 基于角色的权限控制（RBAC）
-- 用户角色管理（管理员/教师/学生）
+- 教师单角色产品逻辑
+- 本地注册、登录、改密、重置密码
 
 ### 🎨 主题定制
 
@@ -81,7 +81,8 @@
 | -------------------- | ------- | ---------- |
 | **FastAPI**    | 0.109.2 | Web框架    |
 | **SQLAlchemy** | 2.0.27  | ORM        |
-| **PostgreSQL** | 15      | 主数据库   |
+| **SQLite**     | -       | 本地默认数据库 |
+| **PostgreSQL** | 15      | 可选部署数据库 |
 | **Alembic**    | 1.13.1  | 数据库迁移 |
 | **MinIO**      | latest  | 对象存储   |
 | **Redis**      | 7       | 缓存       |
@@ -120,8 +121,9 @@
 2. **配置环境变量**
 
    ```bash
+   cp .env.docker.example .env
    cp backend/.env.example backend/.env
-   # 编辑 backend/.env 文件，设置必要的环境变量
+   # 按需修改 .env 与 backend/.env
    ```
 3. **启动服务**
 
@@ -133,12 +135,17 @@
    ```bash
    docker-compose --profile migration run --rm migration
    ```
-5. **访问应用**
+5. **访问服务**
 
-   - 前端界面: http://localhost:3000
+   - 前端页面: http://localhost
    - 后端API: http://localhost:8000
    - API文档: http://localhost:8000/docs
    - MinIO控制台: http://localhost:9001
+
+说明：
+
+- Docker Compose 会同时启动前端（Nginx 托管）、后端及所有依赖服务
+- 生产环境请使用 `docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d` 合并覆盖配置
 
 ### 本地开发
 
@@ -186,6 +193,29 @@ npm run dev
 
 前端服务将在 http://localhost:5173 启动
 
+### 一键本地启动
+
+仓库根目录已提供：
+
+- Windows：`start.bat`
+- macOS / Linux：`start.sh`
+
+脚本会自动：
+
+- 创建虚拟环境
+- 安装依赖
+- 执行数据库迁移
+- 初始化教师账号、标签、教案模板
+- 启动前后端开发服务
+
+首次初始化默认教师账号：
+
+- 用户名：`teacher`
+- 邮箱：`teacher@example.com`
+- 密码：`Teacher@Local2026!`
+
+建议首次登录后立即修改密码。
+
 ---
 
 ## 📁 项目结构
@@ -216,11 +246,16 @@ ai-teaching-platform/
 │   │   ├── types/             # TypeScript类型
 │   │   └── utils/             # 工具函数
 │   ├── public/                # 静态资源
+│   ├── Dockerfile             # 前端Docker配置
+│   ├── nginx.conf             # Nginx配置
 │   └── package.json           # Node依赖
-│
-├── tests/                      # 端到端测试
+
 ├── docker-compose.yml          # Docker编排
+├── docker-compose.prod.yml     # 生产环境覆盖配置
+├── .env.docker                 # Docker环境变量
 ├── .gitignore                  # Git忽略规则
+├── start.bat                   # Windows一键启动
+├── start.sh                    # macOS/Linux一键启动
 └── README.md                   # 项目文档
 ```
 
@@ -239,7 +274,7 @@ ai-teaching-platform/
 | ------------------------------ | ------------ | ---- |
 | `POST /api/v1/auth/login`    | 用户登录     | 否   |
 | `POST /api/v1/auth/register` | 用户注册     | 否   |
-| `GET /api/v1/users/me`       | 获取当前用户 | 是   |
+| `GET /api/v1/auth/me`        | 获取当前用户 | 是   |
 | `GET /api/v1/courses`        | 课程列表     | 是   |
 | `POST /api/v1/lesson-plans`  | 创建教案     | 是   |
 | `GET /api/v1/students`       | 学生列表     | 是   |
@@ -280,8 +315,8 @@ pytest --html=reports/test_report.html
 
 1. **更新环境变量**
 
-   - 修改 `SECRET_KEY` 为强随机字符串
-   - 配置生产数据库连接
+   - 修改 `SECRET_KEY`
+   - 修改数据库与对象存储口令
    - 设置正确的 `BACKEND_CORS_ORIGINS`
 2. **构建生产镜像**
 

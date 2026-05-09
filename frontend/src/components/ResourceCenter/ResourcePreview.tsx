@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Button, Descriptions, Empty, Space, Tooltip, message } from 'antd'
 import {
   DownloadOutlined,
@@ -14,6 +14,7 @@ import {
   ZoomOutOutlined,
 } from '@ant-design/icons'
 import type { Resource } from '../../types/resource'
+import { fetchResourceFileBlob } from '../../services/resource'
 
 export interface ResourcePreviewProps {
   resource: Resource
@@ -69,9 +70,10 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
   const [imageScale, setImageScale] = useState(1)
   const [previewError, setPreviewError] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [loadingBlob, setLoadingBlob] = useState(false)
 
   const fileType = resource.file_type
-  const fileUrl = resource.file_url || ''
   const isImage = fileType.includes('image')
   const isVideo = fileType.includes('video')
   const isAudio = fileType.includes('audio')
@@ -84,20 +86,61 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
     fileType.includes('spreadsheetml') ||
     fileType.includes('presentationml')
 
-  const handleDownload = useCallback(() => {
-    if (!fileUrl) {
+  useEffect(() => {
+    if (!resource.id) return
+    let objectUrl: string | null = null
+    let cancelled = false
+
+    const loadBlob = async () => {
+      setLoadingBlob(true)
+      try {
+        const blob = await fetchResourceFileBlob(resource.id)
+        if (cancelled) return
+        objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+        setPreviewError(false)
+      } catch {
+        if (!cancelled) {
+          setPreviewError(true)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingBlob(false)
+        }
+      }
+    }
+
+    loadBlob()
+
+    return () => {
+      cancelled = true
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl)
+      }
+    }
+  }, [resource.id, previewError === false && blobUrl === null])
+
+  const handleDownload = useCallback(async () => {
+    if (!resource.id) {
       message.error('当前资源没有可下载地址')
       return
     }
 
-    const link = document.createElement('a')
-    link.href = fileUrl
-    link.download = resource.file_name || resource.name
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    message.success('开始下载文件')
-  }, [fileUrl, resource.file_name, resource.name])
+    try {
+      const blob = await fetchResourceFileBlob(resource.id)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = resource.file_name || resource.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      message.success('开始下载文件')
+    } catch {
+      message.error('下载文件失败')
+    }
+  }, [resource.id, resource.file_name, resource.name])
 
   const handleZoom = useCallback((delta: number) => {
     setImageScale((prev) => Math.max(0.5, Math.min(3, prev + delta)))
@@ -113,19 +156,22 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
 
   const handleRetry = useCallback(() => {
     setPreviewError(false)
+    setBlobUrl(null)
   }, [])
 
   const renderImagePreview = () => {
-    if (previewError || !fileUrl) {
+    if (previewError || !blobUrl) {
       return (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <Space direction="vertical" align="center">
-              <span>图片加载失败</span>
-              <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
-                重试
-              </Button>
+              <span>{loadingBlob ? '图片加载中...' : '图片加载失败'}</span>
+              {!loadingBlob && (
+                <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
+                  重试
+                </Button>
+              )}
             </Space>
           }
         />
@@ -145,7 +191,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
         }}
       >
         <img
-          src={fileUrl}
+          src={blobUrl}
           alt={resource.name}
           onError={handlePreviewError}
           style={{
@@ -163,16 +209,18 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
   }
 
   const renderVideoPreview = () => {
-    if (previewError || !fileUrl) {
+    if (previewError || !blobUrl) {
       return (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <Space direction="vertical" align="center">
-              <span>视频加载失败</span>
-              <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
-                重试
-              </Button>
+              <span>{loadingBlob ? '视频加载中...' : '视频加载失败'}</span>
+              {!loadingBlob && (
+                <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
+                  重试
+                </Button>
+              )}
             </Space>
           }
         />
@@ -180,23 +228,25 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
     }
 
     return (
-      <video src={fileUrl} controls onError={handlePreviewError} style={{ width: '100%', maxHeight: '500px' }}>
+      <video src={blobUrl} controls onError={handlePreviewError} style={{ width: '100%', maxHeight: '500px' }}>
         您的浏览器不支持视频播放
       </video>
     )
   }
 
   const renderAudioPreview = () => {
-    if (previewError || !fileUrl) {
+    if (previewError || !blobUrl) {
       return (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             <Space direction="vertical" align="center">
-              <span>音频加载失败</span>
-              <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
-                重试
-              </Button>
+              <span>{loadingBlob ? '音频加载中...' : '音频加载失败'}</span>
+              {!loadingBlob && (
+                <Button type="primary" icon={<ReloadOutlined />} onClick={handleRetry}>
+                  重试
+                </Button>
+              )}
             </Space>
           }
         />
@@ -205,7 +255,7 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
 
     return (
       <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-        <audio src={fileUrl} controls onError={handlePreviewError} style={{ width: '100%' }}>
+        <audio src={blobUrl} controls onError={handlePreviewError} style={{ width: '100%' }}>
           您的浏览器不支持音频播放
         </audio>
       </div>
@@ -276,10 +326,10 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
       )
     }
 
-    if (isPdf && fileUrl) {
+    if (isPdf && blobUrl) {
       buttons.push(
         <Tooltip title="在新窗口打开" key="open-new">
-          <Button icon={<FullscreenOutlined />} onClick={() => window.open(fileUrl, '_blank')}>
+          <Button icon={<FullscreenOutlined />} onClick={() => window.open(blobUrl, '_blank')}>
             新窗口打开
           </Button>
         </Tooltip>,
@@ -310,8 +360,8 @@ const ResourcePreview: React.FC<ResourcePreviewProps> = ({ resource }) => {
           <Descriptions.Item label="文件大小">{formatFileSize(resource.file_size)}</Descriptions.Item>
           <Descriptions.Item label="文件类型">{getFileTypeDisplay(fileType)}</Descriptions.Item>
           <Descriptions.Item label="上传时间">{formatDateTime(resource.created_at)}</Descriptions.Item>
-          {resource.tags.length > 0 && (
-            <Descriptions.Item label="标签">{resource.tags.map((tag) => tag.name).join(', ')}</Descriptions.Item>
+          {(resource.tags || []).length > 0 && (
+            <Descriptions.Item label="标签">{(resource.tags || []).map((tag) => tag?.name || '').join(', ')}</Descriptions.Item>
           )}
         </Descriptions>
       </div>

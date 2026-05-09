@@ -9,7 +9,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from jwt.exceptions import InvalidTokenError as JWTError
-from passlib.context import CryptContext
+import bcrypt
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,8 +18,14 @@ from app.core.config import settings
 from app.core.database import get_async_session as get_db
 
 
-# 密码哈希上下文
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# passlib 1.7.x 会读取 bcrypt.__about__.__version__。
+# 新版 bcrypt 移除了该属性，这里做兼容补丁以避免启动和验收阶段持续告警。
+if not hasattr(bcrypt, "__about__") and hasattr(bcrypt, "__version__"):
+    class _BcryptAbout:
+        __version__ = bcrypt.__version__
+
+    bcrypt.__about__ = _BcryptAbout()
+
 
 # HTTP Bearer认证
 security = HTTPBearer(auto_error=False)
@@ -37,30 +43,17 @@ class TokenPayload(BaseModel):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    验证密码
-    
-    Args:
-        plain_password: 明文密码
-        hashed_password: 哈希后的密码
-        
-    Returns:
-        验证是否通过
-    """
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
 
 
 def get_password_hash(password: str) -> str:
-    """
-    生成密码哈希
-    
-    Args:
-        password: 明文密码
-        
-    Returns:
-        哈希后的密码
-    """
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(
+        password.encode("utf-8"),
+        bcrypt.gensalt()
+    ).decode("utf-8")
 
 
 def create_access_token(
@@ -224,6 +217,75 @@ async def get_current_user_id(
     return user_id
 
 
+async def get_current_user_id_from_token_with_version_check(
+    token: str,
+    db: AsyncSession
+) -> str:
+    """
+    直接根据Token字符串获取当前用户ID并校验Token版本
+
+    Args:
+        token: JWT token字符串
+        db: 数据库会话
+
+    Returns:
+        用户ID
+    """
+    from app.models.user import User
+
+    payload = decode_token(token)
+
+    if not payload or payload.type != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的认证凭证",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload.sub
+    token_version = payload.jti
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="无效的认证凭证",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if payload.exp and datetime.now(timezone.utc) > payload.exp:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="认证凭证已过期",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="用户不存在",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="账户已被禁用"
+        )
+
+    if token_version and str(user.token_version) != token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="认证凭证已失效，请重新登录",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user_id
+
+
 async def get_current_user_id_with_version_check(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db)
@@ -244,68 +306,10 @@ async def get_current_user_id_with_version_check(
     Raises:
         HTTPException: 认证失败或Token版本不匹配时抛出
     """
-    from app.models.user import User
-    
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="未提供认证凭证",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    # 解码Token获取版本信息
-    payload = decode_token(credentials.credentials)
-    
-    if not payload or payload.type != "access":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效的认证凭证",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    user_id = payload.sub
-    token_version = payload.jti
-    
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效的认证凭证",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # 检查是否过期
-    if payload.exp and datetime.now(timezone.utc) > payload.exp:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="认证凭证已过期",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # 查询用户验证Token版本
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户不存在",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="账户已被禁用"
-        )
-    
-    # 验证Token版本（如果Token中包含版本号）
-    if token_version and str(user.token_version) != token_version:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="认证凭证已失效，请重新登录",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    return user_id
-
+    return await get_current_user_id_from_token_with_version_check(credentials.credentials, db)

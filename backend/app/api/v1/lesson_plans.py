@@ -25,6 +25,7 @@ CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 router = APIRouter(tags=["教案管理"])
 
 
+@router.post("/", response_model=DataResponse[LessonPlanResponse], status_code=status.HTTP_201_CREATED, include_in_schema=False)
 @router.post("", response_model=DataResponse[LessonPlanResponse], status_code=status.HTTP_201_CREATED)
 async def create_lesson_plan(
     lesson_plan: LessonPlanCreate,
@@ -47,6 +48,7 @@ async def create_lesson_plan(
     return DataResponse(data=result)
 
 
+@router.get("/", response_model=ListResponse[LessonPlanResponse], include_in_schema=False)
 @router.get("", response_model=ListResponse[LessonPlanResponse])
 async def get_lesson_plans(
     db: DBSession,
@@ -79,7 +81,7 @@ async def get_lesson_plans(
         status_filter=status_filter,
         search=search
     )
-    total = await service.count(user_id, status_filter)
+    total = await service.count(user_id, status_filter, search)
     pages = (total + page_size - 1) // page_size
     return ListResponse(
         data=items,

@@ -52,10 +52,10 @@ const ResourceCard: React.FC<ResourceCardProps> = ({ resource }) => {
         <p style={{ margin: '0 0 12px', color: '#666', fontSize: 14 }}>{truncatedDescription || '暂无描述'}</p>
 
         <div style={{ marginBottom: 12 }}>
-          {resource.tags.slice(0, 3).map((tag) => (
-            <Tag key={tag.id}>{tag.name}</Tag>
+          {(resource.tags || []).slice(0, 3).map((tag) => (
+            <Tag key={tag?.id || 'unknown'}>{tag?.name || ''}</Tag>
           ))}
-          {resource.tags.length > 3 && <Tag>+{resource.tags.length - 3}</Tag>}
+          {(resource.tags || []).length > 3 && <Tag>+{(resource.tags || []).length - 3}</Tag>}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#999', fontSize: 12 }}>

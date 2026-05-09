@@ -4,6 +4,7 @@
 """
 import json
 import logging
+import os
 import sys
 from datetime import datetime, timezone
 from typing import Optional
@@ -58,9 +59,6 @@ class JsonFormatter(logging.Formatter):
             log_record["exception"] = self.formatException(record.exc_info)
 
         return json.dumps(log_record, ensure_ascii=False)
-
-
-import os
 
 
 def setup_logging(

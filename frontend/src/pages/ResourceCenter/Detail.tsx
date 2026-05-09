@@ -3,7 +3,7 @@ import { Button, message } from 'antd'
 import { DownloadOutlined, LeftOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourcePreview } from '@/components'
-import { getResource, type Resource } from '../../services/resource'
+import { fetchResourceFileBlob, getResource, type Resource } from '../../services/resource'
 import './index.css'
 
 const escapeHtml = (unsafe: string): string =>
@@ -47,13 +47,25 @@ const ResourceDetail: React.FC = () => {
     fetchResource()
   }, [id])
 
-  const handleDownload = () => {
-    if (!resource?.file_url) {
+  const handleDownload = async () => {
+    if (!resource?.id) {
       message.error('当前资源没有可下载地址')
       return
     }
 
-    window.open(resource.file_url, '_blank')
+    try {
+      const blob = await fetchResourceFileBlob(resource.id)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = resource.file_name || resource.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      message.error('下载文件失败')
+    }
   }
 
   if (loading) {
@@ -84,9 +96,9 @@ const ResourceDetail: React.FC = () => {
           </div>
 
           <div className="resource-detail-tags">
-            {resource.tags.map((tag) => (
+            {(resource.tags || []).map((tag) => (
               <span
-                key={tag.id}
+                key={tag?.id || 'unknown'}
                 style={{
                   display: 'inline-block',
                   padding: '4px 12px',
@@ -96,7 +108,7 @@ const ResourceDetail: React.FC = () => {
                   marginRight: '8px',
                 }}
               >
-                {tag.name}
+                {tag?.name || ''}
               </span>
             ))}
           </div>

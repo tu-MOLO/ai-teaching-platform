@@ -42,10 +42,9 @@ class LessonPlanService:
             status=data.status or LessonPlanStatus.DRAFT
         )
 
-        async with self.db.begin():
-            self.db.add(lesson_plan)
-            await self.db.flush()
-            await self.db.refresh(lesson_plan)
+        self.db.add(lesson_plan)
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def get_list(
@@ -92,7 +91,8 @@ class LessonPlanService:
     async def count(
         self,
         user_id: str,
-        status_filter: Optional[str] = None
+        status_filter: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> int:
         """
         统计教案数量
@@ -111,6 +111,12 @@ class LessonPlanService:
 
         if status_filter:
             query = query.where(LessonPlan.status == status_filter)
+
+        if search:
+            query = query.where(
+                (LessonPlan.title.ilike(f"%{search}%")) |
+                (LessonPlan.subject.ilike(f"%{search}%"))
+            )
 
         result = await self.db.execute(query)
         return result.scalar()
@@ -158,10 +164,10 @@ class LessonPlanService:
 
         # 更新字段
         update_data = data.model_dump(exclude_unset=True)
-        async with self.db.begin():
-            for field, value in update_data.items():
-                setattr(lesson_plan, field, value)
-            await self.db.refresh(lesson_plan)
+        for field, value in update_data.items():
+            setattr(lesson_plan, field, value)
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def delete(self, plan_id: str, user_id: str) -> bool:
@@ -179,8 +185,8 @@ class LessonPlanService:
         if not lesson_plan:
             return False
 
-        async with self.db.begin():
-            lesson_plan.is_deleted = True
+        lesson_plan.is_deleted = True
+        await self.db.flush()
         return True
 
     async def publish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -198,9 +204,9 @@ class LessonPlanService:
         if not lesson_plan:
             return None
 
-        async with self.db.begin():
-            lesson_plan.status = LessonPlanStatus.PUBLISHED
-            await self.db.refresh(lesson_plan)
+        lesson_plan.status = LessonPlanStatus.PUBLISHED
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def unpublish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -218,9 +224,9 @@ class LessonPlanService:
         if not lesson_plan:
             return None
 
-        async with self.db.begin():
-            lesson_plan.status = LessonPlanStatus.DRAFT
-            await self.db.refresh(lesson_plan)
+        lesson_plan.status = LessonPlanStatus.DRAFT
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def archive(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -238,9 +244,9 @@ class LessonPlanService:
         if not lesson_plan:
             return None
 
-        async with self.db.begin():
-            lesson_plan.status = LessonPlanStatus.ARCHIVED
-            await self.db.refresh(lesson_plan)
+        lesson_plan.status = LessonPlanStatus.ARCHIVED
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def restore(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
@@ -258,9 +264,9 @@ class LessonPlanService:
         if not lesson_plan:
             return None
 
-        async with self.db.begin():
-            lesson_plan.status = LessonPlanStatus.DRAFT
-            await self.db.refresh(lesson_plan)
+        lesson_plan.status = LessonPlanStatus.DRAFT
+        await self.db.flush()
+        await self.db.refresh(lesson_plan)
         return lesson_plan
 
     async def get_monthly_count(self, user_id: str, year: int, month: int) -> int:

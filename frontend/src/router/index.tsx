@@ -3,6 +3,7 @@ import { RouteObject } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuthStore } from '../stores/auth';
 import { Navigate } from 'react-router-dom';
+import { Spin } from 'antd';
 
 // 懒加载所有页面组件
 const Login = React.lazy(() => import('../pages/Login'));
@@ -28,9 +29,8 @@ const Profile = React.lazy(() => import('../pages/Profile'));
 const Notifications = React.lazy(() => import('../pages/Notifications'));
 const CreateStudent = React.lazy(() => import('../pages/Students/Create'));
 const EditStudent = React.lazy(() => import('../pages/Students/Edit'));
-const PortfolioCreateStudent = React.lazy(() => import('../pages/Portfolio/Create'));
-const PortfolioEditStudent = React.lazy(() => import('../pages/Portfolio/Edit'));
 const EditRecord = React.lazy(() => import('../pages/Portfolio/EditRecord'));
+const AIAssistant = React.lazy(() => import('../pages/AIAssistant'));
 
 // 加载中组件
 const PageLoading = () => (
@@ -47,7 +47,14 @@ const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<a
 );
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isInitializing } = useAuthStore();
+  if (isInitializing) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -136,14 +143,6 @@ const router: RouteObject[] = [
         element: withSuspense(EditRecord)
       },
       {
-        path: 'portfolio/create',
-        element: withSuspense(PortfolioCreateStudent)
-      },
-      {
-        path: 'portfolio/:id/edit',
-        element: withSuspense(PortfolioEditStudent)
-      },
-      {
         path: 'settings',
         element: withSuspense(Settings)
       },
@@ -158,6 +157,10 @@ const router: RouteObject[] = [
       {
         path: 'notifications',
         element: withSuspense(Notifications)
+      },
+      {
+        path: 'ai-assistant',
+        element: withSuspense(AIAssistant)
       }
     ]
   },
