@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { CourseForm, CourseFormData } from '@/components';
 import { createCourse } from '../../services/course';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import { BusinessError } from '../../types/error';
 
 const { Title } = Typography;
 
@@ -26,7 +27,11 @@ const CreateCourse: React.FC = () => {
       refreshDashboardStats();
       navigate('/courses');
     } catch (error) {
-      message.error('课程创建失败，请重试');
+      if (error instanceof BusinessError) {
+        message.error(error.message || '课程创建失败，请检查输入信息');
+      } else {
+        message.error('课程创建失败');
+      }
       console.error('Create course error:', error);
     } finally {
       setLoading(false);

@@ -24,7 +24,6 @@ from app.core.security import (
     get_password_hash,
     security,
     verify_password,
-    verify_token,
 )
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.auth import (
@@ -198,7 +197,7 @@ async def refresh_token(
             error_code=ErrorCode.UNAUTHORIZED,
         )
 
-    if payload.jti and str(user.token_version) != payload.jti:
+    if not payload.jti or str(user.token_version) != payload.jti:
         raise AuthenticationException(
             message="刷新令牌已失效，请重新登录",
             error_code=ErrorCode.TOKEN_REVOKED,

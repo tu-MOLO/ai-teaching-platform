@@ -88,8 +88,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
   // 使用 react-dropzone 配置
   const { getRootProps, getInputProps, fileRejections } = useDropzone({
     onDrop,
-    onDragEnter: () => setIsDragging(true),
-    onDragLeave: () => setIsDragging(false),
     maxFiles: 1,
     maxSize: MAX_FILE_SIZE,
   });
@@ -124,6 +122,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
         backgroundColor: isDragging ? '#e6f7ff' : '#fafafa',
         transition: 'all 0.3s ease',
       }}
+      onDragEnter={() => setIsDragging(true)}
+      onDragLeave={() => setIsDragging(false)}
     >
       <input {...getInputProps()} />
       <div>

@@ -53,7 +53,10 @@ class Settings(BaseSettings):
     def validate_secret_key(cls, v: str) -> str:
         """验证SECRET_KEY不为空且长度>=32"""
         if not v:
-            raise ValueError("SECRET_KEY 不能为空，请设置一个安全的密钥")
+            raise ValueError(
+                "SECRET_KEY 未设置！请在 .env 文件中设置 SECRET_KEY。\n"
+                "生成方式：python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            )
         if len(v) < 32:
             raise ValueError(f"SECRET_KEY 长度不足: 当前 {len(v)} 字符, 需要至少 32 字符")
         return v

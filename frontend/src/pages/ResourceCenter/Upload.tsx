@@ -7,6 +7,7 @@ import FileUpload from '../../components/ResourceCenter/FileUpload';
 import { uploadResource } from '../../services/resource';
 import { createTag, getTags, type Tag } from '../../services/tag';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import { BusinessError } from '../../types/error';
 import './index.css';
 
 /** 最大文件大小：100MB（与后端配置保持一致） */
@@ -112,21 +113,16 @@ const UploadPage: React.FC = () => {
       return;
     }
 
-    // 提交前再次验证文件大小
-    const oversizedFiles = fileList.filter(file => file.size > MAX_FILE_SIZE);
-    if (oversizedFiles.length > 0) {
-      oversizedFiles.forEach(file => {
-        message.error(
-          `文件 ${file.name} 超过100MB限制（当前大小: ${formatFileSize(file.size)}）`
-        );
-      });
+    const resourceName = (values.title || selectedFile?.name || '').trim();
+    if (!resourceName) {
+      message.error('请输入资源标题或选择文件');
       return;
     }
 
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('name', (values.title || selectedFile?.name || '').trim());
+      formData.append('name', resourceName);
       formData.append('description', description || values.description || '');
       for (const tagId of values.tags || []) {
         formData.append('tag_ids', tagId);
@@ -135,11 +131,14 @@ const UploadPage: React.FC = () => {
 
       await uploadResource(formData);
       message.success('资源上传成功');
-      // 刷新仪表盘数据
       refreshDashboardStats();
       navigate('/resource-center');
     } catch (error) {
-      message.error('资源上传失败');
+      if (error instanceof BusinessError) {
+        message.error(error.message || '资源上传失败，请检查输入信息');
+      } else {
+        message.error('资源上传失败');
+      }
       console.error('Failed to upload resource:', error);
     } finally {
       setLoading(false);

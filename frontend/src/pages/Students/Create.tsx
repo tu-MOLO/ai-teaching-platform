@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StudentForm, StudentFormData } from '@/components';
 import { studentService } from '../../services/student';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import { BusinessError } from '../../types/error';
 
 const { Title } = Typography;
 
@@ -20,6 +21,10 @@ const CreateStudent: React.FC = () => {
   const handleSubmit = async (values: StudentFormData) => {
     setLoading(true);
     try {
+      if (!values.birth_date) {
+        message.error('请选择出生日期');
+        return;
+      }
       await studentService.createStudent({
         name: values.name,
         gender: values.gender,
@@ -33,7 +38,11 @@ const CreateStudent: React.FC = () => {
       refreshDashboardStats();
       navigate(returnTo);
     } catch (error) {
-      message.error('添加失败，请重试');
+      if (error instanceof BusinessError) {
+        message.error(error.message || '添加失败，请检查输入信息');
+      } else {
+        message.error('添加失败，请重试');
+      }
       console.error('Create student error:', error);
     } finally {
       setLoading(false);

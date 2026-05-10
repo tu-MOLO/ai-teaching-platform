@@ -5,6 +5,7 @@ import ConfigurableSelect from '../../components/Common/ConfigurableSelect'
 import { refreshDashboardStats } from '../../stores/dashboard'
 import { createLessonPlan, getLessonPlan, updateLessonPlan } from '../../services/lessonPlan'
 import type { LessonPlanFormData } from '../../types/forms'
+import { BusinessError } from '../../types/error'
 import './index.css'
 
 const { Title, Text } = Typography
@@ -67,8 +68,12 @@ const CreateLessonPlan: React.FC = () => {
       refreshDashboardStats()
       navigate('/lesson-planner')
     } catch (error) {
-      message.error(isEdit ? '更新失败' : '创建失败')
-      console.error('Failed to save lesson plan:', error)
+      if (error instanceof BusinessError) {
+        message.error(error.message || (isEdit ? '更新失败，请检查输入信息' : '创建失败，请检查输入信息'));
+      } else {
+        message.error(isEdit ? '更新失败' : '创建失败');
+      }
+      console.error('Failed to save lesson plan:', error);
     } finally {
       setSaving(false)
     }
