@@ -17,6 +17,12 @@ class ReportService:
     """Aggregated reporting queries."""
 
     @staticmethod
+    def get_month_start(base_date: datetime, month_offset: int = 0) -> datetime:
+        year = base_date.year + (base_date.month + month_offset - 1) // 12
+        month = (base_date.month + month_offset - 1) % 12 + 1
+        return base_date.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    @staticmethod
     async def get_dashboard_stats(db: AsyncSession, user_id: Optional[str] = None) -> Dict[str, Any]:
         course_filters = [Course.is_deleted == False]
         student_filters = [Student.is_deleted == False]
@@ -76,15 +82,9 @@ class ReportService:
         completion_rate = round((published_lesson_plans / total_lesson_plans * 100), 0) if total_lesson_plans > 0 else 0
 
         now = datetime.now()
-        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        if current_month_start.month == 1:
-            last_month_start = current_month_start.replace(year=current_month_start.year - 1, month=12)
-        else:
-            last_month_start = current_month_start.replace(month=current_month_start.month - 1)
-        if last_month_start.month == 1:
-            two_months_ago_start = last_month_start.replace(year=last_month_start.year - 1, month=12)
-        else:
-            two_months_ago_start = last_month_start.replace(month=last_month_start.month - 1)
+        current_month_start = ReportService.get_month_start(now, 0)
+        last_month_start = ReportService.get_month_start(now, -1)
+        two_months_ago_start = ReportService.get_month_start(now, -2)
 
         monthly_courses = (
             await db.execute(
@@ -374,9 +374,8 @@ class ReportService:
         trends: List[Dict[str, Any]] = []
         current_date = datetime.now()
         for offset in range(months - 1, -1, -1):
-            month_date = current_date - timedelta(days=offset * 30)
-            month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+            month_start = ReportService.get_month_start(current_date, -offset)
+            month_end = ReportService.get_month_start(current_date, -offset + 1) - timedelta(seconds=1)
 
             courses_count = (
                 await db.execute(
@@ -408,7 +407,7 @@ class ReportService:
 
             trends.append(
                 {
-                    "month": month_date.strftime("%Y-%m"),
+                    "month": month_start.strftime("%Y-%m"),
                     "newCourses": courses_count,
                     "newStudents": students_count,
                     "newLessonPlans": lesson_plans_count,
