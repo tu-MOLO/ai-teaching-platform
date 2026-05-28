@@ -45,7 +45,7 @@ const AIAssistant: React.FC = () => {
             <div>
               <Space align="center">
                 <Title level={3} style={{ margin: 0 }}>AI 智能助手</Title>
-                <Tag color="blue">即将上线</Tag>
+                <Tag color="warning">即将上线</Tag>
               </Space>
               <Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
                 AI功能正在研发中，上线后将为您提供智能化的教学辅助体验

@@ -3,8 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI教学平台</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="AI教学平台 - 面向教学场景的智能管理平台，聚焦课程、学生、资源与教案的真实使用流程。" />
+    <meta name="theme-color" content="#fefcf8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>AI教学平台 - 教学管理系统</title>
+    <script>
+      (function() {
+        var theme = localStorage.getItem('ai-teaching-platform-theme');
+        if (theme) {
+          try {
+            var parsed = JSON.parse(theme);
+            if (parsed && parsed.state && parsed.state.currentColors) {
+              var colors = parsed.state.currentColors;
+              var root = document.documentElement;
+              for (var key in colors) {
+                if (colors.hasOwnProperty(key)) {
+                  var cssVar = '--' + key.replace(/_/g, '-');
+                  root.style.setProperty(cssVar, colors[key]);
+                }
+              }
+            }
+          } catch(e) {}
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

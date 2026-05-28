@@ -1,48 +1,70 @@
 /* ============================================
-   AI教学平台 - 设计系统变量
-   采用暖调专业配色方案
+   AI教学平台 - 设计系统变量 v2.0
+   焕新暖调专业配色方案 · 更精致 · 更统一
    ============================================ */
 
 :root {
-  /* 主色调 - 暖调专业 */
+  /* ========== 主色调 - 焕新暖调 ========== */
   --color-primary: #c9a87c;
-  --color-primary-light: #d9c4a3;
+  --color-primary-light: #e0cdb0;
+  --color-primary-lighter: #f0e6d6;
   --color-primary-dark: #a88b5e;
+  --color-primary-darker: #8a7048;
   --color-primary-hover: #b89b6e;
-  
-  /* 背景色 */
-  --color-bg-primary: #fefcf8;
-  --color-bg-secondary: #f5f0e8;
-  --color-bg-tertiary: #ebe5db;
-  --color-bg-card: #ffffff;
-  --color-bg-sidebar: #1a1a2e;
-  
-  /* 文字色 */
-  --color-text-primary: #2c2c2c;
-  --color-text-secondary: #5a5a5a;
-  --color-text-tertiary: #8a8a8a;
-  --color-text-inverse: #ffffff;
-  --color-text-muted: #a0a0a0;
-  
-  /* 功能色 */
+  --color-primary-active: #9a7e54;
+
+  /* ========== 语义色 ========== */
   --color-success: #6b9b7a;
+  --color-success-light: #e8f3ec;
+  --color-success-dark: #4d7a5a;
+
   --color-warning: #d4a574;
+  --color-warning-light: #f8efe6;
+  --color-warning-dark: #b8864e;
+
   --color-error: #c97b7b;
+  --color-error-light: #f8eaea;
+  --color-error-dark: #a85e5e;
+
   --color-info: #7a9ab8;
-  
-  /* 边框 */
-  --color-border: rgba(0, 0, 0, 0.06);
+  --color-info-light: #eaeff5;
+  --color-info-dark: #5a7a98;
+
+  /* ========== 背景色 ========== */
+  --color-bg-primary: #fefcf8;
+  --color-bg-secondary: #f6f1ea;
+  --color-bg-tertiary: #ede6dc;
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #141428;
+  --color-bg-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --color-bg-overlay: rgba(0, 0, 0, 0.45);
+  --color-bg-tooltip: #2c2c2c;
+
+  /* ========== 文字色 ========== */
+  --color-text-primary: #1c1c1e;
+  --color-text-secondary: #636366;
+  --color-text-tertiary: #aeaeb2;
+  --color-text-quaternary: #c7c7cc;
+  --color-text-inverse: #ffffff;
+  --color-text-muted: #aeaeb2;
+  --color-text-placeholder: #c7c7cc;
+
+  /* ========== 边框 ========== */
+  --color-border: rgba(0, 0, 0, 0.07);
   --color-border-light: rgba(0, 0, 0, 0.04);
+  --color-border-medium: rgba(0, 0, 0, 0.12);
   --color-divider: rgba(0, 0, 0, 0.08);
-  
-  /* 阴影系统 */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
-  
-  /* 间距系统 - 8px基准 */
+
+  /* ========== 阴影系统 ========== */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.14);
+  --shadow-glow: 0 4px 20px rgba(201, 168, 124, 0.25);
+
+  /* ========== 间距系统 - 4px基准 ========== */
+  --space-xxs: 2px;
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -50,48 +72,78 @@
   --space-xl: 32px;
   --space-2xl: 48px;
   --space-3xl: 64px;
-  
-  /* 圆角 */
+  --space-4xl: 80px;
+
+  /* ========== 圆角 ========== */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-full: 9999px;
-  
-  /* 字体 */
-  --font-family-base: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-family-mono: "SF Mono", "Fira Code", monospace;
-  
-  /* 字号 */
-  --font-size-xs: 12px;
+
+  /* ========== 字体系统 ========== */
+  --font-family-base: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-display: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: "SF Mono", "Fira Code", "Cascadia Code", "JetBrains Mono", monospace;
+
+  /* 字号 - 使用黄金比例 */
+  --font-size-xs: 11px;
   --font-size-sm: 13px;
   --font-size-base: 14px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
   --font-size-xl: 20px;
   --font-size-2xl: 24px;
-  --font-size-3xl: 32px;
-  
+  --font-size-3xl: 30px;
+  --font-size-4xl: 38px;
+
   /* 字重 */
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  
+
   /* 行高 */
+  --line-height-none: 1;
   --line-height-tight: 1.25;
+  --line-height-snug: 1.375;
   --line-height-normal: 1.5;
-  --line-height-relaxed: 1.75;
-  
-  /* 过渡 */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
-  
-  /* Z-index层级 */
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 1.75;
+
+  /* 字间距 */
+  --letter-spacing-tight: -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.02em;
+  --letter-spacing-wider: 0.05em;
+
+  /* ========== 过渡 ========== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ========== Z-index层级 ========== */
+  --z-base: 1;
   --z-dropdown: 1000;
   --z-sticky: 1020;
-  --z-modal: 1040;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
   --z-popover: 1060;
   --z-tooltip: 1080;
+
+  /* ========== 布局 ========== */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 80px;
+  --header-height: 64px;
+  --header-height-mobile: 56px;
+  --content-max-width: 1440px;
+  --content-padding: 24px;
+  --content-padding-mobile: 16px;
+
+  /* ========== 骨架屏 ========== */
+  --skeleton-bg: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-bg-tertiary) 50%, var(--color-bg-secondary) 75%);
+  --skeleton-bg-size: 200% 100%;
 }

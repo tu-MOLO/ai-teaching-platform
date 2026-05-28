@@ -1,72 +1,89 @@
+/* ============================================
+   通知中心页面样式 v2.0
+   ============================================ */
+
 .notifications-page {
-  padding: 24px;
+  padding: var(--content-padding);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .notifications-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
 }
 
 .notifications-title {
-  margin-bottom: 8px !important;
+  margin-bottom: var(--space-xs) !important;
+  font-size: var(--font-size-2xl) !important;
 }
 
 .notifications-subtitle {
-  color: #666;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 
 .notifications-card {
-  border-radius: 16px;
-}
-
-.notification-row.is-unread {
-  background: rgba(201, 168, 124, 0.06);
-}
-
-.notification-row.is-read {
-  opacity: 0.88;
+  border-radius: var(--radius-lg) !important;
+  overflow: hidden;
 }
 
 .notification-row {
-  padding: 16px !important;
-  border-radius: 12px;
-  margin-bottom: 12px;
+  padding: var(--space-md) var(--space-lg) !important;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-sm);
+  transition: background var(--transition-fast);
+}
+
+.notification-row.is-unread {
+  background: rgba(201, 168, 124, 0.04);
+}
+
+.notification-row.is-read {
+  opacity: 0.85;
+}
+
+.notification-row:hover {
+  background: var(--color-bg-secondary) !important;
 }
 
 .notification-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(122, 154, 184, 0.12);
-  color: #7a9ab8;
+  color: var(--color-info);
   font-size: 18px;
 }
 
 .notification-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .notification-content {
-  color: #444;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
   white-space: pre-wrap;
+  line-height: var(--line-height-normal);
 }
 
 .notification-time {
-  color: #999;
-  font-size: 12px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
 }
 
 @media (max-width: 768px) {
   .notifications-page {
-    padding: 16px;
+    padding: var(--content-padding-mobile);
   }
 
   .notifications-header {

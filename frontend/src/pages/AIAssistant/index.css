@@ -1,49 +1,75 @@
+/* ============================================
+   AI助手页面样式 v2.0
+   统一使用暖调配色方案
+   ============================================ */
+
 .ai-assistant-page {
-  padding: 0;
-  min-height: 100%;
+  padding: var(--content-padding);
+  min-height: calc(100vh - var(--header-height));
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .ai-assistant-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
 }
 
 .ai-assistant-content {
-  padding: 8px 0;
+  padding: var(--space-sm) 0;
 }
 
 .ai-assistant-header {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid #f0f0f0;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .ai-assistant-header-icon {
-  font-size: 48px;
-  color: #1677ff;
-  background: linear-gradient(135deg, #e6f4ff 0%, #bae0ff 100%);
-  padding: 16px;
-  border-radius: 16px;
+  font-size: 44px;
+  color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-light) 100%);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
 }
 
 .ai-feature-card {
-  border-radius: 8px;
-  transition: all 0.3s;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-normal);
 }
 
 .ai-feature-card:hover {
-  border-color: #1677ff;
+  border-color: var(--color-primary-light);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
 .ai-feature-icon {
-  font-size: 24px;
-  color: #1677ff;
-  background: #e6f4ff;
-  padding: 8px;
-  border-radius: 8px;
+  font-size: 22px;
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 768px) {
+  .ai-assistant-page {
+    padding: var(--content-padding-mobile);
+  }
+
+  .ai-assistant-header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
 }

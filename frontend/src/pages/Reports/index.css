@@ -1,7 +1,14 @@
+/* ============================================
+   数据报告页面样式 v2.0
+   ============================================ */
+
 .reports-container {
-  padding: 24px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  padding: var(--content-padding);
+  background: var(--color-bg-primary);
+  min-height: calc(100vh - var(--header-height));
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  width: 100%;
 }
 
 .reports-loading {
@@ -13,56 +20,57 @@
 }
 
 .reports-loading p {
-  margin-top: 16px;
-  color: #666;
+  margin-top: var(--space-md);
+  color: var(--color-text-secondary);
 }
 
-/* 头部样式 */
 .reports-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-xl);
 }
 
 .reports-title {
-  margin: 0 0 8px 0 !important;
-  color: #333;
-  font-weight: 600;
+  margin: 0 0 var(--space-xs) 0 !important;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-2xl) !important;
 }
 
 .reports-subtitle {
-  color: #666;
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 
-/* 统计卡片样式 */
+/* 统计卡片 */
 .stats-row {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-xl);
 }
 
 .stat-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--color-border) !important;
+  transition: all var(--transition-normal) !important;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md) !important;
 }
 
 .stat-card-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .stat-icon-wrapper {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .stat-info {
@@ -70,73 +78,73 @@
 }
 
 .stat-value {
-  font-size: 28px;
-  font-weight: 600;
-  color: #333;
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
   line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 14px;
-  color: #666;
-  margin-top: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
 }
 
 .stat-trend {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  margin-top: 4px;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-xs);
 }
 
 .stat-trend.up {
-  color: #6b9b7a;
+  color: var(--color-success);
 }
 
 .stat-trend.down {
-  color: #e74c3c;
+  color: var(--color-error);
 }
 
-/* 图表卡片样式 */
+/* 图表卡片 */
 .charts-row {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-xl);
 }
 
 .chart-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--color-border) !important;
   height: 100%;
 }
 
 .chart-card .ant-card-head {
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 500;
+  border-bottom: 1px solid var(--color-border-light);
+  font-weight: var(--font-weight-medium);
 }
 
 .chart-card .ant-card-head-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .chart-placeholder {
-  padding: 16px 0;
+  padding: var(--space-md) 0;
 }
 
-/* 饼图样式 */
 .pie-chart {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .chart-legend-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f5f5f5;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .chart-legend-item:last-child {
@@ -144,353 +152,106 @@
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 3px;
   flex-shrink: 0;
 }
 
 .legend-label {
   flex: 1;
-  font-size: 14px;
-  color: #333;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
 }
 
 .legend-value {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
 }
 
 .legend-percent {
-  font-size: 12px;
-  color: #999;
-  min-width: 45px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  min-width: 40px;
   text-align: right;
 }
 
-/* 柱状图样式 */
 .bar-chart {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .bar-chart-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .bar-label {
   width: 60px;
-  font-size: 13px;
-  color: #666;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
   flex-shrink: 0;
 }
 
 .bar-wrapper {
   flex: 1;
   height: 20px;
-  background: #f5f5f5;
-  border-radius: 10px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .bar-fill {
   height: 100%;
-  border-radius: 10px;
+  border-radius: var(--radius-full);
   transition: width 0.5s ease;
 }
 
 .bar-value {
   width: 60px;
-  font-size: 13px;
-  color: #333;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
   text-align: right;
   flex-shrink: 0;
 }
 
-/* 折线图样式 */
 .line-chart {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-lg);
 }
 
 .trend-summary {
   display: flex;
   justify-content: space-around;
-  padding: 16px;
-  background: #fafafa;
-  border-radius: 8px;
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
 }
 
 .trend-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .trend-label {
-  font-size: 12px;
-  color: #999;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
 }
 
 .trend-value {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
-.mini-chart {
-  padding: 0 8px;
-}
-
-.mini-chart-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 80px;
-  padding: 0 8px;
-}
-
-.mini-bar {
-  width: 24px;
-  border-radius: 4px 4px 0 0;
-  transition: all 0.3s ease;
-}
-
-.mini-bar:hover {
-  opacity: 0.8;
-}
-
-.mini-chart-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  padding: 0 8px;
-}
-
-.mini-chart-labels span {
-  font-size: 11px;
-  color: #999;
-  width: 24px;
-  text-align: center;
-}
-
-/* 活动列表样式 */
-.activity-card {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.activity-card .ant-card-head {
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 500;
-}
-
-.activity-card .ant-card-head-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.activity-item {
-  padding: 16px 0 !important;
-  border-bottom: 1px solid #f5f5f5 !important;
-}
-
-.activity-item:last-child {
-  border-bottom: none !important;
-}
-
-.activity-icon-wrapper {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.activity-content {
-  flex: 1;
-  margin-left: 12px;
-}
-
-.activity-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.activity-desc {
-  font-size: 13px;
-  color: #666;
-}
-
-.activity-time {
-  font-size: 12px;
-  color: #999;
-  background: #f5f5f5;
-  border: none;
-}
-
-/* 响应式调整 */
 @media (max-width: 768px) {
   .reports-container {
-    padding: 16px;
+    padding: var(--content-padding-mobile);
   }
-
-  .stat-value {
-    font-size: 24px;
-  }
-
-  .stat-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-  }
-
-  .trend-summary {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .mini-chart-bars {
-    height: 60px;
-  }
-
-  .mini-bar {
-    width: 16px;
-  }
-
-  .mini-chart-labels span {
-    width: 16px;
-    font-size: 10px;
-  }
-}
-
-/* 数据更新动画 */
-.reports-updating {
-  position: relative;
-}
-
-.reports-updating::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.5);
-  z-index: 10;
-  pointer-events: none;
-  animation: fadeInOut 0.3s ease;
-}
-
-@keyframes fadeInOut {
-  0% { opacity: 0; }
-  50% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* 头部刷新指示器 */
-.reports-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.reports-header-left {
-  flex: 1;
-}
-
-.reports-header-right {
-  display: flex;
-  align-items: center;
-}
-
-.refresh-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(107, 155, 122, 0.1);
-  border-radius: 16px;
-  color: #6b9b7a;
-  font-size: 12px;
-}
-
-.refresh-text {
-  white-space: nowrap;
-}
-
-/* 卡片数据更新动画 */
-.stat-card {
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.stat-value {
-  transition: all 0.3s ease;
-}
-
-/* 图表卡片动画 */
-.chart-card {
-  transition: all 0.3s ease;
-}
-
-.chart-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-/* 活动项动画 */
-.activity-item {
-  transition: all 0.2s ease;
-}
-
-.activity-item:hover {
-  background: #fafafa;
-  border-radius: 8px;
-  padding-left: 8px;
-  padding-right: 8px;
-  margin-left: -8px;
-  margin-right: -8px;
-}
-
-/* 迷你图表柱状图动画 */
-.mini-bar {
-  transition: height 0.5s ease, background 0.3s ease;
-}
-
-/* 进度条动画 */
-.bar-fill {
-  transition: width 0.5s ease;
-}
-
-/* 统计数据变化时的脉冲效果 */
-@keyframes statPulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-    color: #6b9b7a;
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.stat-value-updating {
-  animation: statPulse 0.5s ease-in-out;
 }
