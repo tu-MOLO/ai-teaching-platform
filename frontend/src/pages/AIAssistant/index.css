@@ -1,47 +1,48 @@
 /* ============================================
-   AI助手页面样式 v2.0
-   统一使用暖调配色方案
+   AI助手页面样式 v3.0 - 去卡片化
    ============================================ */
 
 .ai-assistant-page {
   padding: var(--content-padding);
-  min-height: calc(100vh - var(--header-height));
   max-width: var(--content-max-width);
   margin: 0 auto;
   width: 100%;
-}
-
-.ai-assistant-card {
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-border);
-}
-
-.ai-assistant-content {
-  padding: var(--space-sm) 0;
 }
 
 .ai-assistant-header {
   display: flex;
   align-items: flex-start;
   gap: var(--space-lg);
-  padding-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: var(--section-gap);
+  border-bottom: 1px solid var(--color-divider);
+  margin-bottom: var(--section-gap);
 }
 
 .ai-assistant-header-icon {
-  font-size: 44px;
+  font-size: 40px;
   color: var(--color-primary);
-  background: linear-gradient(135deg, var(--color-primary-lighter) 0%, var(--color-primary-light) 100%);
+  background: var(--color-primary-lighter);
   padding: var(--space-md);
   border-radius: var(--radius-lg);
   flex-shrink: 0;
 }
 
+.ai-assistant-header-body {
+  flex: 1;
+}
+
+.ai-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+}
+
 .ai-feature-card {
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
+  padding: var(--space-lg);
   transition: all var(--transition-normal);
+  background: var(--color-bg-card);
 }
 
 .ai-feature-card:hover {
@@ -51,23 +52,37 @@
 }
 
 .ai-feature-icon {
-  font-size: 22px;
-  color: var(--color-primary);
-  background: var(--color-primary-lighter);
-  padding: var(--space-sm);
-  border-radius: var(--radius-md);
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  font-size: 22px;
+  color: var(--color-primary);
+  background: var(--color-primary-lighter);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.ai-feature-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.ai-feature-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.ai-feature-desc {
+  font-size: var(--type-caption-size);
+  color: var(--type-caption-color);
+  line-height: 1.5;
 }
 
 @media (max-width: 768px) {
-  .ai-assistant-page {
-    padding: var(--content-padding-mobile);
-  }
-
   .ai-assistant-header {
     flex-direction: column;
     gap: var(--space-md);

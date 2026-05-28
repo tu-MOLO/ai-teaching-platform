@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination'
-import { Button, Card, Input, Modal, Space, Table, Tag, Typography, message } from 'antd'
-import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Input, Modal, Space, Table, Tag, message } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, BookOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { deleteCourse, getCourses, type Course as ApiCourse } from '../../services/course'
 import { refreshDashboardStats } from '../../stores/dashboard'
 
-const { Title } = Typography
 const { Search } = Input
 
 type CourseRow = ApiCourse
@@ -67,7 +66,7 @@ const Courses: React.FC = () => {
   const handleDelete = async (id: string, name: string) => {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除课程“${name}”吗？此操作不可恢复。`,
+      content: `确定要删除课程"${name}"吗？此操作不可恢复。`,
       okText: '确认删除',
       okType: 'danger',
       cancelText: '取消',
@@ -86,84 +85,59 @@ const Courses: React.FC = () => {
   }
 
   const columns = [
+    { title: '课程名称', dataIndex: 'name', key: 'name' },
+    { title: '学科', dataIndex: 'subject', key: 'subject' },
+    { title: '年级', dataIndex: 'grade', key: 'grade' },
+    { title: '任课教师', dataIndex: 'teacher', key: 'teacher' },
+    { title: '上课时间', dataIndex: 'schedule', key: 'schedule', render: (schedule?: string) => schedule || '-' },
     {
-      title: '课程名称',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: '学科',
-      dataIndex: 'subject',
-      key: 'subject',
-    },
-    {
-      title: '年级',
-      dataIndex: 'grade',
-      key: 'grade',
-    },
-    {
-      title: '任课教师',
-      dataIndex: 'teacher',
-      key: 'teacher',
-    },
-    {
-      title: '上课时间',
-      dataIndex: 'schedule',
-      key: 'schedule',
-      render: (schedule?: string) => schedule || '-',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
+      title: '状态', dataIndex: 'status', key: 'status',
       render: (status: CourseRow['status']) => <Tag color={statusColorMap[status]}>{statusLabelMap[status]}</Tag>,
     },
     {
-      title: '操作',
-      key: 'action',
+      title: '操作', key: 'action',
       render: (_: unknown, record: CourseRow) => (
         <Space size="middle">
-          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/courses/${record.id}/edit`)}>
-            编辑
-          </Button>
-          <Button
-            danger
-            icon={<DeleteOutlined />}
-            size="small"
-            onClick={() => handleDelete(record.id, record.name)}
-          >
-            删除
-          </Button>
+          <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/courses/${record.id}/edit`)}>编辑</Button>
+          <Button danger icon={<DeleteOutlined />} size="small" onClick={() => handleDelete(record.id, record.name)}>删除</Button>
         </Space>
       ),
     },
   ]
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card
-        title={
-          <Space>
-            <Title level={4}>课程管理</Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/courses/create')}>
-              新建课程
-            </Button>
-          </Space>
-        }
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Search
-            placeholder="搜索课程名称或教师"
-            allowClear
-            enterButton={<SearchOutlined />}
-            value={searchText}
-            onChange={(event) => {
-              const value = event.target.value
-              setSearchText(value)
-              setSearchParams(value ? { search: value } : {})
-            }}
-            style={{ width: 300 }}
-          />
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">
+            <BookOutlined className="page-title-icon" />
+            课程管理
+          </h1>
+          <p className="page-description">管理所有课程信息，创建和编辑课程内容</p>
+        </div>
+        <div className="page-header-right">
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/courses/create')}>
+            新建课程
+          </Button>
+        </div>
+      </div>
+
+      <div className="table-section">
+        <div className="table-section-toolbar">
+          <div className="table-section-toolbar-left">
+            <Search
+              placeholder="搜索课程名称或教师"
+              allowClear
+              enterButton={<SearchOutlined />}
+              value={searchText}
+              onChange={(event) => {
+                const value = event.target.value
+                setSearchText(value)
+                setSearchParams(value ? { search: value } : {})
+              }}
+              style={{ width: 300 }}
+            />
+          </div>
         </div>
         <Table
           columns={columns}
@@ -178,7 +152,7 @@ const Courses: React.FC = () => {
             onChange: (page, pageSize) => fetchCourses(page, pageSize),
           }}
         />
-      </Card>
+      </div>
     </div>
   )
 }

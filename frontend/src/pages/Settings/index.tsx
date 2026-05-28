@@ -37,7 +37,7 @@ import {
 import { usePortfolioTypesStore } from '../../stores/portfolioTypes'
 import type { BasicSettingsFormData } from '../../types/forms'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const Settings: React.FC = () => {
   const [basicForm] = Form.useForm<BasicSettingsFormData>()
@@ -398,10 +398,17 @@ const Settings: React.FC = () => {
   ]
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title={<Title level={4}>系统设置</Title>}>
-        <Tabs defaultActiveKey={defaultTab} items={items} />
-      </Card>
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">
+            <SettingOutlined className="page-title-icon" />
+            系统设置
+          </h1>
+          <p className="page-description">管理平台的基本配置与选项</p>
+        </div>
+      </div>
+      <Tabs defaultActiveKey={defaultTab} items={items} />
     </div>
   )
 }

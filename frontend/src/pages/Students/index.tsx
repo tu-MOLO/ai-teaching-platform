@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Card, Button, Table, Space, Tag, message, Typography, Input, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { Button, Table, Space, Tag, message, Input, Modal } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
 import { refreshDashboardStats } from '../../stores/dashboard';
 import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
 
-const { Title } = Typography;
 const { Search } = Input;
 interface Student {
   id: string;
@@ -42,11 +41,8 @@ const Students: React.FC = () => {
       });
       const items = response.data || [];
       const formattedStudents: Student[] = items.map((item: any) => ({
-        id: item.id,
-        name: item.name,
-        gender: item.gender,
-        grade: item.grade,
-        class_name: item.class_name,
+        id: item.id, name: item.name, gender: item.gender,
+        grade: item.grade, class_name: item.class_name,
         status: (item.is_active ? 'active' : 'inactive') as 'active' | 'inactive',
       }));
       setStudents(formattedStudents);
@@ -63,17 +59,13 @@ const Students: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchStudents(1);
-  }, [searchText, gradeFilter]);
+  useEffect(() => { fetchStudents(1); }, [searchText, gradeFilter]);
 
   const handleDelete = (id: string, name: string) => {
     Modal.confirm({
       title: '确认删除',
       content: `确定要删除学生 "${name}" 吗？此操作不可恢复。`,
-      okText: '确认删除',
-      okType: 'danger',
-      cancelText: '取消',
+      okText: '确认删除', okType: 'danger', cancelText: '取消',
       onOk: async () => {
         try {
           await studentService.deleteStudent(id);
@@ -89,95 +81,58 @@ const Students: React.FC = () => {
   };
 
   const columns = [
-    {
-      title: '姓名',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: '性别',
-      dataIndex: 'gender',
-      key: 'gender',
-      render: (gender: string) => formatGender(gender),
-    },
-    {
-      title: '年级',
-      dataIndex: 'grade',
-      key: 'grade',
-    },
-    {
-      title: '班级',
-      dataIndex: 'class_name',
-      key: 'class_name',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? '在读' : '已停用'}
-        </Tag>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: any, record: Student) => (
-        <Space size="middle">
-          <Button 
-            icon={<EditOutlined />} 
-            size="small"
-            onClick={() => navigate(`/students/${record.id}/edit`)}
-          >
-            编辑
-          </Button>
-          <Button 
-            danger 
-            icon={<DeleteOutlined />} 
-            size="small"
-            onClick={() => handleDelete(record.id, record.name)}
-          >
-            删除
-          </Button>
-        </Space>
-      ),
-    },
+    { title: '姓名', dataIndex: 'name', key: 'name' },
+    { title: '性别', dataIndex: 'gender', key: 'gender', render: (gender: string) => formatGender(gender) },
+    { title: '年级', dataIndex: 'grade', key: 'grade' },
+    { title: '班级', dataIndex: 'class_name', key: 'class_name' },
+    { title: '状态', dataIndex: 'status', key: 'status', render: (status: string) => (
+      <Tag color={status === 'active' ? 'green' : 'red'}>{status === 'active' ? '在读' : '已停用'}</Tag>
+    )},
+    { title: '操作', key: 'action', render: (_: any, record: Student) => (
+      <Space size="middle">
+        <Button icon={<EditOutlined />} size="small" onClick={() => navigate(`/students/${record.id}/edit`)}>编辑</Button>
+        <Button danger icon={<DeleteOutlined />} size="small" onClick={() => handleDelete(record.id, record.name)}>删除</Button>
+      </Space>
+    )},
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card
-        title={
-          <Space>
-            <Title level={4}>学生管理</Title>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/students/create')}
-            >
-              添加学生
-            </Button>
-          </Space>
-        }
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Search
-            placeholder="搜索学生姓名..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300, marginRight: 16 }}
-          />
-          <ConfigurableSelect
-            groupKey="student_grade"
-            placeholder="选择年级"
-            value={gradeFilter || undefined}
-            onChange={(value) => setGradeFilter((value as string) || '')}
-            allowClear
-            style={{ width: 200 }}
-          />
+    <div className="page-container">
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">
+            <TeamOutlined className="page-title-icon" />
+            学生管理
+          </h1>
+          <p className="page-description">管理学生信息，查看和编辑学生资料</p>
+        </div>
+        <div className="page-header-right">
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/students/create')}>
+            添加学生
+          </Button>
+        </div>
+      </div>
+
+      <div className="table-section">
+        <div className="table-section-toolbar">
+          <div className="table-section-toolbar-left">
+            <Search
+              placeholder="搜索学生姓名..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 300 }}
+            />
+            <ConfigurableSelect
+              groupKey="student_grade"
+              placeholder="选择年级"
+              value={gradeFilter || undefined}
+              onChange={(value) => setGradeFilter((value as string) || '')}
+              allowClear
+              style={{ width: 200 }}
+            />
+          </div>
         </div>
         <Table
           columns={columns}
@@ -192,7 +147,7 @@ const Students: React.FC = () => {
             onChange: (page, pageSize) => fetchStudents(page, pageSize),
           }}
         />
-      </Card>
+      </div>
     </div>
   );
 };

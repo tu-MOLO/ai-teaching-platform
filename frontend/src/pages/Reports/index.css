@@ -1,11 +1,9 @@
 /* ============================================
-   数据报告页面样式 v2.0
+   数据报告页面样式 v3.0 - 去卡片化 · 图表轻量
    ============================================ */
 
 .reports-container {
   padding: var(--content-padding);
-  background: var(--color-bg-primary);
-  min-height: calc(100vh - var(--header-height));
   max-width: var(--content-max-width);
   margin: 0 auto;
   width: 100%;
@@ -25,233 +23,231 @@
 }
 
 .reports-header {
-  margin-bottom: var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--section-gap);
+}
+
+.reports-header-left {
+  flex: 1;
 }
 
 .reports-title {
-  margin: 0 0 var(--space-xs) 0 !important;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--type-h1-size);
+  font-weight: var(--type-h1-weight);
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-2xl) !important;
+  margin: 0 0 var(--space-xs) 0 !important;
 }
 
-.reports-subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
-}
-
-/* 统计卡片 */
-.stats-row {
-  margin-bottom: var(--space-xl);
-}
-
-.stat-card {
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm) !important;
-  border: 1px solid var(--color-border) !important;
-  transition: all var(--transition-normal) !important;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md) !important;
-}
-
-.stat-card-content {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.stat-icon-wrapper {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.reports-title-icon {
+  color: var(--color-primary);
   font-size: 22px;
 }
 
-.stat-info {
-  flex: 1;
+.reports-subtitle {
+  font-size: var(--type-body-size);
+  color: var(--type-body-color);
 }
 
-.stat-value {
-  font-size: 26px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  margin-top: var(--space-xs);
-}
-
-.stat-trend {
+.reports-header-right {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--font-size-xs);
-  margin-top: var(--space-xs);
 }
 
-.stat-trend.up {
-  color: var(--color-success);
-}
-
-.stat-trend.down {
-  color: var(--color-error);
-}
-
-/* 图表卡片 */
-.charts-row {
-  margin-bottom: var(--space-xl);
-}
-
-.chart-card {
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm) !important;
-  border: 1px solid var(--color-border) !important;
-  height: 100%;
-}
-
-.chart-card .ant-card-head {
-  border-bottom: 1px solid var(--color-border-light);
-  font-weight: var(--font-weight-medium);
-}
-
-.chart-card .ant-card-head-title {
+.refresh-indicator {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-}
-
-.chart-placeholder {
-  padding: var(--space-md) 0;
-}
-
-.pie-chart {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.chart-legend-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) 0;
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.chart-legend-item:last-child {
-  border-bottom: none;
-}
-
-.legend-color {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.legend-label {
-  flex: 1;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-primary);
-}
-
-.legend-value {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.legend-percent {
-  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-secondary);
+  font-size: var(--type-caption-size);
   color: var(--color-text-tertiary);
-  min-width: 40px;
-  text-align: right;
 }
 
-.bar-chart {
+/* ========== 统计条 ========== */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+  padding: var(--space-lg) 0;
+  margin-bottom: var(--section-gap);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.stat-item {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: var(--space-md);
 }
 
-.bar-chart-item {
+.stat-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.stat-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-item-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.stat-item-label {
+  font-size: var(--type-caption-size);
+  color: var(--type-caption-color);
+}
+
+.stat-item-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--type-caption-size);
+  margin-top: 2px;
+}
+
+.stat-item-trend.up { color: var(--color-success); }
+.stat-item-trend.down { color: var(--color-error); }
+
+/* ========== 图表区域 - 三列去除卡片框 ========== */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+  margin-bottom: var(--section-gap);
+}
+
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-header {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
-.bar-label {
-  width: 60px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
+.chart-header-icon {
+  color: var(--color-primary);
+  font-size: 16px;
 }
 
-.bar-wrapper {
-  flex: 1;
-  height: 20px;
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.5s ease;
-}
-
-.bar-value {
-  width: 60px;
-  font-size: var(--font-size-sm);
+.chart-header-title {
+  font-size: var(--type-h3-size);
+  font-weight: var(--type-h3-weight);
   color: var(--color-text-primary);
-  text-align: right;
-  flex-shrink: 0;
 }
 
-.line-chart {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-}
-
-.trend-summary {
-  display: flex;
-  justify-content: space-around;
-  padding: var(--space-md);
-  background: var(--color-bg-secondary);
+.chart-body {
+  width: 100%;
+  height: 260px;
+  background: var(--color-bg-subtle);
   border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
 }
 
-.trend-item {
+/* ========== 最近活动 ========== */
+.activity-section {
+  margin-bottom: 0;
+}
+
+.activity-list {
   display: flex;
   flex-direction: column;
+}
+
+.activity-item {
+  display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
 }
 
-.trend-label {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+.activity-item:hover {
+  background: var(--color-bg-subtle);
 }
 
-.trend-value {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+.activity-item + .activity-item {
+  border-top: 1px solid var(--color-border-light);
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.activity-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activity-title-text {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+}
+
+.activity-desc-text {
+  font-size: var(--type-caption-size);
+  color: var(--type-caption-color);
+}
+
+.activity-time {
+  font-size: var(--type-caption-size);
+  color: var(--color-text-quaternary);
+  flex-shrink: 0;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .reports-container {
-    padding: var(--content-padding-mobile);
+  .reports-header {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .stats-strip {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-strip {
+    grid-template-columns: 1fr;
   }
 }

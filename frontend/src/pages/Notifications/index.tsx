@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Card, Empty, List, Popconfirm, Select, Space, Spin, Tag, Typography, message } from 'antd'
+import { Button, Empty, Popconfirm, Select, Spin, Tag, Typography, message } from 'antd'
 import { BellOutlined, DeleteOutlined, ReadOutlined } from '@ant-design/icons'
 import {
   deleteAllRead,
@@ -27,7 +27,6 @@ const formatTime = (dateString: string): string => {
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-
   if (diff < 60000) return '刚刚'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
@@ -57,9 +56,7 @@ const NotificationsPage: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    loadNotifications()
-  }, [typeFilter, readFilter])
+  useEffect(() => { loadNotifications() }, [typeFilter, readFilter])
 
   const unreadCount = useMemo(() => items.filter((item) => !item.read).length, [items])
 
@@ -68,9 +65,7 @@ const NotificationsPage: React.FC = () => {
       await markAsRead(id)
       setItems((prev) => prev.map((item) => (item.id === id ? { ...item, read: true } : item)))
       message.success('已标记为已读')
-    } catch {
-      message.error('标记失败')
-    }
+    } catch { message.error('标记失败') }
   }
 
   const handleMarkAllRead = async () => {
@@ -78,9 +73,7 @@ const NotificationsPage: React.FC = () => {
       await markAllAsRead()
       setItems((prev) => prev.map((item) => ({ ...item, read: true })))
       message.success('已全部标记为已读')
-    } catch {
-      message.error('操作失败')
-    }
+    } catch { message.error('操作失败') }
   }
 
   const handleDelete = async (id: string) => {
@@ -88,9 +81,7 @@ const NotificationsPage: React.FC = () => {
       await deleteNotification(id)
       setItems((prev) => prev.filter((item) => item.id !== id))
       message.success('通知已删除')
-    } catch {
-      message.error('删除失败')
-    }
+    } catch { message.error('删除失败') }
   }
 
   const handleDeleteRead = async () => {
@@ -98,101 +89,78 @@ const NotificationsPage: React.FC = () => {
       await deleteAllRead()
       setItems((prev) => prev.filter((item) => !item.read))
       message.success('已删除全部已读通知')
-    } catch {
-      message.error('删除失败')
-    }
+    } catch { message.error('删除失败') }
   }
 
   return (
     <div className="notifications-page">
       <div className="notifications-header">
-        <div>
-          <Title level={2} className="notifications-title">通知中心</Title>
-          <Text className="notifications-subtitle">
-            查看系统通知与业务提醒，避免遗漏日常教学事务。
-          </Text>
+        <div className="notifications-header-left">
+          <Title level={2} className="notifications-title">
+            <BellOutlined className="notifications-title-icon" />
+            通知中心
+          </Title>
+          <Text className="notifications-subtitle">查看系统通知与业务提醒，避免遗漏日常教学事务。</Text>
         </div>
-        <Space wrap>
+        <div className="notifications-toolbar">
           <Select
-            allowClear
-            placeholder="筛选类型"
-            style={{ width: 140 }}
-            value={typeFilter}
-            onChange={(value) => setTypeFilter(value)}
-            options={Object.values(NotificationType).map((value) => ({
-              label: TYPE_LABELS[value],
-              value,
-            }))}
+            allowClear placeholder="筛选类型" style={{ width: 140 }}
+            value={typeFilter} onChange={(value) => setTypeFilter(value)}
+            options={Object.values(NotificationType).map((value) => ({ label: TYPE_LABELS[value], value }))}
           />
-          <Select
-            style={{ width: 140 }}
-            value={readFilter}
-            onChange={setReadFilter}
+          <Select style={{ width: 140 }} value={readFilter} onChange={setReadFilter}
             options={[
               { label: '全部状态', value: 'all' },
               { label: '仅未读', value: 'unread' },
               { label: '仅已读', value: 'read' },
             ]}
           />
-          <Button icon={<ReadOutlined />} disabled={!unreadCount} onClick={handleMarkAllRead}>
-            全部已读
-          </Button>
+          <Button icon={<ReadOutlined />} disabled={!unreadCount} onClick={handleMarkAllRead}>全部已读</Button>
           <Popconfirm title="确定删除全部已读通知吗？" onConfirm={handleDeleteRead} disabled={!items.some((item) => item.read)}>
-            <Button danger icon={<DeleteOutlined />} disabled={!items.some((item) => item.read)}>
-              清理已读
-            </Button>
+            <Button danger icon={<DeleteOutlined />} disabled={!items.some((item) => item.read)}>清理已读</Button>
           </Popconfirm>
-        </Space>
+        </div>
       </div>
 
-      <Card className="notifications-card">
-        <Spin spinning={loading}>
-          {items.length ? (
-            <List
-              itemLayout="horizontal"
-              dataSource={items}
-              renderItem={(item) => (
-                <List.Item
-                  className={`notification-row ${item.read ? 'is-read' : 'is-unread'}`}
-                  actions={[
-                    !item.read ? (
-                      <Button type="link" key="read" onClick={() => handleMarkRead(item.id)}>
-                        标记已读
-                      </Button>
-                    ) : null,
-                    <Popconfirm title="确定删除这条通知吗？" onConfirm={() => handleDelete(item.id)} key="delete">
-                      <Button type="link" danger>
-                        删除
-                      </Button>
-                    </Popconfirm>,
-                  ].filter(Boolean)}
-                >
-                  <List.Item.Meta
-                    avatar={<div className="notification-avatar"><BellOutlined /></div>}
-                    title={
-                      <Space wrap>
-                        <span>{item.title}</span>
-                        <Tag color={item.read ? 'default' : 'processing'}>
-                          {item.read ? '已读' : '未读'}
-                        </Tag>
-                        <Tag>{TYPE_LABELS[item.type]}</Tag>
-                      </Space>
-                    }
-                    description={
-                      <div className="notification-meta">
-                        <div className="notification-content">{item.content}</div>
-                        <div className="notification-time">{formatTime(item.created_at)}</div>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
-          ) : (
-            <Empty description="暂无通知" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          )}
-        </Spin>
-      </Card>
+      <Spin spinning={loading}>
+        {items.length ? (
+          <div className="notification-list">
+            {items.map((item) => (
+              <div key={item.id} className={`notification-row ${item.read ? 'is-read' : 'is-unread'}`}>
+                <div className="notification-avatar" style={{
+                  background: item.read ? 'rgba(122, 154, 184, 0.08)' : 'rgba(201, 168, 124, 0.12)',
+                  color: item.read ? 'var(--color-info)' : 'var(--color-primary)'
+                }}>
+                  <BellOutlined />
+                </div>
+                <div className="notification-body">
+                  <div className="notification-body-header">
+                    <div className="notification-body-title">
+                      {item.title}
+                      <Tag color={item.read ? 'default' : 'processing'} style={{ marginLeft: 8 }}>
+                        {item.read ? '已读' : '未读'}
+                      </Tag>
+                      <Tag style={{ marginLeft: 4 }}>{TYPE_LABELS[item.type]}</Tag>
+                    </div>
+                    <div className="notification-body-time">{formatTime(item.created_at)}</div>
+                  </div>
+                  <div className="notification-body-content">{item.content}</div>
+                </div>
+                <div className="notification-actions">
+                  {!item.read && (
+                    <Button type="link" size="small" onClick={() => handleMarkRead(item.id)}>标记已读</Button>
+                  )}
+                  <Popconfirm title="确定删除这条通知吗？" onConfirm={() => handleDelete(item.id)}>
+                    <Button type="link" danger size="small">删除</Button>
+                  </Popconfirm>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Empty description="暂无通知" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+      </Spin>
     </div>
   )
 }
