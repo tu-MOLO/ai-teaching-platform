@@ -1,62 +1,197 @@
-import React from 'react';
-import { Typography, Tag, Space } from 'antd';
+import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Button, Empty, Spin, Tooltip } from 'antd'
 import {
-  RobotOutlined,
-  FileTextOutlined,
-  BulbOutlined,
-  CheckCircleOutlined,
-  ExperimentOutlined,
-  RocketOutlined,
-} from '@ant-design/icons';
-import './index.css';
-
-const { Title, Text, Paragraph } = Typography;
-
-const features = [
-  { icon: <FileTextOutlined />, title: '智能教案生成', description: '基于课程目标和学生情况，一键生成结构化教案' },
-  { icon: <BulbOutlined />, title: '个性化学习建议', description: '根据学生档案和能力雷达图，提供针对性学习建议' },
-  { icon: <CheckCircleOutlined />, title: '自动作业批改', description: '支持客观题自动评分，主观题辅助评估' },
-  { icon: <ExperimentOutlined />, title: '学情分析报告', description: 'AI驱动的班级和学生个体学情趋势分析' },
-];
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from '@ant-design/icons'
+import { useAIStore } from '../../stores/ai'
+import { streamChatMessage, deleteConversation, type Message, MODULE_OPTIONS } from '../../services/ai'
+import ChatMessage from '../../components/AIAssistant/ChatMessage'
+import ChatInput from '../../components/AIAssistant/ChatInput'
+import ConversationList from '../../components/AIAssistant/ConversationList'
+import './index.css'
 
 const AIAssistant: React.FC = () => {
-  return (
-    <div className="ai-assistant-page">
-      <div className="ai-assistant-header">
-        <RobotOutlined className="ai-assistant-header-icon" />
-        <div className="ai-assistant-header-body">
-          <Space align="center" style={{ marginBottom: 8 }}>
-            <Title level={2} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              AI 智能助手
-            </Title>
-            <Tag color="warning">即将上线</Tag>
-          </Space>
-          <Paragraph type="secondary" style={{ margin: 0 }}>
-            AI功能正在研发中，上线后将为您提供智能化的教学辅助体验
-          </Paragraph>
+  const navigate = useNavigate()
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  const {
+    conversations,
+    currentConversationId,
+    messages,
+    isStreaming,
+    aiConfig,
+    configLoaded,
+    loadConversations,
+    selectConversation,
+    addMessage,
+    updateLastAssistantMessage,
+    setStreaming,
+    setCurrentConversationId,
+    loadAIConfig,
+  } = useAIStore()
+
+  useEffect(() => {
+    loadConversations()
+    loadAIConfig()
+  }, [])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  const handleSendMessage = async (content: string, module?: string) => {
+    if (!content.trim() || isStreaming) return
+
+    const userMessage: Message = {
+      id: `temp_${Date.now()}`,
+      conversation_id: currentConversationId || '',
+      role: 'user',
+      content,
+      tool_calls: null,
+      tool_call_id: null,
+      module_tag: module || null,
+      created_at: new Date().toISOString(),
+    }
+    addMessage(userMessage)
+
+    const assistantMessage: Message = {
+      id: `temp_assistant_${Date.now()}`,
+      conversation_id: currentConversationId || '',
+      role: 'assistant',
+      content: '',
+      tool_calls: null,
+      tool_call_id: null,
+      module_tag: null,
+      created_at: new Date().toISOString(),
+    }
+    addMessage(assistantMessage)
+    setStreaming(true)
+
+    let fullContent = ''
+
+    try {
+      const stream = streamChatMessage({
+        message: content,
+        conversation_id: currentConversationId || undefined,
+        module: module || undefined,
+        stream: true,
+      })
+
+      for await (const event of stream) {
+        if (event.type === 'content' && event.content) {
+          fullContent += event.content
+          updateLastAssistantMessage(fullContent)
+        }
+        if (event.type === 'tool_call' && event.tool_name) {
+          // Could show tool call indicator
+        }
+        if (event.type === 'done' && event.conversation_id) {
+          if (!currentConversationId) {
+            setCurrentConversationId(event.conversation_id)
+          }
+        }
+        if (event.type === 'error') {
+          fullContent += `\n\n⚠️ ${event.content || '发生错误'}`
+          updateLastAssistantMessage(fullContent)
+        }
+      }
+    } catch {
+      fullContent += '\n\n⚠️ 请求失败，请稍后重试'
+      updateLastAssistantMessage(fullContent)
+    } finally {
+      setStreaming(false)
+      loadConversations()
+    }
+  }
+
+  const handleNewConversation = () => {
+    selectConversation(null)
+  }
+
+  const handleDeleteConversation = async (id: string) => {
+    try {
+      await deleteConversation(id)
+      if (currentConversationId === id) {
+        selectConversation(null)
+      }
+      loadConversations()
+    } catch {
+      // ignore
+    }
+  }
+
+  const hasApiKey = aiConfig?.api_key || aiConfig?.is_user_configured
+
+  if (!configLoaded) {
+    return (
+      <div className="ai-assistant-page">
+        <div className="ai-assistant-loading">
+          <Spin size="large" />
         </div>
       </div>
+    )
+  }
 
-      <div className="section-heading">
-        <RocketOutlined className="section-heading-icon" />
-        <span className="section-heading-text">计划推出的功能</span>
+  if (!hasApiKey && !aiConfig?.api_key) {
+    return (
+      <div className="ai-assistant-page">
+        <div className="ai-assistant-no-config">
+          <Empty
+            description="请先配置 API 密钥以启用 AI 助手功能"
+          >
+            <Button type="primary" onClick={() => navigate('/settings')}>
+              前往设置
+            </Button>
+          </Empty>
+        </div>
       </div>
+    )
+  }
 
-      <div className="ai-features-grid">
-        {features.map((feature, index) => (
-          <div key={index} className="ai-feature-card">
-            <Space align="start" size="middle">
-              <div className="ai-feature-icon">{feature.icon}</div>
-              <div className="ai-feature-body">
-                <Text strong className="ai-feature-title">{feature.title}</Text>
-                <Text className="ai-feature-desc">{feature.description}</Text>
-              </div>
-            </Space>
-          </div>
-        ))}
+  return (
+    <div className="ai-assistant-page">
+      <div className={`ai-assistant-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header">
+          {!sidebarCollapsed && <span className="sidebar-title">对话列表</span>}
+          <Tooltip title={sidebarCollapsed ? '展开' : '收起'}>
+            <Button
+              type="text"
+              icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              size="small"
+            />
+          </Tooltip>
+        </div>
+        {!sidebarCollapsed && (
+          <ConversationList
+            conversations={conversations}
+            currentId={currentConversationId}
+            onSelect={selectConversation}
+            onDelete={handleDeleteConversation}
+            onNew={handleNewConversation}
+          />
+        )}
+      </div>
+      <div className="ai-assistant-main">
+        <div className="chat-messages">
+          {messages.length === 0 ? (
+            <div className="chat-empty">
+              <Empty description="开始一段新对话" />
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <ChatMessage key={msg.id} message={msg} />
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        <ChatInput onSend={handleSendMessage} disabled={isStreaming} moduleOptions={MODULE_OPTIONS} />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AIAssistant;
+export default AIAssistant

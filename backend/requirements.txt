@@ -31,6 +31,7 @@ aiohttp==3.9.3
 # 工具库
 python-dotenv==1.0.1
 orjson==3.9.13
+cryptography>=42.0.0
 
 # 导出功能
 weasyprint==59.0

@@ -78,6 +78,13 @@ class Settings(BaseSettings):
     # Redis配置（可选，用于缓存和会话）
     REDIS_URL: Optional[str] = None
 
+    # BigModel API配置
+    BIGMODEL_API_KEY: str = ""
+    BIGMODEL_API_BASE: str = "https://open.bigmodel.cn/api/paas/v4"
+    BIGMODEL_MODEL: str = "glm-4.7-flash"
+    AI_MAX_CONTEXT_MESSAGES: int = 20
+    AI_REQUEST_RATE_LIMIT: int = 30
+
     # 日志配置
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

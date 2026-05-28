@@ -13,6 +13,8 @@ from app.models.audit_log import AuditLog, AuditAction, AuditLogBuilder, log_aud
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
 from app.models.lesson_template import LessonTemplate
 from app.models.dropdown_option import DropdownOption
+from app.models.ai import AIConversation, AIMessage
+from app.models.ai_config import AIConfig
 
 __all__ = [
     "Base", "User", "UserRole", "UserStatus",
@@ -23,5 +25,7 @@ __all__ = [
     "AuditLog", "AuditAction", "AuditLogBuilder", "log_audit_action",
     "LessonPlan", "LessonPlanStatus",
     "LessonTemplate",
-    "DropdownOption"
+    "DropdownOption",
+    "AIConversation", "AIMessage",
+    "AIConfig",
 ]

@@ -1,15 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
+  ApiOutlined,
   ArrowLeftOutlined,
+  CheckCircleOutlined,
   DeleteOutlined,
+  ReloadOutlined,
   SettingOutlined,
   PlusOutlined,
   SaveOutlined,
   SkinOutlined,
   TagsOutlined,
   UnorderedListOutlined,
+  WarningOutlined,
 } from '@ant-design/icons'
 import {
+  Alert,
   Button,
   Card,
   Form,
@@ -34,10 +39,213 @@ import {
   updateDropdownOption,
   type DropdownOption,
 } from '../../services/dropdownOption'
+import {
+  getAIConfig,
+  updateAIConfig,
+  testAIConfig,
+  resetAIConfig,
+  PROVIDER_DEFAULTS,
+  type AIConfigResponse,
+  type AIConfigUpdate,
+} from '../../services/ai'
 import { usePortfolioTypesStore } from '../../stores/portfolioTypes'
 import type { BasicSettingsFormData } from '../../types/forms'
 
 const { Text } = Typography
+
+const AIConfigSection: React.FC = () => {
+  const [form] = Form.useForm()
+  const [config, setConfig] = useState<AIConfigResponse | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  useEffect(() => {
+    loadConfig()
+  }, [])
+
+  const loadConfig = async () => {
+    try {
+      const data = await getAIConfig()
+      setConfig(data)
+      form.setFieldsValue({
+        provider: data.provider,
+        api_base: data.api_base,
+        model: data.model,
+      })
+      setTestResult(null)
+    } catch {
+      message.error('加载配置失败')
+    }
+  }
+
+  const handleProviderChange = (provider: string) => {
+    const defaults = PROVIDER_DEFAULTS[provider]
+    if (defaults) {
+      form.setFieldsValue({
+        api_base: defaults.api_base,
+        model: defaults.models[0],
+      })
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields()
+      setLoading(true)
+      const updateData: AIConfigUpdate = {
+        provider: values.provider,
+        api_base: values.api_base,
+        model: values.model,
+      }
+      if (values.api_key !== undefined && values.api_key !== '') {
+        updateData.api_key = values.api_key
+      }
+      const result = await updateAIConfig(updateData)
+      setConfig(result)
+      message.success('配置已保存并生效')
+      form.setFieldValue('api_key', undefined)
+    } catch (error: any) {
+      if (error.errorFields) return
+      message.error('保存配置失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTest = async () => {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const values = await form.validateFields()
+      const testData: Record<string, string> = {}
+      if (values.provider) testData.provider = values.provider
+      if (values.api_base) testData.api_base = values.api_base
+      if (values.model) testData.model = values.model
+      if (values.api_key) testData.api_key = values.api_key
+
+      const result = await testAIConfig(Object.keys(testData).length > 0 ? testData : undefined)
+      setTestResult(result)
+      if (result.success) {
+        message.success(result.message)
+      } else {
+        message.error(result.message)
+      }
+    } catch {
+      setTestResult({ success: false, message: '测试请求失败' })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const handleReset = async () => {
+    try {
+      setLoading(true)
+      const result = await resetAIConfig()
+      setConfig(result)
+      form.setFieldsValue({
+        provider: result.provider,
+        api_base: result.api_base,
+        model: result.model,
+        api_key: undefined,
+      })
+      setTestResult(null)
+      message.success('已重置为系统默认配置')
+    } catch {
+      message.error('重置配置失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const currentProvider = Form.useWatch('provider', form) || 'zhipu'
+  const modelOptions = PROVIDER_DEFAULTS[currentProvider]?.models || []
+
+  const getStatusAlert = () => {
+    if (!config) return null
+    if (!config.api_key && !config.is_user_configured) {
+      return (
+        <Alert
+          type="warning"
+          icon={<WarningOutlined />}
+          message="请配置 API 密钥以启用 AI 助手功能"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )
+    }
+    if (config.is_user_configured) {
+      return (
+        <Alert
+          type="success"
+          icon={<CheckCircleOutlined />}
+          message={`已配置个人 API 密钥 (${config.api_key || '未设置'})`}
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )
+    }
+    return (
+      <Alert
+        type="info"
+        icon={<ApiOutlined />}
+        message="当前使用系统默认配置"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />
+    )
+  }
+
+  return (
+    <Card title={<><ApiOutlined /> AI 助手配置</>} style={{ marginBottom: 24 }}>
+      {getStatusAlert()}
+      <Form form={form} layout="vertical" initialValues={{ provider: 'zhipu' }}>
+        <Form.Item label="API 服务商" name="provider" rules={[{ required: true, message: '请选择服务商' }]}>
+          <Select onChange={handleProviderChange}>
+            <Select.Option value="zhipu">智谱 AI (Zhipu)</Select.Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item label="接口地址" name="api_base" rules={[{ required: true, message: '请输入接口地址' }]}>
+          <Input placeholder="https://open.bigmodel.cn/api/paas/v4" />
+        </Form.Item>
+
+        <Form.Item label="模型版本" name="model" rules={[{ required: true, message: '请选择模型' }]}>
+          <Select>
+            {modelOptions.map(m => (
+              <Select.Option key={m} value={m}>{m}</Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item label="API 密钥" name="api_key" extra="留空则保持当前密钥不变，输入空字符串将清除个人密钥">
+          <Input.Password placeholder="请输入API密钥" />
+        </Form.Item>
+
+        {testResult && (
+          <Alert
+            type={testResult.success ? 'success' : 'error'}
+            message={testResult.message}
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
+        <Space>
+          <Button type="primary" onClick={handleSave} loading={loading}>
+            保存配置
+          </Button>
+          <Button onClick={handleTest} loading={testing} icon={<ApiOutlined />}>
+            测试连接
+          </Button>
+          <Button onClick={handleReset} icon={<ReloadOutlined />}>
+            重置为默认值
+          </Button>
+        </Space>
+      </Form>
+    </Card>
+  )
+}
 
 const Settings: React.FC = () => {
   const [basicForm] = Form.useForm<BasicSettingsFormData>()
@@ -228,6 +436,16 @@ const Settings: React.FC = () => {
           </Form.Item>
         </Form>
       ),
+    },
+    {
+      key: 'ai',
+      label: (
+        <span>
+          <ApiOutlined style={{ marginRight: 4 }} />
+          AI 配置
+        </span>
+      ),
+      children: <AIConfigSection />,
     },
     {
       key: 'theme',
