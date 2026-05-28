@@ -1,10 +1,12 @@
 """
 教案相关的Pydantic schemas
 """
-from pydantic import BaseModel, Field
+from pydantic import Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 from enum import Enum
+
+from app.schemas.base import BaseSchema
 
 
 class LessonPlanStatus(str, Enum):
@@ -16,7 +18,7 @@ class LessonPlanStatus(str, Enum):
     ARCHIVED = "archived"
 
 
-class LessonPlanBase(BaseModel):
+class LessonPlanBase(BaseSchema):
     """
     教案基础schema
     """
@@ -39,7 +41,7 @@ class LessonPlanCreate(LessonPlanBase):
     status: Optional[LessonPlanStatus] = Field(None, description="教案状态")
 
 
-class LessonPlanUpdate(BaseModel):
+class LessonPlanUpdate(BaseSchema):
     """
     更新教案的schema
     """
@@ -65,5 +67,4 @@ class LessonPlanResponse(LessonPlanBase):
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

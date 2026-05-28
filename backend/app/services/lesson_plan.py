@@ -7,7 +7,10 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
+from app.models.notification import NotificationType
 from app.schemas.lesson_plan import LessonPlanCreate, LessonPlanUpdate
+from app.schemas.notification import NotificationCreate
+from app.services.notification import NotificationService
 
 
 class LessonPlanService:
@@ -207,6 +210,19 @@ class LessonPlanService:
         lesson_plan.status = LessonPlanStatus.PUBLISHED
         await self.db.flush()
         await self.db.refresh(lesson_plan)
+
+        await NotificationService.create(
+            self.db,
+            NotificationCreate(
+                title="教案已发布",
+                content=f"教案「{lesson_plan.title}」已发布",
+                type=NotificationType.COURSE,
+                user_id=user_id,
+                target_id=lesson_plan.id,
+                target_type="lesson_plan",
+            )
+        )
+
         return lesson_plan
 
     async def unpublish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:

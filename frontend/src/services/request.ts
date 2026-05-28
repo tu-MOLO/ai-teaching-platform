@@ -20,30 +20,21 @@ function handleAuthExpired(): void {
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const { refreshToken } = useAuthStore.getState()
-
-  if (!refreshToken) {
-    return null
-  }
-
   try {
-    const response = await axios.post('/api/v1/auth/refresh', {
-      refresh_token: refreshToken
-    })
+    const response = await axios.post('/api/v1/auth/refresh')
 
     const tokenPayload =
       response.data && typeof response.data === 'object' && response.data.data
         ? response.data.data
         : response.data
 
-    const { access_token, refresh_token } = tokenPayload ?? {}
-    const { login, refreshToken: oldRefreshToken } = useAuthStore.getState()
+    const access_token = tokenPayload?.access_token
 
     if (!access_token) {
       return null
     }
 
-    login(access_token, refresh_token || oldRefreshToken)
+    useAuthStore.getState().setToken(access_token)
     return access_token
   } catch {
     return null
@@ -102,12 +93,15 @@ request.interceptors.response.use(
     }
 
     if (responseData && responseData.data !== undefined) {
+      if (responseData.data === null) {
+        return null
+      }
+
       const hasListMeta =
         typeof responseData === 'object' &&
         responseData !== null &&
-        ['total', 'page', 'page_size', 'pages', 'items', 'unread_count'].some(
-          (key) => key in responseData
-        )
+        (['total', 'page', 'page_size'].every((key) => key in responseData) ||
+          'items' in responseData)
 
       if (hasListMeta) {
         return responseData
@@ -138,6 +132,7 @@ request.interceptors.response.use(
           return request(originalRequest)
         }
       } catch {
+        // 刷新失败，继续执行后续处理
       }
 
       handleAuthExpired()
@@ -153,6 +148,7 @@ request.interceptors.response.use(
             return request(originalRequest)
           }
         } catch {
+          // 刷新失败，继续执行后续处理
         }
       }
       handleAuthExpired()

@@ -46,6 +46,21 @@ from app.schemas.portfolio import (
     Portfolio,
     PortfolioWithStudent
 )
+from app.schemas.course import (
+    CourseCreate,
+    CourseUpdate,
+    CourseResponse
+)
+from app.schemas.lesson_plan import (
+    LessonPlanCreate,
+    LessonPlanUpdate,
+    LessonPlanResponse
+)
+from app.schemas.notification import (
+    NotificationCreate,
+    NotificationResponse,
+    NotificationListResponse
+)
 
 __all__ = [
     # Base schemas
@@ -85,5 +100,17 @@ __all__ = [
     "PortfolioCreate",
     "PortfolioUpdate",
     "Portfolio",
-    "PortfolioWithStudent"
+    "PortfolioWithStudent",
+    # Course schemas
+    "CourseCreate",
+    "CourseUpdate",
+    "CourseResponse",
+    # LessonPlan schemas
+    "LessonPlanCreate",
+    "LessonPlanUpdate",
+    "LessonPlanResponse",
+    # Notification schemas
+    "NotificationCreate",
+    "NotificationResponse",
+    "NotificationListResponse",
 ]

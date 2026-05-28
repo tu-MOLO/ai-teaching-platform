@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
 import { Card, Button, Table, Space, Tag, message, Typography, Input, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -28,7 +29,7 @@ const Students: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 });
 
   const fetchStudents = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);

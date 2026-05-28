@@ -24,7 +24,7 @@ export interface CreateCourseData {
   name: string;
   subject: string;
   grade: string;
-  teacher: string;
+  teacher?: string;
   schedule?: string;
   description?: string;
   status?: 'active' | 'inactive' | 'draft';

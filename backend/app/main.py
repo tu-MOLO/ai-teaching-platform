@@ -6,7 +6,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -19,7 +19,6 @@ from app.core.logging import get_logger, setup_logging
 from app.core.rate_limiter import init_rate_limiter
 from app.core.query_filters import setup_soft_delete_filter
 from app.core.exceptions import BusinessException, ErrorCode, get_error_message
-from app.core.security import get_current_user_id_with_version_check
 
 # 设置日志
 setup_logging()
@@ -152,6 +151,10 @@ def register_middlewares(app: FastAPI) -> None:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response
 
     @app.middleware("http")
@@ -191,6 +194,22 @@ def register_middlewares(app: FastAPI) -> None:
                 f"({process_time:.3f}s)"
             )
             raise
+
+
+async def require_internal_ip(request: Request):
+    if settings.DEBUG:
+        return
+    client_ip = request.client.host if request.client else ""
+    allowed = client_ip.startswith((
+        "127.", "10.",
+        "172.16.", "172.17.", "172.18.", "172.19.",
+        "172.20.", "172.21.", "172.22.", "172.23.",
+        "172.24.", "172.25.", "172.26.", "172.27.",
+        "172.28.", "172.29.", "172.30.", "172.31.",
+        "192.168."
+    ))
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
 
 def register_routers(app: FastAPI) -> None:
@@ -251,10 +270,10 @@ def register_routers(app: FastAPI) -> None:
         
         return health_status
     
-    # 详细健康检查端点（需要认证）
+    # 详细健康检查端点（生产环境仅允许内网IP访问）
     @app.get("/health/detailed", tags=["健康检查"], summary="详细健康检查")
     async def health_check_detailed(
-        user_id: str = Depends(get_current_user_id_with_version_check),
+        _: None = Depends(require_internal_ip),
     ):
         """
         详细健康检查端点

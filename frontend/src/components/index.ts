@@ -147,3 +147,7 @@ export { default as HistoryControls } from './Theme/HistoryControls';
  * @see {@link ./Theme/ContrastWarning}
  */
 export { default as ContrastWarning } from './Theme/ContrastWarning';
+
+// ==================== Common 通用组件 ====================
+
+export { default as ErrorBoundary } from './Common/ErrorBoundary';

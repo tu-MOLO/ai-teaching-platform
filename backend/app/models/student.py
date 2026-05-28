@@ -3,12 +3,15 @@
 """
 from datetime import date
 from enum import Enum as PyEnum
-from typing import Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from sqlalchemy import String, Index, Date, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
+
+if TYPE_CHECKING:
+    from app.models.course import Course
 
 
 class Gender(str, PyEnum):
@@ -90,6 +93,13 @@ class Student(BaseModel):
 
     # 关系
     user = relationship("User")
+
+    courses: Mapped[List["Course"]] = relationship(
+        "Course",
+        secondary="course_student",
+        back_populates="students",
+        lazy="selectin"
+    )
 
     portfolios = relationship(
         "Portfolio",

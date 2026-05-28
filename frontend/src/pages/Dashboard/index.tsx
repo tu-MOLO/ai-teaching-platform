@@ -81,52 +81,15 @@ const Dashboard: React.FC = () => {
   const [notificationsLoading, setNotificationsLoading] = useState(false)
   const isMountedRef = React.useRef(true)
 
-  // 使用 Zustand store
-  const { stats, loading, fetchStats, refreshStats, startAutoRefresh, stopAutoRefresh } = useDashboardStore()
+  const { stats, loading, fetchStats, refreshStats } = useDashboardStore()
 
-  // 获取仪表盘数据和启动自动刷新
   useEffect(() => {
     isMountedRef.current = true
     fetchStats()
     fetchNotifications()
-    startAutoRefresh()
 
     return () => {
       isMountedRef.current = false
-      stopAutoRefresh()
-    }
-  }, [fetchStats, startAutoRefresh, stopAutoRefresh])
-
-  // 监听页面可见性变化，当页面重新可见时刷新数据并控制自动刷新
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // 页面重新可见时立即刷新数据并启动自动刷新
-        fetchStats()
-        startAutoRefresh()
-      } else {
-        // 页面不可见时停止自动刷新
-        stopAutoRefresh()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [fetchStats, startAutoRefresh, stopAutoRefresh])
-
-  // 监听窗口聚焦事件，当用户切换回页面时刷新数据
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchStats()
-    }
-
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
     }
   }, [fetchStats])
 

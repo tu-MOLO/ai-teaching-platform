@@ -2,15 +2,24 @@
 课程数据模型
 """
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import String, Index, Text, Enum, ForeignKey
+from sqlalchemy import String, Index, Text, Enum, ForeignKey, Table, Column, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import BaseModel
+from app.models.base import Base, BaseModel
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.student import Student
+
+course_student = Table(
+    'course_student',
+    Base.metadata,
+    Column('course_id', String(36), ForeignKey('courses.id', ondelete='CASCADE'), primary_key=True),
+    Column('student_id', String(36), ForeignKey('students.id', ondelete='CASCADE'), primary_key=True),
+    Column('enrolled_at', DateTime(timezone=True), server_default=func.now()),
+)
 
 
 class CourseStatus(str, PyEnum):
@@ -82,6 +91,13 @@ class Course(BaseModel):
     # 关联关系
     user: Mapped[Optional["User"]] = relationship(
         "User",
+        lazy="selectin"
+    )
+
+    students: Mapped[List["Student"]] = relationship(
+        "Student",
+        secondary="course_student",
+        back_populates="courses",
         lazy="selectin"
     )
 

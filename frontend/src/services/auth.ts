@@ -59,10 +59,6 @@ export interface SecurityQuestionResponse {
   is_legacy: boolean
 }
 
-export interface RefreshTokenData {
-  refresh_token: string
-}
-
 export const authService = {
   /**
    * 用户登录
@@ -95,13 +91,6 @@ export const authService = {
    */
   register: async (data: RegisterData): Promise<{ message: string; code: string }> => {
     return api.post('/auth/register', data)
-  },
-
-  /**
-   * 刷新访问令牌
-   */
-  refreshToken: async (refreshToken: string): Promise<TokenData> => {
-    return api.post('/auth/refresh', { refresh_token: refreshToken })
   },
 
   /**

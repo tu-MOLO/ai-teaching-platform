@@ -113,16 +113,19 @@ class SimpleMemoryCache:
     适用于开发和测试环境，生产环境建议使用 Redis
     """
     
-    def __init__(self, default_ttl: int = 300):
+    def __init__(self, default_ttl: int = 300, max_size: int = 1000):
         """
         初始化缓存
         
         Args:
             default_ttl: 默认过期时间（秒）
+            max_size: 最大缓存条目数，超过时淘汰最旧条目
         """
         self._cache: dict = {}
         self._ttl: dict = {}
+        self._order: list = []
         self._default_ttl = default_ttl
+        self._max_size = max_size
     
     def get(self, key: str) -> Optional[Any]:
         """获取缓存值"""
@@ -137,18 +140,35 @@ class SimpleMemoryCache:
     
     def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """设置缓存值"""
+        # 如果键已存在，先移除旧记录
+        if key in self._cache:
+            self._order.remove(key)
+        # 检查容量限制，淘汰最旧条目
+        elif len(self._cache) >= self._max_size:
+            self._evict_oldest()
         self._cache[key] = value
         self._ttl[key] = time.time() + (ttl or self._default_ttl)
+        self._order.append(key)
+    
+    def _evict_oldest(self) -> None:
+        """淘汰最旧的缓存条目"""
+        if self._order:
+            oldest_key = self._order.pop(0)
+            self._cache.pop(oldest_key, None)
+            self._ttl.pop(oldest_key, None)
     
     def delete(self, key: str) -> None:
         """删除缓存值"""
         self._cache.pop(key, None)
         self._ttl.pop(key, None)
+        if key in self._order:
+            self._order.remove(key)
     
     def clear(self) -> None:
         """清空缓存"""
         self._cache.clear()
         self._ttl.clear()
+        self._order.clear()
     
     def cleanup_expired(self) -> int:
         """清理过期数据，返回清理数量"""

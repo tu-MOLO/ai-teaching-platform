@@ -6,13 +6,13 @@ export interface CourseFormData {
   name: string
   subject: string
   grade: string
-  teacher: string
   schedule: string
   status: 'active' | 'inactive' | 'draft'
 }
 
 interface CourseFormProps {
   initialData?: Partial<CourseFormData>
+  currentUserName: string
   onSubmit: (values: CourseFormData) => void
   onCancel: () => void
   loading?: boolean
@@ -20,6 +20,7 @@ interface CourseFormProps {
 
 const CourseForm: React.FC<CourseFormProps> = ({
   initialData,
+  currentUserName,
   onSubmit,
   onCancel,
   loading = false,
@@ -61,15 +62,8 @@ const CourseForm: React.FC<CourseFormProps> = ({
         <ConfigurableSelect groupKey="course_grade" placeholder="请选择年级" />
       </Form.Item>
 
-      <Form.Item
-        name="teacher"
-        label="任课教师"
-        rules={[
-          { required: true, message: '请输入任课教师' },
-          { max: 20, message: '教师姓名不能超过 20 个字符' },
-        ]}
-      >
-        <Input placeholder="请输入任课教师姓名" />
+      <Form.Item label="任课教师">
+        <Input value={currentUserName} disabled />
       </Form.Item>
 
       <Form.Item

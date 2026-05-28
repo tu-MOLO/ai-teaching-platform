@@ -65,8 +65,8 @@ const Register: React.FC = () => {
     if (value.length < 8) {
       return Promise.reject(new Error('密码长度至少为8位'))
     }
-    if (!/(?=.*[A-Za-z])(?=.*\d)/.test(value)) {
-      return Promise.reject(new Error('密码必须同时包含字母和数字'))
+    if (!/(?=.*[A-Z])(?=.*[a-z])(?=.*\d)/.test(value)) {
+      return Promise.reject(new Error('密码必须包含大写字母、小写字母和数字'))
     }
     return Promise.resolve()
   }
@@ -162,7 +162,7 @@ const Register: React.FC = () => {
             >
               <Input.Password
                 prefix={<LockOutlined />}
-                placeholder="请输入密码（至少8位，包含字母和数字）"
+                placeholder="请输入密码（至少8位，包含大写字母、小写字母和数字）"
                 size="large"
               />
             </Form.Item>

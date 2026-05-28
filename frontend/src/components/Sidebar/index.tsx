@@ -13,6 +13,8 @@ import {
   MenuUnfoldOutlined,
   CloseOutlined,
   RobotOutlined,
+  BarChartOutlined,
+  BellOutlined,
 } from '@ant-design/icons'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { authService } from '../../services/auth'
@@ -40,10 +42,12 @@ const menuItems: MenuItem[] = [
   { key: '/', icon: <DashboardOutlined />, label: '工作台', path: '/' },
   { key: '/courses', icon: <BookOutlined />, label: '课程管理', path: '/courses' },
   { key: '/students', icon: <TeamOutlined />, label: '学生管理', path: '/students' },
+  { key: '/reports', icon: <BarChartOutlined />, label: '数据报告', path: '/reports' },
   { key: '/portfolio', icon: <UserOutlined />, label: '学生档案', path: '/portfolio' },
   { key: '/lesson-planner', icon: <FileTextOutlined />, label: '教案中心', path: '/lesson-planner' },
   { key: '/resource-center', icon: <FolderOutlined />, label: '资源中心', path: '/resource-center' },
   { key: '/ai-assistant', icon: <RobotOutlined />, label: 'AI助手', path: '/ai-assistant' },
+  { key: '/notifications', icon: <BellOutlined />, label: '通知中心', path: '/notifications' },
   { key: '/settings', icon: <SettingOutlined />, label: '系统设置', path: '/settings' },
 ]
 

@@ -18,15 +18,6 @@ from app.core.config import settings
 from app.core.database import get_async_session as get_db
 
 
-# passlib 1.7.x 会读取 bcrypt.__about__.__version__。
-# 新版 bcrypt 移除了该属性，这里做兼容补丁以避免启动和验收阶段持续告警。
-if not hasattr(bcrypt, "__about__") and hasattr(bcrypt, "__version__"):
-    class _BcryptAbout:
-        __version__ = bcrypt.__version__
-
-    bcrypt.__about__ = _BcryptAbout()
-
-
 # HTTP Bearer认证
 security = HTTPBearer(auto_error=False)
 

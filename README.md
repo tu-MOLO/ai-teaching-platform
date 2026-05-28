@@ -1,7 +1,7 @@
 # AI教学平台
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python" alt="Python 3.11">
   <img src="https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react" alt="React 18">
   <img src="https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript" alt="TypeScript">
@@ -108,7 +108,7 @@
 ### 环境要求
 
 - **Docker** & **Docker Compose** (推荐)
-- 或 **Python 3.13+** 和 **Node.js 18+**
+- 或 **Python 3.11+** 和 **Node.js 18+**
 
 ### Docker部署（推荐）
 

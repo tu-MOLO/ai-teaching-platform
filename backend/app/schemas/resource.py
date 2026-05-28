@@ -2,6 +2,7 @@
 资源相关的Pydantic schemas
 """
 from typing import List, Optional
+from datetime import datetime
 from pydantic import Field, field_validator
 
 from app.schemas.base import BaseSchema, AuditSchema, PaginationParams
@@ -58,7 +59,7 @@ class ResourceListResponse(BaseSchema):
     file_type: str = Field(..., description="文件类型")
     user_id: str = Field(..., description="创建者ID")
     tags: List[TagListResponse] = Field(default_factory=list, description="资源标签")
-    created_at: str = Field(..., description="创建时间")
+    created_at: datetime = Field(..., description="创建时间")
 
 
 class ResourceSearchParams(PaginationParams):

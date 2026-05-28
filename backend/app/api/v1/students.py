@@ -2,6 +2,7 @@
 学生API模块
 实现学生的CRUD操作
 """
+import asyncio
 from typing import Annotated, Optional
 from datetime import datetime, timezone, date
 from urllib.parse import quote
@@ -14,6 +15,7 @@ from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user_id_with_version_check
 from app.models.student import Student
+from app.models.course import Course, course_student
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.student import Student as StudentSchema, StudentCreate, StudentUpdate
 from app.services.student import StudentService
@@ -36,7 +38,6 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.post("/", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生", include_in_schema=False)
 @router.post("", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生")
 async def create_student(
     student_in: StudentCreate,
@@ -78,7 +79,6 @@ async def get_student(
     return DataResponse(data=StudentSchema.model_validate(student))
 
 
-@router.get("/", response_model=ListResponse[StudentSchema], summary="获取学生列表", include_in_schema=False)
 @router.get("", response_model=ListResponse[StudentSchema], summary="获取学生列表")
 async def get_students(
     db: DBSession,
@@ -187,10 +187,13 @@ async def export_student_portfolio(
     )
     portfolios = portfolios_result.scalars().all()
 
-    # 导出PDF
+    # 导出PDF（放到线程池执行，避免阻塞事件循环）
     from app.services.export import ExportService
     export_service = ExportService()
-    pdf_bytes = export_service.export_student_portfolio_to_pdf(student, portfolios)
+    loop = asyncio.get_event_loop()
+    pdf_bytes = await loop.run_in_executor(
+        None, export_service.export_student_portfolio_to_pdf, student, portfolios
+    )
 
     # 返回PDF文件
     from fastapi.responses import Response
@@ -201,4 +204,64 @@ async def export_student_portfolio(
         headers={
             "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
         }
+    )
+
+
+@router.get(
+    "/{student_id}/courses",
+    response_model=ListResponse,
+    summary="获取学生的课程列表"
+)
+async def get_student_courses(
+    student_id: str,
+    db: DBSession,
+    user_id: CurrentUser,
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量")
+):
+    student_result = await db.execute(
+        select(Student).where(
+            Student.id == student_id,
+            Student.user_id == user_id,
+            Student.is_deleted == False
+        )
+    )
+    student = student_result.scalar_one_or_none()
+    if not student:
+        raise NotFoundException("学生")
+
+    from app.schemas.course import CourseResponse
+
+    count_query = (
+        select(Course)
+        .join(course_student, Course.id == course_student.c.course_id)
+        .where(
+            course_student.c.student_id == student_id,
+            Course.is_deleted == False
+        )
+    )
+    total_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
+    total = total_result.scalar() or 0
+
+    offset = (page - 1) * page_size
+    courses_result = await db.execute(
+        select(Course)
+        .join(course_student, Course.id == course_student.c.course_id)
+        .where(
+            course_student.c.student_id == student_id,
+            Course.is_deleted == False
+        )
+        .offset(offset)
+        .limit(page_size)
+    )
+    courses = courses_result.scalars().all()
+
+    pages = (total + page_size - 1) // page_size if page_size > 0 else 0
+
+    return ListResponse(
+        data=[CourseResponse.model_validate(c) for c in courses],
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=pages
     )

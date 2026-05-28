@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
 import { Card, Button, Table, Space, Tag, message, Input, Empty, Modal } from 'antd';
 import { 
   PlusOutlined, 
@@ -44,7 +45,7 @@ const LessonPlanList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 });
 
   const currentStatus = statusConfig[status] || statusConfig.draft;
 

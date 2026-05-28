@@ -23,7 +23,7 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { message } from 'antd';
+import { message, Progress } from 'antd';
 
 /** 最大文件大小：100MB（与后端配置保持一致） */
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -46,6 +46,8 @@ function formatFileSize(bytes: number): string {
 export interface FileUploadProps {
   /** 文件选择变化时的回调函数 */
   onFileChange: (files: File[]) => void;
+  /** 上传进度百分比（0-100） */
+  uploadPercent?: number;
 }
 
 /**
@@ -56,7 +58,7 @@ export interface FileUploadProps {
  * @param props - 组件属性
  * @returns React组件
  */
-const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ onFileChange, uploadPercent }) => {
   /** 是否正在拖拽文件 */
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
@@ -110,6 +112,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
   }, [fileRejections]);
 
   return (
+    <>
     <div
       {...getRootProps()}
       className={`file-upload-area ${isDragging ? 'dragging' : ''}`}
@@ -136,6 +139,21 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileChange }) => {
         </p>
       </div>
     </div>
+    {uploadPercent != null && uploadPercent > 0 && (
+      <div style={{ marginTop: 16 }}>
+        <Progress
+          percent={uploadPercent}
+          status={uploadPercent >= 100 ? 'success' : 'active'}
+          strokeColor={uploadPercent >= 100 ? '#52c41a' : '#1890ff'}
+        />
+        {uploadPercent >= 100 && (
+          <p style={{ textAlign: 'center', color: '#52c41a', marginTop: 8 }}>
+            上传完成！
+          </p>
+        )}
+      </div>
+    )}
+    </>
   );
 };
 

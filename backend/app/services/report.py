@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.course import Course, CourseStatus
+from app.models.course import Course, CourseStatus, course_student
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
 from app.models.resource import Resource
 from app.models.student import Student
@@ -280,11 +280,18 @@ class ReportService:
             )
         ).scalars().all()
         for course in hot_course_rows:
+            student_count = (
+                await db.execute(
+                    select(func.count()).select_from(course_student).where(
+                        course_student.c.course_id == course.id
+                    )
+                )
+            ).scalar() or 0
             hot_courses.append(
                 {
                     "id": course.id,
                     "name": course.name,
-                    "studentCount": 0,
+                    "studentCount": student_count,
                     "completionRate": 0,
                 }
             )

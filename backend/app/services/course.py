@@ -7,14 +7,17 @@ from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
+from app.models.notification import NotificationType
 from app.schemas.course import CourseCreate, CourseUpdate
+from app.schemas.notification import NotificationCreate
+from app.services.notification import NotificationService
 
 
 class CourseService:
     """课程服务类"""
 
     @staticmethod
-    async def create(db: AsyncSession, course_in: CourseCreate, user_id: str) -> Course:
+    async def create(db: AsyncSession, course_in: CourseCreate, user_id: str, teacher_name: str) -> Course:
         """
         创建课程
 
@@ -22,15 +25,30 @@ class CourseService:
             db: 数据库会话
             course_in: 课程创建数据
             user_id: 用户ID
+            teacher_name: 教师名称（当前用户）
 
         Returns:
             创建的课程对象
         """
         db_course = Course(**course_in.model_dump())
         db_course.user_id = user_id
+        db_course.teacher = teacher_name
         db.add(db_course)
         await db.flush()
         await db.refresh(db_course)
+
+        await NotificationService.create(
+            db,
+            NotificationCreate(
+                title="课程创建成功",
+                content=f"您已成功创建课程：{db_course.name}",
+                type=NotificationType.COURSE,
+                user_id=user_id,
+                target_id=db_course.id,
+                target_type="course",
+            )
+        )
+
         return db_course
 
     @staticmethod
@@ -107,7 +125,7 @@ class CourseService:
         if teacher:
             query = query.where(Course.teacher == teacher)
 
-        query = query.offset(skip).limit(limit)
+        query = query.order_by(Course.created_at.desc(), Course.id.desc()).offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
 
@@ -167,7 +185,8 @@ class CourseService:
         db: AsyncSession,
         course_id: str,
         course_in: CourseUpdate,
-        user_id: str
+        user_id: str,
+        teacher_name: str
     ) -> Optional[Course]:
         """
         更新课程
@@ -177,6 +196,7 @@ class CourseService:
             course_id: 课程ID
             course_in: 课程更新数据
             user_id: 用户ID
+            teacher_name: 教师名称（当前用户）
 
         Returns:
             更新后的课程对象（仅更新属于该用户的课程）
@@ -186,6 +206,7 @@ class CourseService:
             return None
 
         update_data = course_in.model_dump(exclude_unset=True)
+        update_data["teacher"] = teacher_name
         for field, value in update_data.items():
             setattr(db_course, field, value)
         await db.flush()

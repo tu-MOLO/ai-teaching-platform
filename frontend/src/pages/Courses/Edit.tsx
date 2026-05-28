@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { CourseForm, CourseFormData } from '@/components';
 import { getCourse, updateCourse } from '../../services/course';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import { useUserStore } from '../../stores/user';
 
 const { Title } = Typography;
 
@@ -16,6 +17,7 @@ const EditCourse: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [courseData, setCourseData] = useState<Partial<CourseFormData>>({});
+  const displayName = useUserStore((s) => s.displayName());
 
   /**
    * 加载课程详情
@@ -35,7 +37,6 @@ const EditCourse: React.FC = () => {
           name: data.name,
           subject: data.subject,
           grade: data.grade,
-          teacher: data.teacher,
           schedule: data.schedule || '',
           status: data.status,
         });
@@ -61,7 +62,6 @@ const EditCourse: React.FC = () => {
     try {
       await updateCourse(id, values);
       message.success('课程更新成功');
-      // 刷新仪表盘数据
       refreshDashboardStats();
       navigate('/courses');
     } catch (error) {
@@ -92,6 +92,7 @@ const EditCourse: React.FC = () => {
       <Card title={<Title level={4}>编辑课程</Title>}>
         <CourseForm
           initialData={courseData}
+          currentUserName={displayName}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           loading={saving}

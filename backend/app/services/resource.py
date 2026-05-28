@@ -108,78 +108,65 @@ class ResourceService:
             资源列表和总记录数
         """
         try:
-            # 构建查询
             query = select(Resource).where(Resource.is_deleted == False)
-            
-            # 应用筛选条件
-            if params.keyword:
-                keyword_filter = or_(
-                    Resource.name.ilike(f"%{params.keyword}%"),
-                    Resource.description.ilike(f"%{params.keyword}%")
-                )
-                query = query.where(keyword_filter)
-            
-            if params.tag_ids:
-                # 标签筛选
-                from app.models.resource import resource_tag_association
-                query = query.join(
-                    resource_tag_association
-                ).where(
-                    resource_tag_association.c.tag_id.in_(params.tag_ids)
-                ).group_by(Resource.id)
-            
-            if params.file_type:
-                query = query.where(Resource.file_type.ilike(f"%{params.file_type}%"))
-            
-            if params.user_id:
-                query = query.where(Resource.user_id == params.user_id)
-            
-            # 计算总记录数
+            query = await ResourceService._build_resource_filters(query, params)
+
             count_query = select(func.count()).select_from(Resource).where(Resource.is_deleted == False)
-            
-            # 重新应用筛选条件到count_query
-            if params.keyword:
-                keyword_filter = or_(
-                    Resource.name.ilike(f"%{params.keyword}%"),
-                    Resource.description.ilike(f"%{params.keyword}%")
-                )
-                count_query = count_query.where(keyword_filter)
-            
-            if params.tag_ids:
-                from app.models.resource import resource_tag_association
-                count_query = count_query.join(
-                    resource_tag_association
-                ).where(
-                    resource_tag_association.c.tag_id.in_(params.tag_ids)
-                ).group_by(Resource.id)
-            
-            if params.file_type:
-                count_query = count_query.where(Resource.file_type.ilike(f"%{params.file_type}%"))
-            
-            if params.user_id:
-                count_query = count_query.where(Resource.user_id == params.user_id)
-            
+            count_query = await ResourceService._build_resource_filters(count_query, params)
+
             if params.tag_ids:
                 count_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
                 total = count_result.scalar() or 0
             else:
                 count_result = await db.execute(count_query)
                 total = count_result.scalar() or 0
-            
-            # 应用分页
+
             query = query.offset(params.offset).limit(params.page_size)
-            
-            # 预加载标签
             query = query.options(selectinload(Resource.tags))
-            
-            # 执行查询
+
             result = await db.execute(query)
             resources = result.scalars().all()
-            
+
             return resources, total
         except Exception as e:
             logger.error(f"Failed to get resources: {e}")
             raise
+
+    @staticmethod
+    async def _build_resource_filters(query, params: ResourceSearchParams):
+        """
+        构建资源查询的筛选条件
+
+        Args:
+            query: 基础查询对象
+            params: 搜索参数
+
+        Returns:
+            应用了筛选条件的查询对象
+        """
+        if params.keyword:
+            safe_keyword = params.keyword.replace("%", "\\%").replace("_", "\\_")
+            keyword_filter = or_(
+                Resource.name.ilike(f"%{safe_keyword}%", escape="\\"),
+                Resource.description.ilike(f"%{safe_keyword}%", escape="\\")
+            )
+            query = query.where(keyword_filter)
+
+        if params.tag_ids:
+            from app.models.resource import resource_tag_association
+            query = query.join(
+                resource_tag_association
+            ).where(
+                resource_tag_association.c.tag_id.in_(params.tag_ids)
+            ).group_by(Resource.id)
+
+        if params.file_type:
+            query = query.where(Resource.file_type.ilike(f"%{params.file_type}%"))
+
+        if params.user_id:
+            query = query.where(Resource.user_id == params.user_id)
+
+        return query
     
     @staticmethod
     async def get_resource_by_id(

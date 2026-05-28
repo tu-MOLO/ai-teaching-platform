@@ -164,7 +164,9 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ item, onDelete, onEdit }) =
                       link.click();
                       document.body.removeChild(link);
                       URL.revokeObjectURL(url);
-                    } catch {}
+                    } catch {
+                      // 下载失败，静默处理
+                    }
                   }}
                 >
                   附件 {index + 1}

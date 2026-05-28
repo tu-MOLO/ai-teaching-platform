@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,7 +32,6 @@ from app.schemas.auth import (
     LoginResponse,
     PasswordChangeRequest,
     PasswordResetRequest,
-    RefreshTokenRequest,
     RegisterRequest,
     SecurityQuestionRequest,
     SecurityQuestionResponse,
@@ -54,6 +53,7 @@ async def login(
     request: Request,
     login_data: LoginRequest,
     db: DBSession,
+    response: Response,
     _: None = Depends(rate_limit_dep("login")),
 ) -> LoginResponse:
     stmt = select(User).where(
@@ -106,6 +106,16 @@ async def login(
         subject=user.id,
         expires_delta=refresh_token_expires,
         token_version=str(user.token_version),
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=int(refresh_token_expires.total_seconds()),
+        path="/api/v1/auth",
     )
 
     return LoginResponse(
@@ -168,10 +178,18 @@ async def register(
 
 @router.post("/refresh", response_model=TokenData, summary="刷新访问令牌")
 async def refresh_token(
-    refresh_data: RefreshTokenRequest,
+    request: Request,
+    response: Response,
     db: DBSession,
 ) -> TokenData:
-    payload = decode_token(refresh_data.refresh_token)
+    refresh_token_value = request.cookies.get("refresh_token")
+    if not refresh_token_value:
+        raise AuthenticationException(
+            message="未提供刷新令牌",
+            error_code=ErrorCode.TOKEN_INVALID,
+        )
+
+    payload = decode_token(refresh_token_value)
     if not payload or payload.type != "refresh":
         raise AuthenticationException(
             message="无效的刷新令牌",
@@ -215,6 +233,16 @@ async def refresh_token(
         token_version=str(user.token_version),
     )
 
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
+        path="/api/v1/auth",
+    )
+
     return TokenData(
         access_token=access_token,
         refresh_token=new_refresh_token,
@@ -256,6 +284,7 @@ async def logout(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)],
     user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
     db: DBSession,
+    response: Response,
 ) -> MessageResponse:
     stmt = select(User).where(User.id == user_id, User.is_deleted == False)
     result = await db.execute(stmt)
@@ -263,6 +292,12 @@ async def logout(
     if user:
         user.increment_token_version()
         await db.commit()
+
+    response.delete_cookie(
+        key="refresh_token",
+        path="/api/v1/auth",
+        samesite="lax",
+    )
 
     return MessageResponse(message="退出成功", code="success")
 
@@ -306,7 +341,7 @@ async def get_security_question(
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
-        raise NotFoundException("用户")
+        raise BadRequestException("无法获取密保问题，请检查用户名或邮箱")
 
     return SecurityQuestionResponse(
         username=user.username,

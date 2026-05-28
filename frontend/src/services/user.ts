@@ -5,16 +5,13 @@ export interface UserProfile {
   email: string
   username: string
   full_name: string | null
-  phone: string | null
-  bio: string | null
   avatar_url: string | null
   role: string
   status: string
   is_active: boolean
   last_login_at: string | null
   login_count: number
-  created_at: string
-  updated_at: string
+  permissions: string[]
 }
 
 export interface UpdateUserProfileData {

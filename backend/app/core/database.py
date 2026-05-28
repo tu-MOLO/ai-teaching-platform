@@ -53,6 +53,7 @@ else:
         max_overflow=settings.DATABASE_MAX_OVERFLOW,
         pool_recycle=settings.DATABASE_POOL_RECYCLE,
         pool_pre_ping=True,  # 连接前ping检查，避免使用失效连接
+        pool_timeout=30,  # 连接池耗尽时等待30秒后超时
         echo=settings.DEBUG,  # 调试模式打印SQL
         future=True
     )

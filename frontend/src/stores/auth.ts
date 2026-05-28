@@ -1,58 +1,53 @@
 import { create } from 'zustand'
-import request from '../services/request'
+import axios from 'axios'
 
 interface AuthState {
   token: string | null
-  refreshToken: string | null
   isAuthenticated: boolean
   isInitializing: boolean
-  login: (token: string, refreshToken: string) => void
-  logout: () => void
+  login: (token: string) => void
+  logout: () => Promise<void>
   setToken: (token: string) => void
-  initializeAuth: () => Promise<void>
+  hydrate: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: localStorage.getItem('token'),
-  refreshToken: localStorage.getItem('refreshToken'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  token: null,
+  isAuthenticated: false,
   isInitializing: true,
-  login: (token: string, refreshToken: string) => {
-    localStorage.setItem('token', token)
-    localStorage.setItem('refreshToken', refreshToken)
-    set({ token, refreshToken, isAuthenticated: true, isInitializing: false })
+
+  login: (token: string) => {
+    set({ token, isAuthenticated: true, isInitializing: false })
   },
-  logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('refreshToken')
-    set({ token: null, refreshToken: null, isAuthenticated: false, isInitializing: false })
+
+  logout: async () => {
+    set({ token: null, isAuthenticated: false, isInitializing: false })
+    try {
+      await axios.post('/api/v1/auth/logout')
+    } catch {
+      // 即便服务器请求失败，本地状态已经清理
+    }
   },
+
   setToken: (token: string) => {
-    localStorage.setItem('token', token)
     set({ token, isAuthenticated: true })
   },
-  initializeAuth: async () => {
-    const { token, refreshToken, login, logout } = get()
-    if (!token) {
-      set({ isInitializing: false })
-      return
-    }
+
+  hydrate: async () => {
     try {
-      await request.get('/api/v1/auth/me')
-      set({ isInitializing: false })
-    } catch {
-      try {
-        const data: any = await request.post('/api/v1/auth/refresh', {
-          refresh_token: refreshToken
-        })
-        const access_token = data.access_token
-        const new_refresh_token = data.refresh_token
-        login(access_token, new_refresh_token || refreshToken!)
-        set({ isInitializing: false })
-      } catch {
-        logout()
-        set({ isInitializing: false })
+      const response = await axios.post('/api/v1/auth/refresh')
+      const payload =
+        response.data && typeof response.data === 'object' && response.data.data
+          ? response.data.data
+          : response.data
+      const access_token = payload?.access_token
+      if (access_token) {
+        set({ token: access_token, isAuthenticated: true, isInitializing: false })
+        return
       }
+    } catch {
+      // Cookie 中无有效 refresh_token，需要重新登录
     }
-  }
+    set({ token: null, isAuthenticated: false, isInitializing: false })
+  },
 }))

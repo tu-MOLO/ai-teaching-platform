@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
 import { Card, Input, Table, Space, message, Empty, Modal } from 'antd';
 import {
   PlusOutlined,
@@ -67,7 +68,7 @@ const Portfolio: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 });
 
   const fetchStudents = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true);

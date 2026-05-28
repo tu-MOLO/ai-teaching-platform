@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { DEFAULT_PAGE_SIZE } from '../../constants/pagination'
 import { Button, Card, Input, Modal, Space, Table, Tag, Typography, message } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -28,7 +29,7 @@ const Courses: React.FC = () => {
   const [courses, setCourses] = useState<CourseRow[]>([])
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState(() => searchParams.get('search') || '')
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 })
 
   const fetchCourses = async (page = 1, pageSize = pagination.pageSize) => {
     setLoading(true)

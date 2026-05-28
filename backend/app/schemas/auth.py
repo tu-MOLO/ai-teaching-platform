@@ -24,8 +24,10 @@ def validate_password_strength(value: str) -> str:
     """统一认证相关密码强度规则。"""
     if len(value) < 8:
         raise ValueError("密码长度至少8位")
-    if not any(ch.isalpha() for ch in value):
-        raise ValueError("密码必须至少包含一个字母")
+    if not any(ch.isupper() for ch in value):
+        raise ValueError("密码必须至少包含一个大写字母")
+    if not any(ch.islower() for ch in value):
+        raise ValueError("密码必须至少包含一个小写字母")
     if not any(ch.isdigit() for ch in value):
         raise ValueError("密码必须至少包含一个数字")
     return value

@@ -8,10 +8,8 @@ export interface LessonTemplate {
   id: string;
   name: string;
   description?: string;
-  subject?: string;
-  grade?: string;
-  duration?: number;
-  template_data?: string;
+  structure: string;
+  is_default: boolean;
   created_at: string;
   updated_at: string;
 }

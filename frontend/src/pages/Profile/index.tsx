@@ -61,8 +61,6 @@ const Profile: React.FC = () => {
         username: data.username,
         email: data.email,
         full_name: data.full_name,
-        phone: data.phone,
-        bio: data.bio
       })
     } catch (error) {
       message.error('获取用户资料失败')
@@ -92,8 +90,6 @@ const Profile: React.FC = () => {
         username: profile.username,
         email: profile.email,
         full_name: profile.full_name,
-        phone: profile.phone,
-        bio: profile.bio
       })
     }
   }
@@ -314,7 +310,7 @@ const Profile: React.FC = () => {
                 教师
               </Tag>
               <p className="profile-bio-preview">
-                {profile.bio || '暂无个人简介'}
+                {profile.full_name ? '欢迎回来' : '暂无个人简介'}
               </p>
             </div>
 
@@ -348,9 +344,6 @@ const Profile: React.FC = () => {
             <Descriptions column={1} size="small">
               <Descriptions.Item label="用户ID">
                 <span className="profile-id">{profile.id}</span>
-              </Descriptions.Item>
-              <Descriptions.Item label="注册时间">
-                {formatUTCToLocal(profile.created_at)}
               </Descriptions.Item>
               <Descriptions.Item label="最后登录">
                 {profile.last_login_at
@@ -488,7 +481,7 @@ const Profile: React.FC = () => {
                 <div className="profile-readonly-hint">
                   <CalendarOutlined />
                   <span>
-                    上次更新：{formatUTCToLocal(profile.updated_at)}
+                    最后登录：{profile.last_login_at ? formatUTCToLocal(profile.last_login_at) : '从未登录'}
                   </span>
                 </div>
               )}

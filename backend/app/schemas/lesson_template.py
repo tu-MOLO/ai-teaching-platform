@@ -1,12 +1,14 @@
 """
 教案模板相关的Pydantic schemas
 """
-from pydantic import BaseModel, Field
+from pydantic import Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
+from app.schemas.base import BaseSchema
 
-class LessonTemplateBase(BaseModel):
+
+class LessonTemplateBase(BaseSchema):
     """
     教案模板基础schema
     """
@@ -23,7 +25,7 @@ class LessonTemplateCreate(LessonTemplateBase):
     pass
 
 
-class LessonTemplateUpdate(BaseModel):
+class LessonTemplateUpdate(BaseSchema):
     """
     更新教案模板的schema
     """
@@ -41,5 +43,4 @@ class LessonTemplateResponse(LessonTemplateBase):
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

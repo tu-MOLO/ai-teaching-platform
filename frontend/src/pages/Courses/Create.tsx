@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { CourseForm, CourseFormData } from '@/components';
 import { createCourse } from '../../services/course';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import { useUserStore } from '../../stores/user';
 import { BusinessError } from '../../types/error';
 
 const { Title } = Typography;
@@ -14,6 +15,7 @@ const { Title } = Typography;
 const CreateCourse: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const displayName = useUserStore((s) => s.displayName());
 
   /**
    * 处理表单提交
@@ -23,7 +25,6 @@ const CreateCourse: React.FC = () => {
     try {
       await createCourse(values);
       message.success('创建成功');
-      // 刷新仪表盘数据
       refreshDashboardStats();
       navigate('/courses');
     } catch (error) {
@@ -49,6 +50,7 @@ const CreateCourse: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Card title={<Title level={4}>新建课程</Title>}>
         <CourseForm
+          currentUserName={displayName}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           loading={loading}

@@ -7,7 +7,7 @@ import { useAuthStore } from './stores/auth'
 function App() {
   useEffect(() => {
     initTheme()
-    useAuthStore.getState().initializeAuth()
+    useAuthStore.getState().hydrate()
   }, [])
 
   const element = useRoutes(router)

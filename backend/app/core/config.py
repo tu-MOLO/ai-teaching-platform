@@ -40,9 +40,9 @@ class Settings(BaseSettings):
     
     # 数据库配置
     DATABASE_URL: str = "sqlite+aiosqlite:///./ai_teaching.db"
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 10
-    DATABASE_POOL_RECYCLE: int = 3600
+    DATABASE_POOL_SIZE: int = 10
+    DATABASE_MAX_OVERFLOW: int = 5
+    DATABASE_POOL_RECYCLE: int = 1800
     
     # JWT配置
     SECRET_KEY: str = ""

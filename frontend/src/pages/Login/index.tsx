@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import { authService } from '../../services/auth'
+import { BusinessError } from '../../types/error'
 import './index.css'
 
 const Login: React.FC = () => {
@@ -27,12 +28,22 @@ const Login: React.FC = () => {
         password: values.password,
         remember_me: values.remember ?? true,
       })
-      login(response.access_token, response.refresh_token)
+      login(response.access_token)
       setUser(response.user)
       message.success('欢迎回来')
       navigate('/')
-    } catch {
-      message.error('登录失败，请检查用户名和密码')
+    } catch (error: unknown) {
+      const businessError = error as BusinessError
+      const code = businessError?.code
+      if (code === '2006') {
+        message.error('账户已被锁定，请稍后再试')
+      } else if (code === '2007') {
+        message.error('账户已被禁用，请联系管理员')
+      } else if (code === '3002' || code === '2000') {
+        message.error('用户名或密码错误')
+      } else {
+        message.error('登录失败，请稍后重试')
+      }
     } finally {
       setLoading(false)
     }

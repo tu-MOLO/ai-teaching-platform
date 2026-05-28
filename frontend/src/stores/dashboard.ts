@@ -1,5 +1,11 @@
 import { create } from 'zustand'
-import { reportService } from '../services/report'
+import {
+  reportService,
+  type DashboardReport,
+  type CourseReport,
+  type StudentReport,
+  type MonthlyTrendItem,
+} from '../services/report'
 
 interface DashboardStats {
   totalCourses: number
@@ -10,6 +16,13 @@ interface DashboardStats {
   totalResources: number
 }
 
+interface ReportData {
+  dashboardData: DashboardReport | null
+  courseData: CourseReport | null
+  studentData: StudentReport | null
+  monthlyTrends: MonthlyTrendItem[]
+}
+
 interface DashboardState {
   stats: DashboardStats
   loading: boolean
@@ -18,13 +31,20 @@ interface DashboardState {
   isAutoRefreshing: boolean
   refreshIntervalId: number | null
 
-  // Actions
+  reportData: ReportData
+  reportsLoading: boolean
+  reportsError: string | null
+  lastFetchTime: number | null
+
   fetchStats: (force?: boolean) => Promise<void>
   refreshStats: () => Promise<void>
   updateStats: (partialStats: Partial<DashboardStats>) => void
   resetStats: () => void
   startAutoRefresh: () => void
   stopAutoRefresh: () => void
+
+  fetchReports: (force?: boolean) => Promise<void>
+  refreshReports: () => Promise<void>
 }
 
 const defaultStats: DashboardStats = {
@@ -36,10 +56,14 @@ const defaultStats: DashboardStats = {
   totalResources: 0
 }
 
-// 自动刷新间隔（毫秒）- 60秒
-const AUTO_REFRESH_INTERVAL = 60 * 1000
+const defaultReportData: ReportData = {
+  dashboardData: null,
+  courseData: null,
+  studentData: null,
+  monthlyTrends: []
+}
 
-// 缓存时间（毫秒）- 30秒内不重复请求
+const AUTO_REFRESH_INTERVAL = 60 * 1000
 const CACHE_DURATION = 30 * 1000
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -50,13 +74,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   isAutoRefreshing: false,
   refreshIntervalId: null,
 
+  reportData: { ...defaultReportData },
+  reportsLoading: false,
+  reportsError: null,
+  lastFetchTime: null,
+
   fetchStats: async (force = false) => {
     const { loading, lastUpdated } = get()
-
-    // 如果正在加载，不重复请求
     if (loading) return
-
-    // 如果不是强制刷新，且缓存未过期，使用缓存数据
     if (!force && lastUpdated) {
       const now = Date.now()
       if (now - lastUpdated < CACHE_DURATION) {
@@ -103,7 +128,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   resetStats: () => {
     const { refreshIntervalId } = get()
-    // 清除定时器
     if (refreshIntervalId) {
       window.clearInterval(refreshIntervalId)
     }
@@ -113,27 +137,31 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       lastUpdated: null,
       error: null,
       isAutoRefreshing: false,
-      refreshIntervalId: null
+      refreshIntervalId: null,
+      reportData: { ...defaultReportData },
+      reportsLoading: false,
+      reportsError: null,
+      lastFetchTime: null
     })
   },
 
   startAutoRefresh: () => {
     const { isAutoRefreshing, refreshIntervalId } = get()
-    
-    // 如果已经在自动刷新，先停止
+
     if (isAutoRefreshing && refreshIntervalId) {
       window.clearInterval(refreshIntervalId)
     }
 
-    // 立即执行一次刷新
     get().fetchStats()
+    get().fetchReports()
 
-    // 设置定时刷新
     const intervalId = window.setInterval(() => {
-      const { loading } = get()
-      // 如果当前没有在加载，才执行刷新
+      const { loading, reportsLoading } = get()
       if (!loading) {
         get().fetchStats()
+      }
+      if (!reportsLoading) {
+        get().fetchReports()
       }
     }, AUTO_REFRESH_INTERVAL)
 
@@ -152,10 +180,52 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       isAutoRefreshing: false,
       refreshIntervalId: null
     })
+  },
+
+  fetchReports: async (force = false) => {
+    const { reportsLoading, lastFetchTime } = get()
+    if (reportsLoading) return
+    if (!force && lastFetchTime) {
+      const now = Date.now()
+      if (now - lastFetchTime < CACHE_DURATION) {
+        return
+      }
+    }
+
+    set({ reportsLoading: true, reportsError: null })
+
+    try {
+      const [dashboard, courses, students, trends] = await Promise.all([
+        reportService.getDashboardReport(),
+        reportService.getCourseReport(),
+        reportService.getStudentReport(),
+        reportService.getMonthlyTrends(7)
+      ])
+
+      set({
+        reportData: {
+          dashboardData: dashboard,
+          courseData: courses,
+          studentData: students,
+          monthlyTrends: trends
+        },
+        lastFetchTime: Date.now(),
+        reportsLoading: false
+      })
+    } catch (error) {
+      set({
+        reportsError: '获取报告数据失败',
+        reportsLoading: false
+      })
+      console.error('Failed to fetch report data:', error)
+    }
+  },
+
+  refreshReports: async () => {
+    await get().fetchReports(true)
   }
 }))
 
-// 导出便捷的刷新函数，供其他模块使用
 export const refreshDashboardStats = () => {
   useDashboardStore.getState().refreshStats()
 }

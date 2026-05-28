@@ -41,12 +41,17 @@ export const getResource = async (id: string): Promise<Resource> => {
 /**
  * 上传资源
  * @param data FormData数据
+ * @param onUploadProgress 上传进度回调
  */
-export const uploadResource = async (data: FormData): Promise<Resource> => {
+export const uploadResource = async (
+  data: FormData,
+  onUploadProgress?: (progressEvent: any) => void
+): Promise<Resource> => {
   const response = await api.post('/resources', data, {
     headers: {
       'Content-Type': 'multipart/form-data'
-    }
+    },
+    onUploadProgress,
   });
   return toItem<Resource>(response);
 };

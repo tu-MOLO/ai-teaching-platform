@@ -57,7 +57,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
 
   // 处理HEX输入
   const handleHexInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue = e.target.value.trim()
+    const newValue = e.target.value.trim()
     setInputValue(newValue)
 
     if (isValidColor(newValue)) {

@@ -8,14 +8,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.student import Student
 from app.models.portfolio import Portfolio
+from app.models.notification import NotificationType
 from app.schemas.student import StudentCreate, StudentUpdate
+from app.schemas.notification import NotificationCreate
+from app.services.notification import NotificationService
 
 
 class StudentService:
     """学生服务类"""
 
     @staticmethod
-    async def create(db: AsyncSession, student_in: StudentCreate, user_id: int) -> Student:
+    async def create(db: AsyncSession, student_in: StudentCreate, user_id: str) -> Student:
         """
         创建学生
 
@@ -31,10 +34,23 @@ class StudentService:
         db.add(db_student)
         await db.flush()
         await db.refresh(db_student)
+
+        await NotificationService.create(
+            db,
+            NotificationCreate(
+                title="添加学生成功",
+                content=f"您已成功添加学生：{db_student.name}",
+                type=NotificationType.SYSTEM,
+                user_id=user_id,
+                target_id=db_student.id,
+                target_type="student",
+            )
+        )
+
         return db_student
 
     @staticmethod
-    async def get(db: AsyncSession, student_id: str, user_id: int) -> Optional[Student]:
+    async def get(db: AsyncSession, student_id: str, user_id: str) -> Optional[Student]:
         """
         获取学生（带用户隔离）
 
@@ -61,7 +77,7 @@ class StudentService:
     @staticmethod
     async def get_list(
         db: AsyncSession,
-        user_id: int,
+        user_id: str,
         skip: int = 0,
         limit: int = 100,
         keyword: Optional[str] = None,
@@ -106,15 +122,21 @@ class StudentService:
 
         student_ids = [s.id for s in students]
         if student_ids:
-            progress_query = select(
-                Portfolio.student_id,
-                func.count().label('count')
-            ).where(
-                Portfolio.student_id.in_(student_ids),
-                Portfolio.is_deleted == False
-            ).group_by(Portfolio.student_id)
-            progress_result = await db.execute(progress_query)
-            progress_map = {row.student_id: min(row.count * 10, 100) for row in progress_result}
+            result = await db.execute(
+                select(Portfolio).where(
+                    Portfolio.student_id.in_(student_ids),
+                    Portfolio.is_deleted == False
+                )
+            )
+            all_portfolios = result.scalars().all()
+
+            portfolios_by_student: dict = {}
+            for p in all_portfolios:
+                portfolios_by_student.setdefault(p.student_id, []).append(p)
+
+            progress_map = {}
+            for sid, portfolios in portfolios_by_student.items():
+                progress_map[sid] = StudentService._compute_progress_from_portfolios(portfolios)
         else:
             progress_map = {}
 
@@ -128,7 +150,7 @@ class StudentService:
         db: AsyncSession,
         student_id: str,
         student_in: StudentUpdate,
-        user_id: int
+        user_id: str
     ) -> Optional[Student]:
         """
         更新学生（带所有权验证）
@@ -154,7 +176,7 @@ class StudentService:
         return db_student
 
     @staticmethod
-    async def delete(db: AsyncSession, student_id: str, user_id: int) -> bool:
+    async def delete(db: AsyncSession, student_id: str, user_id: str) -> bool:
         """
         删除学生（软删除，带所有权验证）
 
@@ -177,7 +199,7 @@ class StudentService:
     @staticmethod
     async def count(
         db: AsyncSession,
-        user_id: int,
+        user_id: str,
         keyword: Optional[str] = None,
         grade: Optional[str] = None,
         class_name: Optional[str] = None
@@ -216,11 +238,26 @@ class StudentService:
         return result.scalar()
 
     @staticmethod
+    def _compute_progress_from_portfolios(portfolios: list) -> int:
+        dimensions = [
+            [p.cognitive_score for p in portfolios if p.cognitive_score is not None],
+            [p.skill_score for p in portfolios if p.skill_score is not None],
+            [p.creativity_score for p in portfolios if p.creativity_score is not None],
+            [p.cooperation_score for p in portfolios if p.cooperation_score is not None],
+            [p.attention_score for p in portfolios if p.attention_score is not None],
+        ]
+        dimension_avgs = [sum(scores) / len(scores) if scores else 0 for scores in dimensions]
+        return round(sum(dimension_avgs) / len(dimension_avgs))
+
+    @staticmethod
     async def calculate_progress(db: AsyncSession, student_id: str) -> int:
         """
         计算学生学习进度
 
-        根据学生成长档案记录数量计算进度，每条记录增加10%进度，最高100%
+        基于多维度评分计算：查询学生所有 Portfolio 记录，
+        对 cognitive_score、skill_score、creativity_score、
+        cooperation_score、attention_score 五个维度各自取平均值，
+        再对各维度平均值取算术平均作为最终进度（0-100）。
 
         Args:
             db: 数据库会话
@@ -230,19 +267,23 @@ class StudentService:
             进度值 (0-100)
         """
         result = await db.execute(
-            select(func.count()).select_from(Portfolio).where(
+            select(Portfolio).where(
                 Portfolio.student_id == student_id,
                 Portfolio.is_deleted == False
             )
         )
-        count = result.scalar() or 0
-        return min(count * 10, 100)
+        portfolios = result.scalars().all()
+
+        if not portfolios:
+            return 0
+
+        return StudentService._compute_progress_from_portfolios(list(portfolios))
 
     @staticmethod
     async def verify_ownership(
         db: AsyncSession,
         student_id: str,
-        user_id: int
+        user_id: str
     ) -> bool:
         """
         验证学生是否属于指定用户

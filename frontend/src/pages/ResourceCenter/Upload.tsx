@@ -35,6 +35,7 @@ const UploadPage: React.FC = () => {
   const [tagLoading, setTagLoading] = useState<boolean>(false);
   const [creatingTag, setCreatingTag] = useState<boolean>(false);
   const [draftTag, setDraftTag] = useState<string>('');
+  const [uploadPercent, setUploadPercent] = useState(0);
   const navigate = useNavigate();
   const selectedFile = fileList[0];
 
@@ -120,6 +121,7 @@ const UploadPage: React.FC = () => {
     }
 
     setLoading(true);
+    setUploadPercent(0);
     try {
       const formData = new FormData();
       formData.append('name', resourceName);
@@ -129,11 +131,16 @@ const UploadPage: React.FC = () => {
       }
       formData.append('file', fileList[0]);
 
-      await uploadResource(formData);
+      await uploadResource(formData, (progressEvent) => {
+        const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+        setUploadPercent(percent);
+      });
+      setUploadPercent(100);
       message.success('资源上传成功');
       refreshDashboardStats();
       navigate('/resource-center');
     } catch (error) {
+      setUploadPercent(0);
       if (error instanceof BusinessError) {
         message.error(error.message || '资源上传失败，请检查输入信息');
       } else {
@@ -163,7 +170,7 @@ const UploadPage: React.FC = () => {
       >
         <div className="upload-section">
           <h3 className="upload-section-title">文件上传</h3>
-          <FileUpload onFileChange={handleFileChange} />
+          <FileUpload onFileChange={handleFileChange} uploadPercent={uploadPercent} />
           {fileList.length > 0 && (
             <div style={{ marginTop: 16 }}>
               <p style={{ color: '#666' }}>已选择文件：</p>

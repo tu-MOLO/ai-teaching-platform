@@ -3,6 +3,7 @@ import { Layout as AntLayout, Drawer } from 'antd'
 import Sidebar from '../Sidebar'
 import Header from '../Header'
 import { Outlet } from 'react-router-dom'
+import { useDashboardStore } from '../../stores/dashboard'
 import './index.css'
 
 const { Content } = AntLayout
@@ -14,6 +15,9 @@ const Layout: React.FC = () => {
   const [mobileVisible, setMobileVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
+  const startAutoRefresh = useDashboardStore((s) => s.startAutoRefresh)
+  const stopAutoRefresh = useDashboardStore((s) => s.stopAutoRefresh)
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT)
@@ -23,6 +27,28 @@ const Layout: React.FC = () => {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  useEffect(() => {
+    startAutoRefresh()
+    return () => {
+      stopAutoRefresh()
+    }
+  }, [startAutoRefresh, stopAutoRefresh])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startAutoRefresh()
+      } else {
+        stopAutoRefresh()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [startAutoRefresh, stopAutoRefresh])
 
   return (
     <AntLayout className="layout">
