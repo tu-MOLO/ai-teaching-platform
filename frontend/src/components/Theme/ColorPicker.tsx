@@ -106,7 +106,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
 
   // 颜色预设
   const colorPresets = [
-    '#c9a87c',
+    '#548CA8',
     '#7fb3d5',
     '#f4a4b4',
     '#90c695',
@@ -159,7 +159,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
               fontSize,
               fontFamily: 'monospace',
             }}
-            placeholder="#c9a87c"
+            placeholder="#548CA8"
             status={!isValidColor(inputValue) && inputValue !== '' ? 'error' : undefined}
           />
         )}

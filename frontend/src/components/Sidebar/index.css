@@ -1,15 +1,18 @@
-/* 侧边栏样式 */
+/* ============================================
+   娓氀嗙珶閺嶅繑鐗卞?v2.0
+   ============================================ */
 
 .sidebar {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, var(--color-bg-sidebar) 0%, #1a1a30 100%);
+  box-shadow: 2px 0 24px rgba(0, 0, 0, 0.12);
   position: fixed;
   left: 0;
   top: 0;
   height: 100vh;
-  z-index: 100;
+  z-index: var(--z-fixed);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .sidebar .ant-layout-sider-children {
@@ -18,16 +21,16 @@
   height: 100%;
 }
 
-/* 收起状态 */
+/* 閺€鎯版崳閻樿埖鈧?*/
 .sidebar-collapsed .logo-text,
 .sidebar-collapsed .menu-section-title,
-.sidebar-collapsed .collapse-button span,
-.sidebar-collapsed .logout-button span {
+.sidebar-collapsed .collapse-button span:not(.anticon),
+.sidebar-collapsed .logout-button span:not(.anticon) {
   display: none;
 }
 
 .sidebar-collapsed .sidebar-header {
-  padding: 24px 18px;
+  padding: 20px 0;
   display: flex;
   justify-content: center;
 }
@@ -41,19 +44,19 @@
 }
 
 .sidebar-collapsed .sidebar-menu-wrapper {
-  padding: 16px 10px;
+  padding: 12px 8px;
 }
 
 .sidebar-collapsed .sidebar-footer {
-  padding: 12px 10px;
+  padding: 8px 8px;
 }
 
-/* Logo区域 */
+/* Logo閸栧搫鐓?*/
 .sidebar-header {
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 .sidebar-logo {
@@ -63,60 +66,63 @@
 }
 
 .logo-icon {
-  width: 44px;
-  height: 44px;
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--color-primary);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(201, 168, 124, 0.3);
+  box-shadow: 0 3px 10px rgba(84, 140, 168, 0.25);
   flex-shrink: 0;
+  transition: all var(--transition-normal);
 }
 
 .logo-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   color: white;
 }
 
 .logo-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  transition: all 0.3s ease;
+  gap: 1px;
+  transition: all var(--transition-normal);
 }
 
 .logo-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   color: white;
   line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
 .logo-subtitle {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
   line-height: 1.3;
+  letter-spacing: 0.3px;
 }
 
-/* 菜单区域 */
+/* 閼挎粌宕熼崠鍝勭厵 */
 .sidebar-menu-wrapper {
   flex: 1;
-  padding: 16px 12px;
+  padding: 12px 10px;
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
 }
 
 .menu-section-title {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   padding: 0 12px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .sidebar-menu {
@@ -125,31 +131,42 @@
 }
 
 .sidebar-menu .ant-menu-item {
-  height: 48px;
-  line-height: 48px;
-  margin: 4px 0;
+  height: 44px;
+  line-height: 44px;
+  margin: 3px 0;
   padding: 0 12px !important;
-  border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
-  transition: all 0.25s ease;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .sidebar-menu .ant-menu-item:hover {
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-menu .ant-menu-item-selected {
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   color: white;
-  box-shadow: 0 4px 12px rgba(201, 168, 124, 0.3);
+  box-shadow: 0 3px 10px rgba(84, 140, 168, 0.25);
 }
 
 .sidebar-menu .ant-menu-item-selected:hover {
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
 }
 
-/* 收起状态下的菜单项 */
+.sidebar-menu .ant-menu-item-active {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-menu .ant-menu-item-icon {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+/* 閺€鎯版崳閻樿埖鈧椒绗呴惃鍕綅閸楁洟銆?*/
 .sidebar-collapsed .sidebar-menu {
   border-inline-end: none !important;
 }
@@ -159,6 +176,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 48px;
+  width: 48px;
+  margin: 4px auto;
+  border-radius: 10px;
 }
 
 .sidebar-collapsed .sidebar-menu .ant-menu-item > * {
@@ -168,7 +189,7 @@
 .sidebar-collapsed .sidebar-menu .ant-menu-item .ant-menu-item-icon {
   margin-right: 0 !important;
   margin-left: 0 !important;
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -179,170 +200,99 @@
   overflow: hidden;
 }
 
-.sidebar-menu .ant-menu-title-content {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* 底部区域 */
+/* 鎼存洟鍎撮崠鍝勭厵 */
 .sidebar-footer {
-  padding: 16px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* 收起/展开按钮 */
 .collapse-button {
   width: 100%;
-  height: 40px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .collapse-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .collapse-button svg {
-  font-size: 18px;
+  font-size: 16px;
 }
 
-/* 退出登录按钮 */
 .logout-button {
   width: 100%;
-  height: 44px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .logout-button:hover {
-  background: rgba(201, 97, 97, 0.15);
-  border-color: rgba(201, 97, 97, 0.3);
-  color: #ff9e9e;
+  background: rgba(201, 97, 97, 0.12);
+  border-color: rgba(201, 97, 97, 0.2);
+  color: #ff6b6b;
 }
 
-.logout-button svg {
-  font-size: 18px;
-}
-
-/* 收起状态下按钮居中 */
-.sidebar-collapsed .collapse-button,
-.sidebar-collapsed .logout-button {
-  padding: 0;
-  width: 44px;
-  height: 44px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-collapsed .collapse-button > span,
-.sidebar-collapsed .logout-button > span {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-collapsed .sidebar-footer {
-  align-items: center;
-}
-
-/* ==================== 移动端样式 ==================== */
-
-/* 移动端侧边栏容器 */
+/* ========== 缁夎濮╃粩顖欐櫠鏉堣鐖?========== */
 .sidebar-mobile {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  background: linear-gradient(180deg, var(--color-bg-sidebar) 0%, #1a1a30 100%);
 }
 
-/* 移动端头部 */
 .mobile-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.mobile-header .sidebar-logo {
-  flex: 1;
-}
-
-/* 移动端关闭按钮 */
 .mobile-close-btn {
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  transition: all 0.25s ease;
-  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .mobile-close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
-}
-
-.mobile-close-btn svg {
-  font-size: 18px;
-}
-
-/* 滚动条样式 */
-.sidebar-menu-wrapper::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-.sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* 响应式适配 - 平板 */
-@media (max-width: 1024px) {
-  .sidebar-header {
-    padding: 20px 16px;
-  }
 }

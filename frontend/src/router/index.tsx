@@ -32,10 +32,28 @@ const EditStudent = React.lazy(() => import('../pages/Students/Edit'));
 const EditRecord = React.lazy(() => import('../pages/Portfolio/EditRecord'));
 const AIAssistant = React.lazy(() => import('../pages/AIAssistant'));
 
-// 加载中组件
 const PageLoading = () => (
-  <div style={{ padding: 24, textAlign: 'center' }}>
-    <div>加载中...</div>
+  <div style={{
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 300,
+    gap: 16,
+    padding: 48
+  }}>
+    <div style={{
+      width: 32,
+      height: 32,
+      border: '3px solid var(--color-border)',
+      borderTopColor: 'var(--color-primary)',
+      borderRadius: '50%',
+      animation: 'spin 0.8s linear infinite'
+    }} />
+    <div style={{
+      fontSize: 14,
+      color: 'var(--color-text-secondary)'
+    }}>加载中...</div>
   </div>
 );
 

@@ -140,17 +140,14 @@ const EditRecord: React.FC = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="edit-record" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <Spin size="large" tip="加载中..." />
-      </div>
-    )
-  }
-
   return (
     <div className="edit-record">
       <Card title={<Title level={4}>编辑档案记录</Title>} className="edit-record-card">
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+            <Spin size="large" />
+          </div>
+        ) : (
         <Form form={form} onFinish={handleSubmit} layout="vertical">
           <Form.Item name="type" label="记录类型" rules={[{ required: true, message: '请选择记录类型' }]}>
             <PortfolioTypeSelect placeholder="选择记录类型" />
@@ -217,6 +214,7 @@ const EditRecord: React.FC = () => {
             </Space>
           </Form.Item>
         </Form>
+          )}
       </Card>
     </div>
   )

@@ -1,35 +1,22 @@
-/**
- * 预设配色方案定义
- */
-
 export interface ThemeColors {
-  // 主色调
   '--color-primary': string
   '--color-primary-light': string
   '--color-primary-dark': string
   '--color-primary-hover': string
-
-  // 背景色
   '--color-bg-primary': string
   '--color-bg-secondary': string
   '--color-bg-tertiary': string
   '--color-bg-card': string
   '--color-bg-sidebar': string
-
-  // 文字色
   '--color-text-primary': string
   '--color-text-secondary': string
   '--color-text-tertiary': string
   '--color-text-inverse': string
   '--color-text-muted': string
-
-  // 功能色
   '--color-success': string
   '--color-warning': string
   '--color-error': string
   '--color-info': string
-
-  // 边框色
   '--color-border': string
   '--color-border-light': string
   '--color-divider': string
@@ -40,166 +27,174 @@ export interface PresetTheme {
   name: string
   description: string
   colors: ThemeColors
-  previewColors: string[] // 用于预览的主要颜色
+  previewColors: string[]
 }
 
-// 默认配色（暖调专业风格）
+/* ============================================
+   方案1 - 蓝色渐变组（默认）
+   #021024 #052659 #548CA8 #7DA0CA #C1E8FF
+   ============================================ */
 export const defaultThemeColors: ThemeColors = {
-  '--color-primary': '#c9a87c',
-  '--color-primary-light': '#d9c4a3',
-  '--color-primary-dark': '#a88b5e',
-  '--color-primary-hover': '#b89b6e',
+  '--color-primary': '#548CA8',
+  '--color-primary-light': '#7DA0CA',
+  '--color-primary-dark': '#052659',
+  '--color-primary-hover': '#6a9cb5',
 
-  '--color-bg-primary': '#fefcf8',
-  '--color-bg-secondary': '#f5f0e8',
-  '--color-bg-tertiary': '#ebe5db',
+  '--color-bg-primary': '#f3f9fc',
+  '--color-bg-secondary': '#e6f2f8',
+  '--color-bg-tertiary': '#d6e9f2',
   '--color-bg-card': '#ffffff',
-  '--color-bg-sidebar': '#1a1a2e',
+  '--color-bg-sidebar': '#021024',
 
-  '--color-text-primary': '#2c2c2c',
-  '--color-text-secondary': '#5a5a5a',
-  '--color-text-tertiary': '#8a8a8a',
+  '--color-text-primary': '#021024',
+  '--color-text-secondary': '#1e3a5c',
+  '--color-text-tertiary': '#548CA8',
   '--color-text-inverse': '#ffffff',
-  '--color-text-muted': '#a0a0a0',
+  '--color-text-muted': '#7DA0CA',
 
   '--color-success': '#6b9b7a',
   '--color-warning': '#d4a574',
   '--color-error': '#c97b7b',
-  '--color-info': '#7a9ab8',
+  '--color-info': '#548CA8',
 
-  '--color-border': 'rgba(0, 0, 0, 0.06)',
-  '--color-border-light': 'rgba(0, 0, 0, 0.04)',
-  '--color-divider': 'rgba(0, 0, 0, 0.08)',
+  '--color-border': 'rgba(84, 140, 168, 0.14)',
+  '--color-border-light': 'rgba(84, 140, 168, 0.07)',
+  '--color-divider': 'rgba(84, 140, 168, 0.10)',
 }
 
-// 海盐风格 - 清新蓝调
-export const oceanTheme: PresetTheme = {
-  id: 'ocean',
-  name: '海盐风格',
-  description: '清新蓝调配色，适合长时间使用',
-  colors: {
-    '--color-primary': '#7fb3d5',
-    '--color-primary-light': '#a8cce5',
-    '--color-primary-dark': '#5a9ac4',
-    '--color-primary-hover': '#6ba8d0',
-
-    '--color-bg-primary': '#f8fbfd',
-    '--color-bg-secondary': '#e8f4f8',
-    '--color-bg-tertiary': '#d9ebf2',
-    '--color-bg-card': '#ffffff',
-    '--color-bg-sidebar': '#2c4a5e',
-
-    '--color-text-primary': '#2c3e50',
-    '--color-text-secondary': '#5a6c7d',
-    '--color-text-tertiary': '#8a9aa8',
-    '--color-text-inverse': '#ffffff',
-    '--color-text-muted': '#95a5a6',
-
-    '--color-success': '#5cb85c',
-    '--color-warning': '#f0ad4e',
-    '--color-error': '#d9534f',
-    '--color-info': '#5bc0de',
-
-    '--color-border': 'rgba(127, 179, 213, 0.2)',
-    '--color-border-light': 'rgba(127, 179, 213, 0.1)',
-    '--color-divider': 'rgba(127, 179, 213, 0.15)',
-  },
-  previewColors: ['#7fb3d5', '#a8cce5', '#2c4a5e', '#f8fbfd', '#5cb85c'],
-}
-
-// 马卡龙风格 - 柔和粉彩
-export const macaronTheme: PresetTheme = {
-  id: 'macaron',
-  name: '马卡龙风格',
-  description: '柔和粉彩配色，适合年轻用户',
-  colors: {
-    '--color-primary': '#f4a4b4',
-    '--color-primary-light': '#f8c5d0',
-    '--color-primary-dark': '#e87a8e',
-    '--color-primary-hover': '#f194a5',
-
-    '--color-bg-primary': '#fff8fa',
-    '--color-bg-secondary': '#fceef2',
-    '--color-bg-tertiary': '#f9e4eb',
-    '--color-bg-card': '#ffffff',
-    '--color-bg-sidebar': '#4a3f4f',
-
-    '--color-text-primary': '#4a3f4f',
-    '--color-text-secondary': '#7a6f7f',
-    '--color-text-tertiary': '#a89fa8',
-    '--color-text-inverse': '#ffffff',
-    '--color-text-muted': '#c0b8c0',
-
-    '--color-success': '#a8d8b9',
-    '--color-warning': '#f4d06f',
-    '--color-error': '#f4a4a4',
-    '--color-info': '#a4c8f4',
-
-    '--color-border': 'rgba(244, 164, 180, 0.2)',
-    '--color-border-light': 'rgba(244, 164, 180, 0.1)',
-    '--color-divider': 'rgba(244, 164, 180, 0.15)',
-  },
-  previewColors: ['#f4a4b4', '#f8c5d0', '#4a3f4f', '#fff8fa', '#a8d8b9'],
-}
-
-// 春日风格 - 温暖绿色
-export const springTheme: PresetTheme = {
-  id: 'spring',
-  name: '春日风格',
-  description: '温暖绿色配色，适合春季主题',
-  colors: {
-    '--color-primary': '#90c695',
-    '--color-primary-light': '#b0d9b4',
-    '--color-primary-dark': '#70b376',
-    '--color-primary-hover': '#80bc85',
-
-    '--color-bg-primary': '#f8fdf8',
-    '--color-bg-secondary': '#e8f5e9',
-    '--color-bg-tertiary': '#d4edda',
-    '--color-bg-card': '#ffffff',
-    '--color-bg-sidebar': '#2e4a3e',
-
-    '--color-text-primary': '#2c4a3e',
-    '--color-text-secondary': '#5a7a6e',
-    '--color-text-tertiary': '#8aaa9e',
-    '--color-text-inverse': '#ffffff',
-    '--color-text-muted': '#a0c0b0',
-
-    '--color-success': '#7cb87c',
-    '--color-warning': '#e6b87c',
-    '--color-error': '#d68c8c',
-    '--color-info': '#7cb8d6',
-
-    '--color-border': 'rgba(144, 198, 149, 0.2)',
-    '--color-border-light': 'rgba(144, 198, 149, 0.1)',
-    '--color-divider': 'rgba(144, 198, 149, 0.15)',
-  },
-  previewColors: ['#90c695', '#b0d9b4', '#2e4a3e', '#f8fdf8', '#7cb87c'],
-}
-
-// 默认暖调专业风格
-export const warmTheme: PresetTheme = {
-  id: 'warm',
-  name: '暖调专业',
-  description: '经典暖调配色，专业稳重',
+export const blueTheme: PresetTheme = {
+  id: 'blue',
+  name: '蓝色渐变',
+  description: '专业稳重，清晰明快',
   colors: defaultThemeColors,
-  previewColors: ['#c9a87c', '#d9c4a3', '#1a1a2e', '#fefcf8', '#6b9b7a'],
+  previewColors: ['#548CA8', '#7DA0CA', '#021024', '#f3f9fc', '#6b9b7a'],
 }
 
-// 所有预设方案列表
-export const presetThemes: PresetTheme[] = [warmTheme, oceanTheme, macaronTheme, springTheme]
+/* ============================================
+   方案2 - 莫兰迪柔色组
+   #99CDD8 #D1E7DD #F0DDD0 #FAC2BE #E2E8D4 #657166
+   ============================================ */
+export const morandiTheme: PresetTheme = {
+  id: 'morandi',
+  name: '莫兰迪柔色',
+  description: '低饱和柔和，温润舒适',
+  colors: {
+    '--color-primary': '#657166',
+    '--color-primary-light': '#99CDD8',
+    '--color-primary-dark': '#4a5850',
+    '--color-primary-hover': '#7d8a7e',
 
-// 获取预设方案
+    '--color-bg-primary': '#faf8f6',
+    '--color-bg-secondary': '#f0eeea',
+    '--color-bg-tertiary': '#e8e5df',
+    '--color-bg-card': '#ffffff',
+    '--color-bg-sidebar': '#3d4340',
+
+    '--color-text-primary': '#2d3330',
+    '--color-text-secondary': '#4a5850',
+    '--color-text-tertiary': '#657166',
+    '--color-text-inverse': '#ffffff',
+    '--color-text-muted': '#8a908a',
+
+    '--color-success': '#8cb89a',
+    '--color-warning': '#d4b896',
+    '--color-error': '#c99b9b',
+    '--color-info': '#99b8c9',
+
+    '--color-border': 'rgba(101, 113, 102, 0.12)',
+    '--color-border-light': 'rgba(101, 113, 102, 0.06)',
+    '--color-divider': 'rgba(101, 113, 102, 0.10)',
+  },
+  previewColors: ['#657166', '#99CDD8', '#3d4340', '#faf8f6', '#8cb89a'],
+}
+
+/* ============================================
+   方案3 - 深灰中性组
+   #06141B #11212D #253745 #4A5C6A #9BA8AB #CCD0CF
+   ============================================ */
+export const neutralTheme: PresetTheme = {
+  id: 'neutral',
+  name: '深灰中性',
+  description: '克制内敛，聚焦内容',
+  colors: {
+    '--color-primary': '#4A5C6A',
+    '--color-primary-light': '#9BA8AB',
+    '--color-primary-dark': '#253745',
+    '--color-primary-hover': '#6b7d8a',
+
+    '--color-bg-primary': '#f5f6f6',
+    '--color-bg-secondary': '#e8ebec',
+    '--color-bg-tertiary': '#dce0e1',
+    '--color-bg-card': '#ffffff',
+    '--color-bg-sidebar': '#06141B',
+
+    '--color-text-primary': '#06141B',
+    '--color-text-secondary': '#11212D',
+    '--color-text-tertiary': '#4A5C6A',
+    '--color-text-inverse': '#ffffff',
+    '--color-text-muted': '#9BA8AB',
+
+    '--color-success': '#6b9b7a',
+    '--color-warning': '#d4a574',
+    '--color-error': '#c97b7b',
+    '--color-info': '#4A5C6A',
+
+    '--color-border': 'rgba(74, 92, 106, 0.12)',
+    '--color-border-light': 'rgba(74, 92, 106, 0.06)',
+    '--color-divider': 'rgba(74, 92, 106, 0.10)',
+  },
+  previewColors: ['#4A5C6A', '#9BA8AB', '#06141B', '#f5f6f6', '#6b9b7a'],
+}
+
+/* ============================================
+   方案4 - 紫粉渐变组
+   #2E365A #6B597F #A2869C #BD6C73 #92A1C2 #3F5BBD
+   ============================================ */
+export const violetTheme: PresetTheme = {
+  id: 'violet',
+  name: '紫粉渐变',
+  description: '优雅知性，柔和亮眼',
+  colors: {
+    '--color-primary': '#3F5BBD',
+    '--color-primary-light': '#92A1C2',
+    '--color-primary-dark': '#2E365A',
+    '--color-primary-hover': '#5a74cf',
+
+    '--color-bg-primary': '#f9f8fb',
+    '--color-bg-secondary': '#f0eef5',
+    '--color-bg-tertiary': '#e8e4ef',
+    '--color-bg-card': '#ffffff',
+    '--color-bg-sidebar': '#2E365A',
+
+    '--color-text-primary': '#1a1d2e',
+    '--color-text-secondary': '#2E365A',
+    '--color-text-tertiary': '#6B597F',
+    '--color-text-inverse': '#ffffff',
+    '--color-text-muted': '#A2869C',
+
+    '--color-success': '#7aaa8a',
+    '--color-warning': '#c9a080',
+    '--color-error': '#BD6C73',
+    '--color-info': '#92A1C2',
+
+    '--color-border': 'rgba(63, 91, 189, 0.12)',
+    '--color-border-light': 'rgba(63, 91, 189, 0.06)',
+    '--color-divider': 'rgba(63, 91, 189, 0.10)',
+  },
+  previewColors: ['#3F5BBD', '#92A1C2', '#2E365A', '#f9f8fb', '#7aaa8a'],
+}
+
+/* ========== 导出列表 ========== */
+export const presetThemes: PresetTheme[] = [blueTheme, morandiTheme, neutralTheme, violetTheme]
+
 export function getPresetThemeById(id: string): PresetTheme | undefined {
   return presetThemes.find((theme) => theme.id === id)
 }
 
-// 获取默认预设方案
 export function getDefaultPresetTheme(): PresetTheme {
-  return warmTheme
+  return blueTheme
 }
 
-// CSS变量名列表
 export const colorVariableNames: (keyof ThemeColors)[] = [
   '--color-primary',
   '--color-primary-light',
@@ -224,7 +219,6 @@ export const colorVariableNames: (keyof ThemeColors)[] = [
   '--color-divider',
 ]
 
-// 颜色变量分组
 export const colorVariableGroups = [
   {
     key: 'primary',
@@ -253,7 +247,6 @@ export const colorVariableGroups = [
   },
 ]
 
-// 变量显示名称映射
 export const colorVariableLabels: Record<keyof ThemeColors, string> = {
   '--color-primary': '主色',
   '--color-primary-light': '主色(浅)',

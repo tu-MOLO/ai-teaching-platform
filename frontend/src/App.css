@@ -22,52 +22,256 @@ code {
   height: 100vh;
 }
 
-/* Ant Design 组件样式覆盖 */
+/* ============================================
+   Ant Design 缁勪欢鍏ㄥ眬涓婚瑕嗙洊
+   ============================================ */
+
+/* Layout */
 .ant-layout {
   background: var(--color-bg-primary);
 }
 
 .ant-layout-sider {
-  background: var(--color-bg-sidebar);
+  background: var(--color-bg-sidebar) !important;
 }
 
 .ant-layout-header {
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--color-border);
+  height: var(--header-height);
+  line-height: var(--header-height);
+  padding: 0 32px;
 }
 
+/* Card */
 .ant-card {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .ant-card-head {
   border-bottom: 1px solid var(--color-border-light);
   padding: var(--space-md) var(--space-lg);
+  min-height: 56px;
+}
+
+.ant-card-head-title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  padding: var(--space-sm) 0;
+}
+
+.ant-card-extra {
+  padding: var(--space-sm) 0;
 }
 
 .ant-card-body {
   padding: var(--space-lg);
 }
 
+/* Button */
+.ant-btn {
+  border-radius: var(--radius-md);
+  font-weight: var(--font-weight-medium);
+  height: 36px;
+  padding: 4px 16px;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.ant-btn-sm {
+  height: 28px;
+  padding: 0 12px;
+  font-size: var(--font-size-sm);
+}
+
+.ant-btn-lg {
+  height: 44px;
+  padding: 4px 24px;
+  font-size: var(--font-size-md);
+}
+
 .ant-btn-primary {
   background: var(--color-primary);
   border-color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(84, 140, 168, 0.25);
 }
 
 .ant-btn-primary:hover {
-  background: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(84, 140, 168, 0.35);
+}
+
+.ant-btn-primary:active {
+  transform: translateY(0);
+  background: var(--color-primary-active) !important;
+}
+
+.ant-btn-default {
+  border-color: var(--color-border-medium);
+  color: var(--color-text-primary);
+}
+
+.ant-btn-default:hover {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+.ant-btn-text:hover {
+  background: var(--color-bg-secondary);
+}
+
+.ant-btn-link {
+  color: var(--color-primary);
+}
+
+.ant-btn-link:hover {
+  color: var(--color-primary-dark);
+}
+
+.ant-btn-dangerous.ant-btn-primary {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  box-shadow: 0 2px 6px rgba(201, 123, 123, 0.25);
+}
+
+.ant-btn-dangerous.ant-btn-primary:hover {
+  background: var(--color-error-dark) !important;
+  border-color: var(--color-error-dark) !important;
+}
+
+/* Input */
+.ant-input {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-medium);
+  height: 36px;
+  font-size: var(--font-size-base);
+  transition: all var(--transition-fast);
+  line-height: 1.5;
+}
+
+.ant-input:hover {
+  border-color: var(--color-primary-light);
 }
 
 .ant-input:focus,
 .ant-input-focused {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(201, 168, 124, 0.2);
+  box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.12);
 }
 
+.ant-input-affix-wrapper {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-medium);
+  padding: 4px 12px;
+  transition: all var(--transition-fast);
+}
+
+.ant-input-affix-wrapper:hover {
+  border-color: var(--color-primary-light);
+}
+
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.12);
+}
+
+.ant-input-affix-wrapper .ant-input {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  height: auto;
+}
+
+.ant-input-search .ant-input-search-button {
+  height: 36px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.ant-input-search .ant-input-search-button.ant-btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.ant-input-search .ant-input-search-button.ant-btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+}
+
+/* Select */
+.ant-select:not(.ant-select-customize-input) .ant-select-selector {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--color-border-medium) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.ant-select:not(.ant-select-customize-input).ant-select-focused .ant-select-selector {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.12) !important;
+}
+
+.ant-select:not(.ant-select-customize-input):hover .ant-select-selector {
+  border-color: var(--color-primary-light) !important;
+}
+
+/* Table */
+.ant-table {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+}
+
+.ant-table-thead > tr > th {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--color-divider);
+  padding: var(--space-md) var(--space-md);
+}
+
+.ant-table-tbody > tr > td {
+  padding: var(--space-md) var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition-fast);
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(84, 140, 168, 0.04);
+}
+
+.ant-table-tbody > tr.ant-table-row-selected > td {
+  background: rgba(84, 140, 168, 0.06);
+}
+
+.ant-table-pagination {
+  padding: var(--space-md) 0;
+}
+
+/* Tag */
+.ant-tag {
+  border-radius: var(--radius-sm);
+  padding: 0 8px;
+  font-size: var(--font-size-xs);
+  line-height: 22px;
+  border: none;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Menu */
 .ant-menu-dark {
   background: var(--color-bg-sidebar);
 }
@@ -76,6 +280,92 @@ code {
   background: var(--color-primary);
 }
 
+/* Menu - Dropdown */
+.ant-dropdown-menu {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-xs);
+}
+
+.ant-dropdown-menu-item {
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  transition: background var(--transition-fast);
+}
+
+.ant-dropdown-menu-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.ant-dropdown-menu-item-divider {
+  margin: var(--space-xs) 0;
+  background: var(--color-divider);
+}
+
+/* Modal */
+.ant-modal-content {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+}
+
+.ant-modal-header {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--space-lg) var(--space-lg) var(--space-md);
+}
+
+.ant-modal-body {
+  padding: var(--space-lg);
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--color-border-light);
+  padding: var(--space-md) var(--space-lg);
+}
+
+/* Drawer */
+.ant-drawer-content-wrapper {
+  box-shadow: var(--shadow-xl);
+}
+
+.ant-drawer-header {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* Tooltip */
+.ant-tooltip-inner {
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  padding: 6px 12px;
+  background: var(--color-bg-tooltip);
+}
+
+/* Popover */
+.ant-popover-inner {
+  border-radius: var(--radius-lg);
+}
+
+.ant-popover-inner-content {
+  padding: var(--space-md);
+}
+
+/* Badge */
+.ant-badge-count {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-bg-card);
+}
+
+/* Notification (antd message) */
+.ant-message-notice-content {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* Statistic */
 .ant-statistic-title {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
@@ -86,15 +376,104 @@ code {
   font-weight: var(--font-weight-semibold);
 }
 
-.ant-table {
-  background: var(--color-bg-card);
+/* Spin */
+.ant-spin-dot-item {
+  background-color: var(--color-primary);
 }
 
-.ant-table-thead > tr > th {
-  background: var(--color-bg-secondary);
-  font-weight: var(--font-weight-semibold);
+/* Steps */
+.ant-steps-item-title {
+  font-size: var(--font-size-base);
 }
 
-.ant-tag {
-  border-radius: var(--radius-sm);
+.ant-steps-item-description {
+  font-size: var(--font-size-sm);
+}
+
+/* Tabs */
+.ant-tabs-tab {
+  font-size: var(--font-size-base);
+  padding: var(--space-sm) 0;
+  transition: color var(--transition-fast);
+}
+
+.ant-tabs-tab:hover {
+  color: var(--color-primary);
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--color-primary);
+}
+
+.ant-tabs-ink-bar {
+  background: var(--color-primary);
+}
+
+/* Pagination */
+.ant-pagination-item {
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.ant-pagination-item:hover {
+  border-color: var(--color-primary);
+}
+
+.ant-pagination-item-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.ant-pagination-item-active a {
+  color: white;
+}
+
+.ant-pagination-item-active:hover a {
+  color: white;
+}
+
+/* Form */
+.ant-form-item-label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  padding-bottom: var(--space-xs);
+}
+
+.ant-form-item-label > label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+
+/* Switch */
+.ant-switch {
+  background: var(--color-text-quaternary);
+}
+
+.ant-switch.ant-switch-checked {
+  background: var(--color-primary);
+}
+
+/* Progress */
+.ant-progress-bg {
+  background: var(--color-primary);
+}
+
+/* Empty */
+.ant-empty-image {
+  opacity: 0.6;
+}
+
+.ant-empty-description {
+  color: var(--color-text-tertiary);
+}
+
+/* Avatar */
+.ant-avatar {
+  background: var(--color-primary);
+}
+
+/* Dropdown button icon spacing */
+.ant-btn > .anticon + span,
+.ant-btn > span + .anticon {
+  margin-inline-start: 6px;
 }

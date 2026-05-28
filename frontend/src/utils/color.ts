@@ -11,7 +11,7 @@ export interface RGBColor {
 
 /**
  * 将HEX颜色转换为RGB对象
- * @param hex - HEX颜色值 (如: #c9a87c 或 #fff)
+ * @param hex - HEX颜色值 (如: #548CA8 或 #fff)
  * @returns RGBColor对象
  */
 export function hexToRgb(hex: string): RGBColor | null {
@@ -39,7 +39,7 @@ export function hexToRgb(hex: string): RGBColor | null {
 /**
  * 将RGB对象转换为HEX颜色
  * @param rgb - RGBColor对象
- * @returns HEX颜色值 (如: #c9a87c)
+ * @returns HEX颜色值 (如: #548CA8)
  */
 export function rgbToHex(rgb: RGBColor): string {
   const toHex = (n: number): string => {

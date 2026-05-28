@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Row, Col, Spin, Empty } from 'antd'
+import { Spin, Empty } from 'antd'
 import {
   BookOutlined,
   UserOutlined,
@@ -15,7 +15,10 @@ import {
   CalendarOutlined,
   BellOutlined,
   InfoCircleOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  DashboardOutlined,
+  ThunderboltOutlined,
+  NotificationOutlined
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -26,7 +29,6 @@ import {
 import { useDashboardStore } from '../../stores/dashboard'
 import './index.css'
 
-// 图标映射
 const iconMapping: Record<string, React.ReactNode> = {
   [NotificationType.SYSTEM]: <InfoCircleOutlined />,
   [NotificationType.COURSE]: <BookOutlined />,
@@ -39,7 +41,6 @@ const iconMapping: Record<string, React.ReactNode> = {
   'achievement': <TrophyOutlined />,
 }
 
-// 类型样式映射
 const typeStyleMapping: Record<string, string> = {
   [NotificationType.SYSTEM]: 'maintenance',
   [NotificationType.COURSE]: 'new-feature',
@@ -49,29 +50,15 @@ const typeStyleMapping: Record<string, string> = {
   [NotificationType.REMINDER]: 'maintenance',
 }
 
-// 格式化时间显示
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
 
-  // 小于1分钟
-  if (diff < 60000) {
-    return '刚刚'
-  }
-  // 小于1小时
-  if (diff < 3600000) {
-    return `${Math.floor(diff / 60000)}分钟前`
-  }
-  // 小于24小时
-  if (diff < 86400000) {
-    return `${Math.floor(diff / 3600000)}小时前`
-  }
-  // 小于7天
-  if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}天前`
-  }
-  // 显示具体日期
+  if (diff < 60000) return '刚刚'
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`
   return date.toLocaleDateString('zh-CN')
 }
 
@@ -110,59 +97,16 @@ const Dashboard: React.FC = () => {
   }
 
   const statCards = [
-    {
-      title: '总课程数',
-      value: stats.totalCourses,
-      icon: <BookOutlined />,
-      color: '#c9a87c',
-      bgColor: 'rgba(201, 168, 124, 0.1)',
-      path: '/courses',
-    },
-    {
-      title: '总学生数',
-      value: stats.totalStudents,
-      icon: <UserOutlined />,
-      color: '#6b9b7a',
-      bgColor: 'rgba(107, 155, 122, 0.1)',
-      path: '/students',
-    },
-    {
-      title: '本月教案',
-      value: stats.monthlyLessonPlans,
-      icon: <FileTextOutlined />,
-      color: '#7a9ab8',
-      bgColor: 'rgba(122, 154, 184, 0.1)',
-      path: '/lesson-planner',
-    },
-    {
-      title: '我的资源',
-      value: stats.totalResources,
-      icon: <RocketOutlined />,
-      color: '#909399',
-      bgColor: 'rgba(144, 147, 153, 0.1)',
-      path: '/resource-center',
-    },
+    { title: '总课程数', value: stats.totalCourses, icon: <BookOutlined />, color: '#548CA8', bgColor: 'rgba(84, 140, 168, 0.08)', path: '/courses' },
+    { title: '总学生数', value: stats.totalStudents, icon: <UserOutlined />, color: '#6b9b7a', bgColor: 'rgba(107, 155, 122, 0.08)', path: '/students' },
+    { title: '本月教案', value: stats.monthlyLessonPlans, icon: <FileTextOutlined />, color: '#7a9ab8', bgColor: 'rgba(122, 154, 184, 0.08)', path: '/lesson-planner' },
+    { title: '我的资源', value: stats.totalResources, icon: <RocketOutlined />, color: '#909399', bgColor: 'rgba(144, 147, 153, 0.08)', path: '/resource-center' },
   ]
 
   const quickActions = [
-    {
-      icon: <PlusOutlined />,
-      title: '创建新课程',
-      desc: '开始设计一堂新课',
-      onClick: () => navigate('/courses/create'),
-    },
-    {
-      icon: <UserAddOutlined />,
-      title: '添加学生',
-      desc: '录入新学生信息',
-      onClick: () => navigate('/students/create'),
-    },
-    {
-      icon: <FileTextOutlined />,
-      title: '查看报告',
-      desc: '查看教学数据分析',
-      onClick: () => navigate('/reports'),
-    },
+    { icon: <PlusOutlined />, title: '创建新课程', desc: '开始设计一堂新课', onClick: () => navigate('/courses/create') },
+    { icon: <UserAddOutlined />, title: '添加学生', desc: '录入新学生信息', onClick: () => navigate('/students/create') },
+    { icon: <FileTextOutlined />, title: '查看报告', desc: '查看教学数据分析', onClick: () => navigate('/reports') },
   ]
 
   if (loading && !stats.totalCourses && !stats.totalStudents) {
@@ -178,108 +122,87 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      {/* 页面标题 */}
       <div className="dashboard-header">
         <div className="dashboard-header-left">
-          <h1 className="dashboard-title">工作台</h1>
+          <h1 className="dashboard-title">
+            <DashboardOutlined className="dashboard-title-icon" />
+            工作台
+          </h1>
           <p className="dashboard-subtitle">欢迎回来，祝您今天教学顺利！</p>
         </div>
         <div className="dashboard-header-right">
-          <button
-            className="refresh-btn"
-            onClick={refreshStats}
-            disabled={loading}
-            title="刷新数据"
-          >
+          <button className="refresh-btn" onClick={refreshStats} disabled={loading} title="刷新数据">
             <ReloadOutlined spin={loading} />
           </button>
         </div>
       </div>
 
-      {/* 统计卡片 */}
-      <Row gutter={[24, 24]} className="stats-row">
+      {/* 统计数据 - 行内条 */}
+      <div className="stats-strip">
         {statCards.map((stat, index) => (
-          <Col xs={24} sm={12} lg={8} key={index}>
-            <div
-              className={`stat-card stat-card-animate`}
-              style={{
-                '--stat-color': stat.color,
-                '--stat-bg-color': stat.bgColor
-              } as React.CSSProperties}
-              onClick={() => navigate(stat.path)}
-            >
-              <div className="stat-card-content">
-                <div
-                  className="stat-icon-wrapper"
-                  style={{ background: stat.bgColor, color: stat.color }}
-                >
-                  {stat.icon}
-                </div>
-                <div className="stat-info">
-                  <div className="stat-value stat-value-animate">{stat.value?.toLocaleString?.() || stat.value}</div>
-                  <div className="stat-label">{stat.title}</div>
-                </div>
-              </div>
+          <div key={index} className="stat-item" onClick={() => navigate(stat.path)}>
+            <div className="stat-item-icon" style={{ background: stat.bgColor, color: stat.color }}>
+              {stat.icon}
             </div>
-          </Col>
+            <div className="stat-item-body">
+              <div className="stat-item-value">{stat.value?.toLocaleString?.() || stat.value}</div>
+              <div className="stat-item-label">{stat.title}</div>
+            </div>
+          </div>
         ))}
-      </Row>
+      </div>
 
-      {/* 快捷操作和通知 */}
-      <Row gutter={[24, 24]} className="actions-row">
-        <Col xs={24} lg={8}>
-          <Card title="快捷操作" className="action-card">
-            <div className="action-list">
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  className="action-button"
-                  onClick={action.onClick}
-                >
-                  <div className="action-icon">{action.icon}</div>
-                  <div className="action-text">
-                    <div className="action-title">{action.title}</div>
-                    <div className="action-desc">{action.desc}</div>
+      {/* 快捷操作 */}
+      <div className="content-section">
+        <div className="section-heading">
+          <ThunderboltOutlined className="section-heading-icon" />
+          <span className="section-heading-text">快捷操作</span>
+        </div>
+        <div className="quick-actions">
+          {quickActions.map((action, index) => (
+            <button key={index} className="quick-action-btn" onClick={action.onClick}>
+              <div className="quick-action-icon">{action.icon}</div>
+              <div className="quick-action-text">
+                <div className="quick-action-title">{action.title}</div>
+                <div className="quick-action-desc">{action.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 系统通知 */}
+      <div className="content-section">
+        <div className="section-heading">
+          <NotificationOutlined className="section-heading-icon" />
+          <span className="section-heading-text">系统通知</span>
+          {notifications.length > 0 && (
+            <span className="section-heading-extra" onClick={() => navigate('/notifications')}>
+              查看全部
+            </span>
+          )}
+        </div>
+        <Spin spinning={notificationsLoading}>
+          {notifications.length > 0 ? (
+            <div className="notification-list">
+              {notifications.map((notification, index) => (
+                <div key={notification.id || index} className="notification-item">
+                  <div className={`notification-type-icon ${typeStyleMapping[notification.type] || 'new-feature'}`}>
+                    {iconMapping[notification.type] || <BellOutlined />}
                   </div>
-                </button>
+                  <div className="notification-body">
+                    <div className="notification-body-title">{notification.title}</div>
+                    <div className="notification-body-content">{notification.content}</div>
+                  </div>
+                  <div className="notification-time">{formatTime(notification.created_at)}</div>
+                </div>
               ))}
             </div>
-          </Card>
-        </Col>
-        <Col xs={24} lg={16}>
-          <Card
-            title="系统通知"
-            className="notification-card"
-            extra={notifications.length > 0 && (
-              <a onClick={() => navigate('/notifications')}>查看全部</a>
-            )}
-          >
-            <Spin spinning={notificationsLoading}>
-              {notifications.length > 0 ? (
-                <div className="notification-list">
-                  {notifications.map((notification, index) => (
-                    <div key={notification.id || index} className="notification-item">
-                      <div className={`notification-icon ${typeStyleMapping[notification.type] || 'new-feature'}`}>
-                        {iconMapping[notification.type] || <BellOutlined />}
-                      </div>
-                      <div className="notification-content">
-                        <div className="notification-title">{notification.title}</div>
-                        <div className="notification-desc">{notification.content}</div>
-                      </div>
-                      <div className="notification-time">{formatTime(notification.created_at)}</div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="暂无通知"
-                />
-              )}
-            </Spin>
-          </Card>
-        </Col>
-      </Row>
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无通知" />
+          )}
+        </Spin>
+      </div>
     </div>
   )
 }

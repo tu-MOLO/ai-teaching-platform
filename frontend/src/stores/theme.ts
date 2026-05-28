@@ -99,7 +99,7 @@ const pushHistory = (
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      currentThemeId: 'warm',
+      currentThemeId: 'blue',
       currentColors: { ...defaultThemeColors },
       isCustom: false,
       history: createInitialHistory(defaultThemeColors),

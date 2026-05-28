@@ -68,6 +68,7 @@ export default defineConfig({
   plugins: [
     react(),
     viteCompression({ algorithm: 'gzip', ext: '.gz', threshold: 1024 }),
+    viteCompression({ algorithm: 'brotliCompress', ext: '.br', threshold: 1024 }),
   ],
   resolve: {
     alias: {
@@ -87,10 +88,25 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     chunkSizeWarningLimit: 900,
+    cssCodeSplit: true,
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks(id) {
           return getChunkGroup(id)
+        },
+        assetFileNames: (assetInfo) => {
+          const name = assetInfo.name || ''
+          if (name.endsWith('.css')) {
+            return 'assets/css/[name]-[hash][extname]'
+          }
+          if (/\.(png|jpe?g|gif|svg|webp|ico)$/.test(name)) {
+            return 'assets/img/[name]-[hash][extname]'
+          }
+          if (/\.(woff2?|eot|ttf|otf)$/.test(name)) {
+            return 'assets/fonts/[name]-[hash][extname]'
+          }
+          return 'assets/[name]-[hash][extname]'
         },
       },
     },
