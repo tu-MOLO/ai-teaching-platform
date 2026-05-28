@@ -1,5 +1,5 @@
 /* ============================================
-   头部导航样式 v2.0
+   澶撮儴瀵艰埅鏍峰紡 v2.0
    ============================================ */
 
 .header {
@@ -112,7 +112,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,7 +166,7 @@
   outline: none;
   border-color: var(--color-primary-light);
   background: var(--color-bg-card);
-  box-shadow: 0 0 0 3px rgba(201, 168, 124, 0.08);
+  box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.08);
 }
 
 .header-search-icon {
@@ -179,7 +179,7 @@
   pointer-events: none;
 }
 
-/* ========== 通知下拉菜单 ========== */
+/* ========== 閫氱煡涓嬫媺鑿滃崟 ========== */
 .notification-dropdown-wrapper .ant-dropdown-menu {
   padding: 0;
   border-radius: var(--radius-lg);
@@ -225,7 +225,7 @@
 }
 
 .notification-item.unread {
-  background: rgba(201, 168, 124, 0.04);
+  background: rgba(84, 140, 168, 0.04);
 }
 
 .notification-item-title {
@@ -258,7 +258,7 @@
   color: var(--color-text-tertiary);
 }
 
-/* ========== 移动端响应式 ========== */
+/* ========== 绉诲姩绔搷搴斿紡 ========== */
 @media (max-width: 768px) {
   .header {
     padding: 0 var(--content-padding-mobile);

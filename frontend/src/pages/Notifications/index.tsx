@@ -128,7 +128,7 @@ const NotificationsPage: React.FC = () => {
             {items.map((item) => (
               <div key={item.id} className={`notification-row ${item.read ? 'is-read' : 'is-unread'}`}>
                 <div className="notification-avatar" style={{
-                  background: item.read ? 'rgba(122, 154, 184, 0.08)' : 'rgba(201, 168, 124, 0.12)',
+                  background: item.read ? 'rgba(122, 154, 184, 0.08)' : 'rgba(84, 140, 168, 0.12)',
                   color: item.read ? 'var(--color-info)' : 'var(--color-primary)'
                 }}>
                   <BellOutlined />

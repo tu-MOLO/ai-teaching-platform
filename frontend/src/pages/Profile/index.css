@@ -1,5 +1,5 @@
 /* ============================================
-   个人资料页面样式 v2.0
+   涓汉璧勬枡椤甸潰鏍峰紡 v2.0
    ============================================ */
 
 .profile-container {
@@ -82,7 +82,7 @@
 
 .profile-avatar {
   margin-bottom: var(--space-md);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   font-size: 44px !important;
 }
 
@@ -182,7 +182,7 @@
 .profile-form .ant-input:focus,
 .profile-form .ant-input-focused {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(201, 168, 124, 0.15);
+  box-shadow: 0 0 0 2px rgba(84, 140, 168, 0.15);
 }
 
 .profile-form.ant-form-disabled .ant-input {

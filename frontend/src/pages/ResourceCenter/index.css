@@ -1,10 +1,10 @@
-/* 资源中心页面样式 */
+/* 璧勬簮涓績椤甸潰鏍峰紡 */
 
 .resource-center {
   padding: var(--space-lg);
 }
 
-/* 页面头部 */
+/* 椤甸潰澶撮儴 */
 .resource-header {
   display: flex;
   justify-content: space-between;
@@ -30,7 +30,7 @@
   color: var(--color-text-secondary);
 }
 
-/* 搜索区域 */
+/* 鎼滅储鍖哄煙 */
 .search-section {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
@@ -51,7 +51,7 @@
   max-width: 500px;
 }
 
-/* 确保搜索组件的输入框和按钮高度一致 */
+/* 纭繚鎼滅储缁勪欢鐨勮緭鍏ユ鍜屾寜閽珮搴︿竴鑷?*/
 .search-input-large .ant-input-affix-wrapper,
 .search-input-large .ant-input-search-button {
   height: 48px;
@@ -71,7 +71,7 @@
   background: var(--color-bg-card);
 }
 
-/* 搜索按钮样式 */
+/* 鎼滅储鎸夐挳鏍峰紡 */
 .search-input-large .ant-input-search-button {
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: var(--color-primary);
@@ -89,7 +89,7 @@
   border-color: var(--color-primary-dark);
 }
 
-/* 标签筛选 */
+/* 鏍囩绛涢€?*/
 .filter-section {
   display: flex;
   flex-direction: column;
@@ -130,7 +130,7 @@
   color: white;
 }
 
-/* 资源网格 */
+/* 璧勬簮缃戞牸 */
 .resource-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -138,7 +138,7 @@
   margin-bottom: var(--space-xl);
 }
 
-/* 资源卡片 */
+/* 璧勬簮鍗＄墖 */
 .resource-card {
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
@@ -172,14 +172,14 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 30% 70%, rgba(201, 168, 124, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 70% 30%, rgba(201, 168, 124, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 30% 70%, rgba(84, 140, 168, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 70% 30%, rgba(84, 140, 168, 0.05) 0%, transparent 50%);
 }
 
 .resource-type-icon {
   width: 64px;
   height: 64px;
-  background: rgba(201, 168, 124, 0.15);
+  background: rgba(84, 140, 168, 0.15);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -226,7 +226,7 @@
 
 .resource-tag {
   padding: 2px 8px;
-  background: rgba(201, 168, 124, 0.1);
+  background: rgba(84, 140, 168, 0.1);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
   color: var(--color-primary);
@@ -254,28 +254,28 @@
   gap: 4px;
 }
 
-/* 上传按钮 */
+/* 涓婁紶鎸夐挳 */
 .btn-upload {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   padding: 12px 24px;
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   color: white;
   border-radius: var(--radius-md);
   font-weight: var(--font-weight-medium);
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 12px rgba(201, 168, 124, 0.3);
+  box-shadow: 0 4px 12px rgba(84, 140, 168, 0.3);
 }
 
 .btn-upload:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(201, 168, 124, 0.4);
+  box-shadow: 0 6px 16px rgba(84, 140, 168, 0.4);
 }
 
-/* 分页 */
+/* 鍒嗛〉 */
 .pagination-wrapper {
   display: flex;
   justify-content: center;
@@ -308,7 +308,7 @@
   color: white;
 }
 
-/* 空状态 */
+/* 绌虹姸鎬?*/
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -347,7 +347,7 @@
   margin-bottom: var(--space-xl);
 }
 
-/* 统计信息 */
+/* 缁熻淇℃伅 */
 .stats-bar {
   display: flex;
   gap: var(--space-xl);
@@ -372,7 +372,7 @@
   color: var(--color-text-secondary);
 }
 
-/* 加载状态 */
+/* 鍔犺浇鐘舵€?*/
 .resource-loading {
   display: flex;
   flex-direction: column;
@@ -387,7 +387,7 @@
   color: var(--color-text-secondary);
 }
 
-/* 响应式 */
+/* 鍝嶅簲寮?*/
 @media (max-width: 768px) {
   .resource-center {
     padding: var(--space-md);

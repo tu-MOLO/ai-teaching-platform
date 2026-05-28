@@ -97,7 +97,7 @@ const Dashboard: React.FC = () => {
   }
 
   const statCards = [
-    { title: '总课程数', value: stats.totalCourses, icon: <BookOutlined />, color: '#c9a87c', bgColor: 'rgba(201, 168, 124, 0.08)', path: '/courses' },
+    { title: '总课程数', value: stats.totalCourses, icon: <BookOutlined />, color: '#548CA8', bgColor: 'rgba(84, 140, 168, 0.08)', path: '/courses' },
     { title: '总学生数', value: stats.totalStudents, icon: <UserOutlined />, color: '#6b9b7a', bgColor: 'rgba(107, 155, 122, 0.08)', path: '/students' },
     { title: '本月教案', value: stats.monthlyLessonPlans, icon: <FileTextOutlined />, color: '#7a9ab8', bgColor: 'rgba(122, 154, 184, 0.08)', path: '/lesson-planner' },
     { title: '我的资源', value: stats.totalResources, icon: <RocketOutlined />, color: '#909399', bgColor: 'rgba(144, 147, 153, 0.08)', path: '/resource-center' },

@@ -363,7 +363,7 @@ const LessonPlanList: React.FC = () => {
       key: 'subject',
       render: (text: string) => (
         <Tag style={{
-          background: 'rgba(201, 168, 124, 0.1)',
+          background: 'rgba(84, 140, 168, 0.1)',
           color: 'var(--color-primary)',
           border: 'none',
           borderRadius: '4px'

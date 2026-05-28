@@ -109,7 +109,7 @@ const Reports: React.FC = () => {
         xAxis: { type: 'category', boundaryGap: false, data: months, axisLabel: { color: '#999', fontSize: 10 } },
         yAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#999', fontSize: 10 } },
         series: [
-          { name: '课程', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: monthlyTrends.map(t => t.newCourses), itemStyle: { color: '#c9a87c' }, lineStyle: { width: 2 } },
+          { name: '课程', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: monthlyTrends.map(t => t.newCourses), itemStyle: { color: '#548CA8' }, lineStyle: { width: 2 } },
           { name: '学生', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: monthlyTrends.map(t => t.newStudents), itemStyle: { color: '#6b9b7a' }, lineStyle: { width: 2 } },
           { name: '教案', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6, data: monthlyTrends.map(t => t.newLessonPlans), itemStyle: { color: '#7a9ab8' }, lineStyle: { width: 2 } },
         ]
@@ -131,7 +131,7 @@ const Reports: React.FC = () => {
   }, [courseData, studentData, monthlyTrends, reportsLoading, reportsError]);
 
   const statCards = [
-    { title: '总课程数', value: dashboardData?.totalCourses || 0, icon: <BookOutlined />, color: '#c9a87c', trend: dashboardData?.courseTrend || '+0%', trendUp: true },
+    { title: '总课程数', value: dashboardData?.totalCourses || 0, icon: <BookOutlined />, color: '#548CA8', trend: dashboardData?.courseTrend || '+0%', trendUp: true },
     { title: '总学生数', value: dashboardData?.totalStudents || 0, icon: <UserOutlined />, color: '#6b9b7a', trend: dashboardData?.studentTrend || '+0%', trendUp: true },
   ];
 

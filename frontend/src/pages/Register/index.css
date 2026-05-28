@@ -1,5 +1,5 @@
 /* ============================================
-   注册页面样式 v2.0 - 优雅专业
+   娉ㄥ唽椤甸潰鏍峰紡 v2.0 - 浼橀泤涓撲笟
    ============================================ */
 
 .register-container {
@@ -20,7 +20,7 @@
   right: -20%;
   width: 800px;
   height: 800px;
-  background: radial-gradient(circle, rgba(201, 168, 124, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(84, 140, 168, 0.08) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -32,7 +32,7 @@
   left: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(201, 168, 124, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(84, 140, 168, 0.06) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -70,8 +70,8 @@
   right: 0;
   bottom: 0;
   background:
-    radial-gradient(circle at 20% 80%, rgba(201, 168, 124, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(201, 168, 124, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 20% 80%, rgba(84, 140, 168, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(84, 140, 168, 0.08) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -83,13 +83,13 @@
 .brand-logo {
   width: 60px;
   height: 60px;
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--space-xl);
-  box-shadow: 0 8px 24px rgba(201, 168, 124, 0.3);
+  box-shadow: 0 8px 24px rgba(84, 140, 168, 0.3);
 }
 
 .brand-logo svg {
@@ -180,7 +180,7 @@
 
 .register-form .ant-input-affix-wrapper-focused {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(201, 168, 124, 0.1);
+  box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.1);
 }
 
 .register-form .ant-input {
@@ -198,16 +198,16 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   border: none;
-  box-shadow: 0 4px 14px rgba(201, 168, 124, 0.3);
+  box-shadow: 0 4px 14px rgba(84, 140, 168, 0.3);
   transition: all var(--transition-fast);
   margin-top: var(--space-md);
 }
 
 .register-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(201, 168, 124, 0.4);
+  box-shadow: 0 6px 20px rgba(84, 140, 168, 0.4);
 }
 
 .register-button:active {
