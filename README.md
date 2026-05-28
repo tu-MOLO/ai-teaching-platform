@@ -234,29 +234,43 @@ ai-teaching-platform/
 │   ├── alembic/               # 数据库迁移
 │   ├── scripts/               # 实用脚本
 │   ├── tests/                 # 测试文件
-│   ├── Dockerfile             # Docker配置
+│   ├── .env.example           # 后端环境变量示例
+│   ├── alembic.ini            # Alembic配置
+│   ├── Dockerfile             # 后端Docker配置
+│   ├── pyproject.toml         # Python项目配置
 │   └── requirements.txt       # Python依赖
 │
 ├── frontend/                   # 前端代码
 │   ├── src/
 │   │   ├── components/        # 可复用组件
+│   │   ├── constants/         # 全局常量
+│   │   ├── hooks/             # 自定义Hooks
 │   │   ├── pages/             # 页面组件
+│   │   ├── router/            # 路由配置
 │   │   ├── services/          # API服务
 │   │   ├── stores/            # 状态管理
+│   │   ├── styles/            # 全局样式
 │   │   ├── types/             # TypeScript类型
 │   │   └── utils/             # 工具函数
-│   ├── public/                # 静态资源
+│   ├── .eslintrc.cjs          # ESLint配置
+│   ├── .prettierrc            # Prettier配置
 │   ├── Dockerfile             # 前端Docker配置
+│   ├── index.html             # HTML入口
 │   ├── nginx.conf             # Nginx配置
-│   └── package.json           # Node依赖
-
+│   ├── package.json           # Node依赖
+│   ├── tsconfig.json          # TypeScript配置
+│   └── vite.config.ts         # Vite构建配置
+│
+├── project_suggestions/        # 项目优化建议文档
+├── .env.docker.example         # Docker环境变量示例
+├── .gitignore                  # Git忽略规则
+├── .pre-commit-config.yaml     # Pre-commit钩子配置
+├── LICENSE                     # MIT许可证
+├── README.md                   # 项目文档
 ├── docker-compose.yml          # Docker编排
 ├── docker-compose.prod.yml     # 生产环境覆盖配置
-├── .env.docker                 # Docker环境变量
-├── .gitignore                  # Git忽略规则
 ├── start.bat                   # Windows一键启动
-├── start.sh                    # macOS/Linux一键启动
-└── README.md                   # 项目文档
+└── start.sh                    # macOS/Linux一键启动
 ```
 
 ---
