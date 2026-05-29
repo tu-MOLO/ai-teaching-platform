@@ -22,6 +22,11 @@ class AIConfig(AIModelBase):
         default="zhipu",
     )
 
+    provider_name: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
     api_base: Mapped[str] = mapped_column(
         String(500),
         nullable=False,

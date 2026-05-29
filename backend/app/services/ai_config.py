@@ -12,8 +12,34 @@ logger = get_logger(__name__)
 
 PROVIDER_DEFAULTS = {
     "zhipu": {
+        "name": "智谱 AI (Zhipu)",
         "api_base": "https://open.bigmodel.cn/api/paas/v4",
         "models": ["glm-4.7-flash", "glm-4.7-flashx", "glm-4.5-air", "glm-4.5-flash"],
+    },
+    "openai": {
+        "name": "OpenAI",
+        "api_base": "https://api.openai.com/v1",
+        "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"],
+    },
+    "deepseek": {
+        "name": "DeepSeek",
+        "api_base": "https://api.deepseek.com/v1",
+        "models": ["deepseek-chat", "deepseek-coder"],
+    },
+    "moonshot": {
+        "name": "Moonshot (月之暗面)",
+        "api_base": "https://api.moonshot.cn/v1",
+        "models": ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"],
+    },
+    "qwen": {
+        "name": "通义千问 (阿里云)",
+        "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "models": ["qwen-turbo", "qwen-plus", "qwen-max"],
+    },
+    "custom": {
+        "name": "自定义服务商",
+        "api_base": "",
+        "models": [],
     },
 }
 
@@ -29,6 +55,7 @@ class AIConfigService:
             decrypted_key = decrypt_api_key(config.api_key_encrypted) if config.api_key_encrypted else None
             return AIConfigResponse(
                 provider=config.provider,
+                provider_name=config.provider_name,
                 api_base=config.api_base,
                 model=config.model,
                 api_key=mask_api_key(decrypted_key) if decrypted_key else None,
@@ -38,6 +65,7 @@ class AIConfigService:
 
         return AIConfigResponse(
             provider="zhipu",
+            provider_name=None,
             api_base=settings.BIGMODEL_API_BASE,
             model=settings.BIGMODEL_MODEL,
             api_key=mask_api_key(settings.BIGMODEL_API_KEY) if settings.BIGMODEL_API_KEY else None,
@@ -54,6 +82,7 @@ class AIConfigService:
             config = AIConfig(
                 user_id=user_id,
                 provider=config_update.provider or "zhipu",
+                provider_name=config_update.provider_name,
                 api_base=config_update.api_base or settings.BIGMODEL_API_BASE,
                 model=config_update.model or settings.BIGMODEL_MODEL,
             )
@@ -61,6 +90,8 @@ class AIConfigService:
 
         if config_update.provider is not None:
             config.provider = config_update.provider
+        if config_update.provider_name is not None:
+            config.provider_name = config_update.provider_name
         if config_update.api_base is not None:
             config.api_base = config_update.api_base
         if config_update.model is not None:
@@ -71,7 +102,7 @@ class AIConfigService:
             else:
                 config.api_key_encrypted = encrypt_api_key(config_update.api_key)
 
-        await db.flush()
+        await db.commit()
         await db.refresh(config)
 
         return await AIConfigService.get_user_config(db, user_id)
@@ -82,7 +113,7 @@ class AIConfigService:
         config = result.scalar_one_or_none()
         if config:
             await db.delete(config)
-            await db.flush()
+            await db.commit()
         return await AIConfigService.get_user_config(db, user_id)
 
     @staticmethod
@@ -116,6 +147,10 @@ class AIConfigService:
                 )
                 if response.status_code == 200:
                     return AIConfigTestResponse(success=True, message="连接成功，API密钥有效")
+                elif response.status_code == 429:
+                    return AIConfigTestResponse(success=True, message="连接成功（API返回速率限制，密钥有效，请稍后再试）")
+                elif response.status_code == 401:
+                    return AIConfigTestResponse(success=False, message="认证失败，请检查API密钥是否正确")
                 else:
                     error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
                     error_msg = error_data.get("error", {}).get("message", f"HTTP {response.status_code}")

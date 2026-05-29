@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_async_session as get_db
 from app.core.security import get_current_user_id
-from app.schemas.ai import ChatRequest, ChatResponse, ConversationListSchema, ConversationSchema, MessageListSchema, MessageSchema
+from app.schemas.ai import ChatRequest, ChatResponse, ConversationListSchema, ConversationSchema, MessageListSchema, MessageSchema, ConversationRenameRequest
 from app.services.ai import AIService
 
 router = APIRouter()
@@ -91,3 +91,16 @@ async def delete_conversation(
     if not success:
         raise HTTPException(status_code=404, detail="对话不存在")
     return {"message": "删除成功", "code": "success"}
+
+
+@router.patch("/conversations/{conversation_id}", summary="重命名对话")
+async def rename_conversation(
+    conversation_id: str,
+    request: ConversationRenameRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await AIService.rename_conversation(db, conversation_id, user_id, request.title)
+    if not result:
+        raise HTTPException(status_code=404, detail="对话不存在")
+    return {"message": "重命名成功", "code": "success"}

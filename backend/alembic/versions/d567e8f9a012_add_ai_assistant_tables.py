@@ -54,6 +54,7 @@ def upgrade() -> None:
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("user_id", sa.String(length=36), nullable=False),
         sa.Column("provider", sa.String(length=50), nullable=False, server_default="zhipu"),
+        sa.Column("provider_name", sa.String(length=100), nullable=True),
         sa.Column("api_base", sa.String(length=500), nullable=False, server_default="https://open.bigmodel.cn/api/paas/v4"),
         sa.Column("model", sa.String(length=100), nullable=False, server_default="glm-4.7-flash"),
         sa.Column("api_key_encrypted", sa.Text(), nullable=True),

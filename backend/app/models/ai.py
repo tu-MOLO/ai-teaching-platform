@@ -18,7 +18,6 @@ class AIConversation(AIModelBase, SoftDeleteMixin):
         String(36),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
 
     title: Mapped[str] = mapped_column(
@@ -53,7 +52,6 @@ class AIMessage(AIModelBase):
         String(36),
         ForeignKey("ai_conversations.id", ondelete="CASCADE"),
         nullable=False,
-        index=True,
     )
 
     role: Mapped[str] = mapped_column(

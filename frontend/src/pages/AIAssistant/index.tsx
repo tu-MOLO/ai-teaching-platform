@@ -16,6 +16,7 @@ const AIAssistant: React.FC = () => {
   const navigate = useNavigate()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const {
     conversations,
@@ -31,11 +32,15 @@ const AIAssistant: React.FC = () => {
     setStreaming,
     setCurrentConversationId,
     loadAIConfig,
+    renameConversation,
   } = useAIStore()
 
   useEffect(() => {
     loadConversations()
     loadAIConfig()
+    return () => {
+      abortControllerRef.current?.abort()
+    }
   }, [])
 
   useEffect(() => {
@@ -44,6 +49,9 @@ const AIAssistant: React.FC = () => {
 
   const handleSendMessage = async (content: string, module?: string) => {
     if (!content.trim() || isStreaming) return
+
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = new AbortController()
 
     const userMessage: Message = {
       id: `temp_${Date.now()}`,
@@ -73,12 +81,15 @@ const AIAssistant: React.FC = () => {
     let fullContent = ''
 
     try {
-      const stream = streamChatMessage({
-        message: content,
-        conversation_id: currentConversationId || undefined,
-        module: module || undefined,
-        stream: true,
-      })
+      const stream = streamChatMessage(
+        {
+          message: content,
+          conversation_id: currentConversationId || undefined,
+          module: module || undefined,
+          stream: true,
+        },
+        abortControllerRef.current.signal
+      )
 
       for await (const event of stream) {
         if (event.type === 'content' && event.content) {
@@ -98,7 +109,10 @@ const AIAssistant: React.FC = () => {
           updateLastAssistantMessage(fullContent)
         }
       }
-    } catch {
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return
+      }
       fullContent += '\n\n⚠️ 请求失败，请稍后重试'
       updateLastAssistantMessage(fullContent)
     } finally {
@@ -123,7 +137,7 @@ const AIAssistant: React.FC = () => {
     }
   }
 
-  const hasApiKey = aiConfig?.api_key || aiConfig?.is_user_configured
+  const hasApiKey = !!aiConfig?.api_key
 
   if (!configLoaded) {
     return (
@@ -135,14 +149,14 @@ const AIAssistant: React.FC = () => {
     )
   }
 
-  if (!hasApiKey && !aiConfig?.api_key) {
+  if (!hasApiKey) {
     return (
       <div className="ai-assistant-page">
         <div className="ai-assistant-no-config">
           <Empty
             description="请先配置 API 密钥以启用 AI 助手功能"
           >
-            <Button type="primary" onClick={() => navigate('/settings')}>
+            <Button type="primary" onClick={() => navigate('/settings?tab=ai')}>
               前往设置
             </Button>
           </Empty>
@@ -169,9 +183,10 @@ const AIAssistant: React.FC = () => {
           <ConversationList
             conversations={conversations}
             currentId={currentConversationId}
-            onSelect={selectConversation}
+            onSelect={(id) => selectConversation(id)}
             onDelete={handleDeleteConversation}
             onNew={handleNewConversation}
+            onRename={renameConversation}
           />
         )}
       </div>

@@ -3,6 +3,7 @@ import { toItem } from './response'
 
 export interface AIConfigResponse {
   provider: string
+  provider_name: string | null
   api_base: string
   model: string
   api_key: string | null
@@ -12,6 +13,7 @@ export interface AIConfigResponse {
 
 export interface AIConfigUpdate {
   provider?: string
+  provider_name?: string
   api_base?: string
   model?: string
   api_key?: string
@@ -88,7 +90,7 @@ export const updateAIConfig = async (data: AIConfigUpdate): Promise<AIConfigResp
 }
 
 export const testAIConfig = async (data?: AIConfigTestRequest): Promise<AIConfigTestResponse> => {
-  const response = await api.post('/ai/config/test', data || {})
+  const response = await api.post('/ai/config/test', data || {}, { timeout: 30000 })
   return toItem<AIConfigTestResponse>(response)
 }
 
@@ -111,15 +113,45 @@ export const deleteConversation = async (conversationId: string): Promise<void> 
   await api.delete(`/ai/conversations/${conversationId}`)
 }
 
+export const renameConversation = async (conversationId: string, title: string): Promise<void> => {
+  await api.patch(`/ai/conversations/${conversationId}`, { title })
+}
+
 export const sendChatMessage = async (data: ChatRequest): Promise<ChatResponse> => {
   const response = await api.post('/ai/chat', { ...data, stream: false })
   return toItem<ChatResponse>(response)
 }
 
-export const PROVIDER_DEFAULTS: Record<string, { api_base: string; models: string[] }> = {
+export const PROVIDER_DEFAULTS: Record<string, { api_base: string; models: string[]; name: string }> = {
   zhipu: {
+    name: '智谱 AI (Zhipu)',
     api_base: 'https://open.bigmodel.cn/api/paas/v4',
     models: ['glm-4.7-flash', 'glm-4.7-flashx', 'glm-4.5-air', 'glm-4.5-flash'],
+  },
+  openai: {
+    name: 'OpenAI',
+    api_base: 'https://api.openai.com/v1',
+    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    api_base: 'https://api.deepseek.com/v1',
+    models: ['deepseek-chat', 'deepseek-coder'],
+  },
+  moonshot: {
+    name: 'Moonshot (月之暗面)',
+    api_base: 'https://api.moonshot.cn/v1',
+    models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+  },
+  qwen: {
+    name: '通义千问 (阿里云)',
+    api_base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    models: ['qwen-turbo', 'qwen-plus', 'qwen-max'],
+  },
+  custom: {
+    name: '自定义服务商',
+    api_base: '',
+    models: [],
   },
 }
 
@@ -133,7 +165,8 @@ export const MODULE_OPTIONS = [
 ] as const
 
 export async function* streamChatMessage(
-  data: ChatRequest
+  data: ChatRequest,
+  signal?: AbortSignal
 ): AsyncGenerator<SSEEvent, void, undefined> {
   const baseURL = (api.defaults.baseURL as string) || '/api/v1'
   const url = `${baseURL}/ai/chat`
@@ -148,6 +181,7 @@ export async function* streamChatMessage(
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ ...data, stream: true }),
+    signal,
   })
 
   if (!response.ok) {

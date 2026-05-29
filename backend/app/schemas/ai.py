@@ -18,6 +18,10 @@ class ChatResponse(BaseSchema):
     module_tag: Optional[str] = Field(None)
 
 
+class ConversationRenameRequest(BaseSchema):
+    title: str = Field(..., min_length=1, max_length=100)
+
+
 class ConversationSchema(BaseSchema):
     id: str = Field(...)
     title: str = Field(...)

@@ -930,6 +930,32 @@ class AIService:
             return await AIService._non_stream_chat(db, user_id, conversation, messages, effective_config)
 
     @staticmethod
+    async def _get_next_session_number(db: AsyncSession, user_id: str) -> int:
+        result = await db.execute(
+            select(AIConversation.id)
+            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)
+        )
+        existing_ids = result.scalars().all()
+        max_num = 0
+        for eid in existing_ids:
+            pass
+        result2 = await db.execute(
+            select(AIConversation.title)
+            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)
+        )
+        existing_titles = result2.scalars().all()
+        for title in existing_titles:
+            if title.startswith("新会话"):
+                try:
+                    num_str = title[len("新会话"):].split(" ")[0]
+                    num = int(num_str)
+                    if num > max_num:
+                        max_num = num
+                except (ValueError, IndexError):
+                    pass
+        return max_num + 1
+
+    @staticmethod
     async def _get_or_create_conversation(db: AsyncSession, user_id: str, conversation_id: Optional[str], message: str) -> AIConversation:
         if conversation_id:
             result = await db.execute(
@@ -943,10 +969,13 @@ class AIService:
             if conv:
                 return conv
 
-        title = message[:50] if len(message) > 50 else message
+        next_num = await AIService._get_next_session_number(db, user_id)
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        title = f"新会话{next_num} [{timestamp}]"
         conv = AIConversation(user_id=user_id, title=title)
         db.add(conv)
-        await db.flush()
+        await db.commit()
         await db.refresh(conv)
         return conv
 
@@ -1259,5 +1288,21 @@ class AIService:
         if not conv:
             return False
         conv.soft_delete()
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def rename_conversation(db: AsyncSession, conversation_id: str, user_id: str, new_title: str) -> bool:
+        result = await db.execute(
+            select(AIConversation).where(
+                AIConversation.id == conversation_id,
+                AIConversation.user_id == user_id,
+                AIConversation.is_deleted == False,
+            )
+        )
+        conv = result.scalar_one_or_none()
+        if not conv:
+            return False
+        conv.title = new_title[:100]
         await db.commit()
         return True

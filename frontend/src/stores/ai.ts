@@ -3,6 +3,7 @@ import {
   getConversations,
   getConversationMessages,
   getAIConfig,
+  renameConversation as renameConversationApi,
   type Conversation,
   type Message,
   type AIConfigResponse,
@@ -25,6 +26,7 @@ interface AIState {
   setStreaming: (streaming: boolean) => void
   setCurrentConversationId: (id: string | null) => void
   loadAIConfig: () => Promise<void>
+  renameConversation: (id: string, title: string) => Promise<void>
   reset: () => void
 }
 
@@ -85,6 +87,19 @@ export const useAIStore = create<AIState>((set) => ({
       set({ aiConfig: config, configLoaded: true })
     } catch {
       set({ configLoaded: true })
+    }
+  },
+
+  renameConversation: async (id: string, title: string) => {
+    try {
+      await renameConversationApi(id, title)
+      set((state) => ({
+        conversations: state.conversations.map((c) =>
+          c.id === id ? { ...c, title } : c
+        ),
+      }))
+    } catch {
+      // ignore
     }
   },
 
