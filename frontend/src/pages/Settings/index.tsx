@@ -59,6 +59,11 @@ const AIConfigSection: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [currentProvider, setCurrentProvider] = useState<string>('zhipu')
+
+  const providerConfig = PROVIDER_DEFAULTS[currentProvider]
+  const modelOptions = providerConfig?.models || []
+  const isCustomProvider = currentProvider === 'custom'
 
   useEffect(() => {
     loadConfig()
@@ -70,9 +75,11 @@ const AIConfigSection: React.FC = () => {
       setConfig(data)
       form.setFieldsValue({
         provider: data.provider,
+        provider_name: data.provider_name,
         api_base: data.api_base,
         model: data.model,
       })
+      setCurrentProvider(data.provider)
       setTestResult(null)
     } catch {
       message.error('加载配置失败')
@@ -80,11 +87,13 @@ const AIConfigSection: React.FC = () => {
   }
 
   const handleProviderChange = (provider: string) => {
+    setCurrentProvider(provider)
     const defaults = PROVIDER_DEFAULTS[provider]
     if (defaults) {
       form.setFieldsValue({
         api_base: defaults.api_base,
-        model: defaults.models[0],
+        model: defaults.models[0] || '',
+        provider_name: provider === 'custom' ? '' : undefined,
       })
     }
   }
@@ -95,16 +104,25 @@ const AIConfigSection: React.FC = () => {
       setLoading(true)
       const updateData: AIConfigUpdate = {
         provider: values.provider,
+        provider_name: values.provider === 'custom' ? values.provider_name : undefined,
         api_base: values.api_base,
         model: values.model,
       }
-      if (values.api_key !== undefined && values.api_key !== '') {
-        updateData.api_key = values.api_key
+      const apiKeyValue = form.getFieldValue('api_key')
+      if (apiKeyValue && String(apiKeyValue).trim() !== '') {
+        updateData.api_key = String(apiKeyValue).trim()
       }
       const result = await updateAIConfig(updateData)
-      setConfig(result)
+      setConfig({
+        provider: result.provider,
+        provider_name: result.provider_name,
+        api_base: result.api_base,
+        model: result.model,
+        api_key: result.api_key,
+        is_active: result.is_active,
+        is_user_configured: result.is_user_configured,
+      })
       message.success('配置已保存并生效')
-      form.setFieldValue('api_key', undefined)
     } catch (error: any) {
       if (error.errorFields) return
       message.error('保存配置失败')
@@ -158,9 +176,6 @@ const AIConfigSection: React.FC = () => {
     }
   }
 
-  const currentProvider = Form.useWatch('provider', form) || 'zhipu'
-  const modelOptions = PROVIDER_DEFAULTS[currentProvider]?.models || []
-
   const getStatusAlert = () => {
     if (!config) return null
     if (!config.api_key && !config.is_user_configured) {
@@ -202,23 +217,51 @@ const AIConfigSection: React.FC = () => {
       <Form form={form} layout="vertical" initialValues={{ provider: 'zhipu' }}>
         <Form.Item label="API 服务商" name="provider" rules={[{ required: true, message: '请选择服务商' }]}>
           <Select onChange={handleProviderChange}>
-            <Select.Option value="zhipu">智谱 AI (Zhipu)</Select.Option>
-          </Select>
-        </Form.Item>
-
-        <Form.Item label="接口地址" name="api_base" rules={[{ required: true, message: '请输入接口地址' }]}>
-          <Input placeholder="https://open.bigmodel.cn/api/paas/v4" />
-        </Form.Item>
-
-        <Form.Item label="模型版本" name="model" rules={[{ required: true, message: '请选择模型' }]}>
-          <Select>
-            {modelOptions.map(m => (
-              <Select.Option key={m} value={m}>{m}</Select.Option>
+            {Object.entries(PROVIDER_DEFAULTS).map(([key, value]) => (
+              <Select.Option key={key} value={key}>{value.name}</Select.Option>
+            ))}
             ))}
           </Select>
         </Form.Item>
 
-        <Form.Item label="API 密钥" name="api_key" extra="留空则保持当前密钥不变，输入空字符串将清除个人密钥">
+        {isCustomProvider && (
+          <Form.Item 
+            label="服务商名称" 
+            name="provider_name" 
+            rules={[{ required: true, message: '请输入服务商名称' }]}
+            extra="为自定义服务商设置一个显示名称"
+          >
+            <Input placeholder="如：我的私有 API" />
+          </Form.Item>
+        )}
+
+        <Form.Item 
+          label="接口地址" 
+          name="api_base" 
+          rules={[{ required: true, message: '请输入接口地址' }]}
+          extra="可修改为自定义端点地址"
+        >
+          <Input placeholder="https://api.example.com/v1" />
+        </Form.Item>
+
+        <Form.Item 
+          label="模型版本" 
+          name="model" 
+          rules={[{ required: true, message: '请选择或输入模型' }]}
+          extra={isCustomProvider || modelOptions.length === 0 ? '请输入模型名称' : '选择预设模型或手动输入'}
+        >
+          {isCustomProvider || modelOptions.length === 0 ? (
+            <Input placeholder="请输入模型名称，如 gpt-4o" />
+          ) : (
+            <Select showSearch allowClear optionFilterProp="children">
+              {modelOptions.map(m => (
+                <Select.Option key={m} value={m}>{m}</Select.Option>
+              ))}
+            </Select>
+          )}
+        </Form.Item>
+
+        <Form.Item label="API 密钥" name="api_key" extra="首次使用请输入您的 API 密钥并保存；留空提交则保持已有密钥不变">
           <Input.Password placeholder="请输入API密钥" />
         </Form.Item>
 
@@ -246,6 +289,7 @@ const AIConfigSection: React.FC = () => {
     </Card>
   )
 }
+}
 
 const Settings: React.FC = () => {
   const [basicForm] = Form.useForm<BasicSettingsFormData>()
@@ -266,7 +310,7 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     basicForm.setFieldsValue(localSettingsService.getBasicSettings())
-  }, [basicForm])
+  }, [])
 
   const loadOptions = async (groupKey: string) => {
     setOptionsLoading(true)
@@ -287,14 +331,12 @@ const Settings: React.FC = () => {
   }, [selectedGroup])
 
   useEffect(() => {
-    if (!editingId) {
-      optionForm.resetFields()
-      optionForm.setFieldsValue({
-        is_active: true,
-        sort_order: options.length,
-      })
-    }
-  }, [editingId, optionForm, options.length])
+    optionForm.resetFields()
+    optionForm.setFieldsValue({
+      is_active: true,
+      sort_order: options.length,
+    })
+  }, [editingId, options.length])
 
   const handleSaveBasic = async (values: BasicSettingsFormData) => {
     setLoading(true)

@@ -215,8 +215,8 @@ class User(BaseModel):
         return self.role in roles
 
     def verify_security_answer(self, answer: str) -> bool:
-        from app.core.security import pwd_context
-        return pwd_context.verify(answer, self.hashed_security_answer)
+        from app.core.security import verify_password
+        return verify_password(answer, self.hashed_security_answer)
 
     def is_reset_locked(self) -> bool:
         if self.reset_locked_until:
