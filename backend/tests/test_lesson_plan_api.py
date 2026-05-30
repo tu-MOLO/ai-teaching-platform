@@ -225,3 +225,160 @@ class TestLessonPlanAPI:
             "Authorization": f"Bearer {token}",
         })
         assert get_resp.status_code == 404
+
+
+class TestLessonPlanFiltering:
+    @pytest.mark.asyncio
+    async def test_filter_lesson_plans_by_subject(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        await client.post("/api/v1/lesson-plans", json={
+            "title": "Math Plan",
+            "subject": "Math",
+            "grade": "Grade 7",
+            "duration": 40,
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        await client.post("/api/v1/lesson-plans", json={
+            "title": "English Plan",
+            "subject": "English",
+            "grade": "Grade 8",
+            "duration": 45,
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        response = await client.get("/api/v1/lesson-plans", params={
+            "search": "Math",
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] >= 1
+        for plan in data["data"]:
+            assert "Math" in plan["title"] or "Math" in plan["subject"]
+
+    @pytest.mark.asyncio
+    async def test_lesson_plan_pagination(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        for i in range(3):
+            await client.post("/api/v1/lesson-plans", json={
+                "title": f"Pagination Plan {i}",
+                "subject": "Art",
+                "grade": "Grade 5",
+                "duration": 30,
+            }, headers={"Authorization": f"Bearer {token}"})
+
+        response = await client.get("/api/v1/lesson-plans", params={
+            "page": 1,
+            "page_size": 2,
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["page"] == 1
+        assert data["page_size"] == 2
+        assert len(data["data"]) <= 2
+        assert data["pages"] >= 2
+
+
+class TestLessonPlanStateTransitions:
+    @pytest.mark.asyncio
+    async def test_publish_already_published_plan(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        create_resp = await client.post("/api/v1/lesson-plans", json={
+            "title": "Already Published",
+            "subject": "Geography",
+            "grade": "Grade 6",
+            "duration": 40,
+        }, headers={"Authorization": f"Bearer {token}"})
+        plan_id = create_resp.json()["data"]["id"]
+
+        await client.post(f"/api/v1/lesson-plans/{plan_id}/publish", headers={
+            "Authorization": f"Bearer {token}",
+        })
+
+        response = await client.post(f"/api/v1/lesson-plans/{plan_id}/publish", headers={
+            "Authorization": f"Bearer {token}",
+        })
+
+        assert response.status_code == 200
+        data = response.json()["data"]
+        assert data["status"] == "published"
+
+    @pytest.mark.asyncio
+    async def test_unpublish_draft_plan(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        create_resp = await client.post("/api/v1/lesson-plans", json={
+            "title": "Draft Plan",
+            "subject": "Music",
+            "grade": "Grade 4",
+            "duration": 25,
+        }, headers={"Authorization": f"Bearer {token}"})
+        plan_id = create_resp.json()["data"]["id"]
+
+        response = await client.post(f"/api/v1/lesson-plans/{plan_id}/unpublish", headers={
+            "Authorization": f"Bearer {token}",
+        })
+
+        assert response.status_code == 200
+        data = response.json()["data"]
+        assert data["status"] == "draft"
+
+
+class TestLessonPlanEdgeCases:
+    @pytest.mark.asyncio
+    async def test_get_nonexistent_lesson_plan(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        response = await client.get("/api/v1/lesson-plans/nonexistent-id", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_nonexistent_lesson_plan(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        response = await client.put("/api/v1/lesson-plans/nonexistent-id", json={
+            "title": "Updated",
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_delete_nonexistent_lesson_plan(self, client, test_user):
+        login_resp = await client.post("/api/v1/auth/login", json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        })
+        token = login_resp.json()["token"]["access_token"]
+
+        response = await client.delete("/api/v1/lesson-plans/nonexistent-id", headers={
+            "Authorization": f"Bearer {token}",
+        })
+        assert response.status_code == 404

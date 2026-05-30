@@ -4,7 +4,7 @@ API V1路由注册模块
 """
 from fastapi import APIRouter
 
-from app.api.v1 import auth, tags, resources, lesson_templates, lesson_plans, students, portfolios, courses, reports, notifications, users, dropdown_options
+from app.api.v1 import auth, tags, resources, lesson_templates, lesson_plans, students, portfolios, courses, reports, notifications, users, dropdown_options, ai_config, ai
 
 # 创建V1版本的路由器
 api_router = APIRouter()
@@ -44,7 +44,8 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 
 # 注册可配置下拉选项路由
 api_router.include_router(dropdown_options.router)
-# api_router.include_router(materials.router, prefix="/materials", tags=["教学资料"])
+api_router.include_router(ai.router, prefix="/ai", tags=["AI助手"])
+api_router.include_router(ai_config.router, prefix="/ai", tags=["AI配置"])
 # api_router.include_router(assignments.router, prefix="/assignments", tags=["作业"])
 # api_router.include_router(quizzes.router, prefix="/quizzes", tags=["测验"])
 # api_router.include_router(ai.router, prefix="/ai", tags=["AI功能"])

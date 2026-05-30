@@ -1,0 +1,161 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: D:\Projects\ai-teaching-platform\backend
+configfile: pyproject.toml
+plugins: anyio-4.10.0, jaxtyping-0.3.2, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 688 items
+
+tests\test_ai_api.py .......                                             [  1%]
+tests\test_ai_config_api.py .......                                      [  2%]
+tests\test_ai_config_service.py .....................                    [  5%]
+tests\test_ai_service.py ...................................             [ 10%]
+tests\test_auth_api.py ....................                              [ 13%]
+tests\test_config_validator.py ......................................... [ 19%]
+...                                                                      [ 19%]
+tests\test_course_api.py ................                                [ 21%]
+tests\test_database.py .........                                         [ 23%]
+tests\test_dropdown_option_api.py ..........                             [ 24%]
+tests\test_dropdown_option_service.py ....                               [ 25%]
+tests\test_encryption.py ..............                                  [ 27%]
+tests\test_exceptions.py .............................................   [ 33%]
+tests\test_export_service.py .......................                     [ 37%]
+tests\test_file_validation.py .......................................... [ 43%]
+.....................                                                    [ 46%]
+tests\test_lesson_plan_api.py ...............                            [ 48%]
+tests\test_lesson_plan_service.py ......                                 [ 49%]
+tests\test_lesson_template_api.py ......                                 [ 50%]
+tests\test_notification_api.py ...................                       [ 52%]
+tests\test_notification_service.py ..                                    [ 53%]
+tests\test_performance.py ......................................         [ 58%]
+tests\test_permission_service.py ....................                    [ 61%]
+tests\test_portfolio_api.py ............                                 [ 63%]
+tests\test_query_filters.py .................                            [ 65%]
+tests\test_rate_limiter.py ......................                        [ 69%]
+tests\test_report.py .........................                           [ 72%]
+tests\test_report_api.py ........                                        [ 73%]
+tests\test_resource_api.py ............                                  [ 75%]
+tests\test_resource_service.py ..............                            [ 77%]
+tests\test_security.py ...............                                   [ 79%]
+tests\test_storage_service.py .......................................... [ 85%]
+............                                                             [ 87%]
+tests\test_student_api.py .............                                  [ 89%]
+tests\test_student_service.py ............                               [ 91%]
+tests\test_tag_api.py ............                                       [ 93%]
+tests\test_tag_service.py ....                                           [ 93%]
+tests\test_user_api.py ...........                                       [ 95%]
+tests\test_user_model.py .................................
+ERROR: Coverage failure: total of 73 is less than fail-under=90
+                                                                         [100%]
+
+============================== warnings summary ===============================
+..\..\..\python\Lib\site-packages\pydantic\_internal\_generate_schema.py:319: 59 warnings
+  D:\python\Lib\site-packages\pydantic\_internal\_generate_schema.py:319: PydanticDeprecatedSince20: `json_encoders` is deprecated. See https://docs.pydantic.dev/2.12/concepts/serialization/#custom-serializers for alternatives. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    warnings.warn(
+
+tests/test_exceptions.py::TestValidationException::test_default_message
+  D:\Projects\ai-teaching-platform\backend\tests\test_exceptions.py:125: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    exc = ValidationException()
+
+tests/test_exceptions.py::TestValidationException::test_default_message
+  D:\python\Lib\site-packages\_pytest\python.py:166: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    result = testfunction(**testargs)
+
+tests/test_exceptions.py::TestValidationException::test_custom_message
+  D:\Projects\ai-teaching-platform\backend\tests\test_exceptions.py:131: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    exc = ValidationException(message="字段不能为空")
+
+tests/test_exceptions.py::TestValidationException::test_with_details
+  D:\Projects\ai-teaching-platform\backend\tests\test_exceptions.py:135: DeprecationWarning: 'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated. Use 'HTTP_422_UNPROCESSABLE_CONTENT' instead.
+    exc = ValidationException(details={"field": "email", "reason": "invalid"})
+
+tests/test_user_model.py::TestIsLocked::test_locked_until_naive_datetime_past
+  D:\Projects\ai-teaching-platform\backend\tests\test_user_model.py:53: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    locked_until=datetime.utcnow() - timedelta(hours=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.3-final-0 _______________
+
+Name                              Stmts   Miss  Cover   Missing
+---------------------------------------------------------------
+app\__init__.py                       1      0   100%
+app\api\__init__.py                   0      0   100%
+app\api\v1\__init__.py               17      0   100%
+app\api\v1\ai.py                     54     17    69%   28, 41, 45-46, 57-60, 69, 81, 91-93, 103-106
+app\api\v1\ai_config.py              22      0   100%
+app\api\v1\auth.py                   92     49    47%   67-121, 150-173, 194, 199, 204, 211-246, 262-267, 291-302
+app\api\v1\courses.py                91     48    47%   46-49, 66-68, 103-117, 141-146, 163-164, 180-208, 223-243, 259-288
+app\api\v1\dropdown_options.py       39     13    67%   38-43, 60-63, 75-81, 91-93
+app\api\v1\lesson_plans.py           85     35    59%   47, 82-84, 112-114, 138-140, 162-163, 185-187, 209-211, 233-235, 255-259, 281-292
+app\api\v1\lesson_templates.py       28      8    71%   50-57, 88-93
+app\api\v1\notifications.py          74     28    62%   56-72, 96-109, 126, 142-145, 161-164, 177, 201, 221-224, 240-243, 259
+app\api\v1\portfolios.py             40     12    70%   35, 48-50, 74-79, 99-101, 114-115
+app\api\v1\reports.py                26      4    85%   43, 64, 85, 109
+app\api\v1\resources.py             103     34    67%   103, 122-125, 168-181, 210-217, 242-252, 275-276, 293-299, 301
+app\api\v1\students.py               91     45    51%   26, 52, 57-60, 73-79, 108-125, 145-148, 161-162, 175-201, 222-261
+app\api\v1\tags.py                   72     40    44%   44-54, 78-84, 99-106, 122-137, 152-157
+app\api\v1\users.py                  46     23    50%   38-43, 59-92
+app\core\__init__.py                  3      0   100%
+app\core\config.py                   62      7    89%   36, 39, 56, 61, 102, 107-108
+app\core\config_validator.py         93      6    94%   146, 150, 156, 210-211, 221
+app\core\database.py                 40      3    92%   50, 95-96
+app\core\exceptions.py               89      0   100%
+app\core\logging.py                  47     11    77%   35-36, 51-61, 80, 86-89
+app\core\performance.py             128      9    93%   65-80
+app\core\permissions.py              36     19    47%   29, 49-59, 75, 95-108, 131, 154, 175-176, 195-196
+app\core\query_filters.py            54     15    72%   65-74, 82-94
+app\core\rate_limiter.py            148     60    59%   101-102, 105-141, 158-201, 225, 279-294
+app\core\security.py                109     15    86%   87, 168, 172, 202, 230, 240, 247, 255-277
+app\main.py                         163     52    68%   38-68, 119-128, 137, 190-196, 200-212, 244-245, 250-252, 265-266, 282-285, 307, 344, 390, 397, 414-417
+app\models\__init__.py               16      0   100%
+app\models\ai.py                     24      0   100%
+app\models\ai_config.py              14      0   100%
+app\models\audit_log.py              99     52    47%   159, 163-165, 169-170, 174-176, 180-181, 186-193, 198-202, 207-210, 214, 255-287
+app\models\base.py                   44      5    89%   110, 114, 133-134, 138
+app\models\course.py                 26      2    92%   13-14
+app\models\dropdown_option.py        12      0   100%
+app\models\lesson_plan.py            30      3    90%   122, 126, 130
+app\models\lesson_template.py         9      0   100%
+app\models\notification.py           28      2    93%   14, 101
+app\models\permission.py             22      0   100%
+app\models\portfolio.py              19      0   100%
+app\models\resource.py               16      0   100%
+app\models\student.py                28      1    96%   14
+app\models\tag.py                    11      0   100%
+app\models\user.py                   81      1    99%   226
+app\schemas\__init__.py              11      0   100%
+app\schemas\ai.py                    34      0   100%
+app\schemas\ai_config.py             25      0   100%
+app\schemas\auth.py                  66      0   100%
+app\schemas\base.py                  42      0   100%
+app\schemas\course.py                23      0   100%
+app\schemas\dropdown_option.py       19      0   100%
+app\schemas\lesson_plan.py           40      0   100%
+app\schemas\lesson_template.py       20      0   100%
+app\schemas\notification.py          53      0   100%
+app\schemas\portfolio.py             47      6    87%   30, 55-59
+app\schemas\resource.py              37      0   100%
+app\schemas\student.py               74     17    77%   29, 37, 39, 42, 66-72, 90, 95-97, 104, 107
+app\schemas\tag.py                   18      0   100%
+app\schemas\user.py                  63      0   100%
+app\services\__init__.py              7      0   100%
+app\services\ai.py                  438    263    40%   468-478, 482-489, 501-506, 519-532, 536-541, 545-550, 554-561, 573-578, 591-599, 603-608, 612-614, 618-620, 624-626, 630-633, 637-643, 647-658, 670-676, 693-702, 706-713, 717-723, 727-740, 752-757, 768-775, 779-782, 786-804, 816-821, 831-836, 840-843, 847-850, 921-930, 934-956, 1057-1148, 1202-1203, 1210-1213, 1218
+app\services\ai_config.py            88      0   100%
+app\services\course.py               76     28    63%   38-52, 74, 110-114, 123, 126, 130, 162-166, 175, 178, 181, 205-214, 230-235
+app\services\dropdown_option.py      72     21    71%   34, 51, 62-70, 80, 106-111, 116-121
+app\services\export.py              168     65    61%   24-68, 83-84, 240-318, 494-562
+app\services\lesson_plan.py          99     33    67%   50-51, 80, 92, 116, 125, 145, 165-174, 188-193, 240-246, 260-266, 304
+app\services\notification.py        107     32    70%   86, 127, 160, 180, 196-202, 228-229, 256-257, 274-283, 299-304, 324-330
+app\services\permission.py           80      3    96%   290-292
+app\services\portfolio.py            56     18    68%   32-33, 55, 94, 116-124, 140-145, 178
+app\services\report.py              119      5    96%   154-155, 157, 176, 178
+app\services\resource.py            164     51    69%   118-119, 122-133, 196-200, 211-237, 243-253, 258-263, 347-348
+app\services\storage.py             330     60    82%   46, 125, 208, 212-216, 296-298, 368-374, 398-404, 430, 433-440, 476-481, 515-517, 542-545, 578-580, 619-621, 654-656, 675-677, 749-752, 794, 827
+app\services\student.py              99     42    58%   36-50, 72-75, 107-111, 117, 121-146, 168-176, 192-197, 225-229, 235, 238
+app\services\tag.py                 104     50    52%   37-43, 61-65, 73-76, 93-97, 116-118, 135-149, 165-175, 194-196
+app\utils\__init__.py                 0      0   100%
+---------------------------------------------------------------
+TOTAL                              4911   1313    73%
+FAIL Required test coverage of 90.0% not reached. Total coverage: 73.26%
+================ 688 passed, 64 warnings in 147.79s (0:02:27) =================

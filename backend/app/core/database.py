@@ -125,7 +125,7 @@ async def init_db() -> None:
     """
     async with async_engine.begin() as conn:
         # 导入所有模型确保它们被注册
-        from app.models import user, permission, course, student, portfolio, resource, tag, notification, audit_log, lesson_plan, dropdown_option  # noqa: F401
+        from app.models import user, permission, course, student, portfolio, resource, tag, notification, audit_log, lesson_plan, dropdown_option, ai, ai_config  # noqa: F401
         await conn.run_sync(Base.metadata.create_all)
 
 

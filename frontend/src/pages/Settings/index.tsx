@@ -39,6 +39,241 @@ import type { BasicSettingsFormData } from '../../types/forms'
 
 const { Text } = Typography
 
+const AIConfigSection: React.FC = () => {
+  const [form] = Form.useForm()
+  const [config, setConfig] = useState<AIConfigResponse | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [currentProvider, setCurrentProvider] = useState<string>('zhipu')
+
+  const providerConfig = PROVIDER_DEFAULTS[currentProvider]
+  const modelOptions = providerConfig?.models || []
+  const isCustomProvider = currentProvider === 'custom'
+
+  useEffect(() => {
+    loadConfig()
+  }, [])
+
+  const loadConfig = async () => {
+    try {
+      const data = await getAIConfig()
+      setConfig(data)
+      form.setFieldsValue({
+        provider: data.provider,
+        provider_name: data.provider_name,
+        api_base: data.api_base,
+        model: data.model,
+      })
+      setCurrentProvider(data.provider)
+      setTestResult(null)
+    } catch {
+      message.error('加载配置失败')
+    }
+  }
+
+  const handleProviderChange = (provider: string) => {
+    setCurrentProvider(provider)
+    const defaults = PROVIDER_DEFAULTS[provider]
+    if (defaults) {
+      form.setFieldsValue({
+        api_base: defaults.api_base,
+        model: defaults.models[0] || '',
+        provider_name: provider === 'custom' ? '' : undefined,
+      })
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields()
+      setLoading(true)
+      const updateData: AIConfigUpdate = {
+        provider: values.provider,
+        provider_name: values.provider === 'custom' ? values.provider_name : undefined,
+        api_base: values.api_base,
+        model: values.model,
+      }
+      const apiKeyValue = form.getFieldValue('api_key')
+      if (apiKeyValue && String(apiKeyValue).trim() !== '') {
+        updateData.api_key = String(apiKeyValue).trim()
+      }
+      const result = await updateAIConfig(updateData)
+      setConfig({
+        provider: result.provider,
+        provider_name: result.provider_name,
+        api_base: result.api_base,
+        model: result.model,
+        api_key: result.api_key,
+        is_active: result.is_active,
+        is_user_configured: result.is_user_configured,
+      })
+      message.success('配置已保存并生效')
+    } catch (error: any) {
+      if (error.errorFields) return
+      message.error('保存配置失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTest = async () => {
+    setTesting(true)
+    setTestResult(null)
+    try {
+      const values = await form.validateFields()
+      const testData: Record<string, string> = {}
+      if (values.provider) testData.provider = values.provider
+      if (values.api_base) testData.api_base = values.api_base
+      if (values.model) testData.model = values.model
+      if (values.api_key) testData.api_key = values.api_key
+
+      const result = await testAIConfig(Object.keys(testData).length > 0 ? testData : undefined)
+      setTestResult(result)
+      if (result.success) {
+        message.success(result.message)
+      } else {
+        message.error(result.message)
+      }
+    } catch {
+      setTestResult({ success: false, message: '测试请求失败' })
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const handleReset = async () => {
+    try {
+      setLoading(true)
+      const result = await resetAIConfig()
+      setConfig(result)
+      form.setFieldsValue({
+        provider: result.provider,
+        api_base: result.api_base,
+        model: result.model,
+        api_key: undefined,
+      })
+      setTestResult(null)
+      message.success('已重置为系统默认配置')
+    } catch {
+      message.error('重置配置失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getStatusAlert = () => {
+    if (!config) return null
+    if (!config.api_key && !config.is_user_configured) {
+      return (
+        <Alert
+          type="warning"
+          icon={<WarningOutlined />}
+          message="请配置 API 密钥以启用 AI 助手功能"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )
+    }
+    if (config.is_user_configured) {
+      return (
+        <Alert
+          type="success"
+          icon={<CheckCircleOutlined />}
+          message={`已配置个人 API 密钥 (${config.api_key || '未设置'})`}
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )
+    }
+    return (
+      <Alert
+        type="info"
+        icon={<ApiOutlined />}
+        message="当前使用系统默认配置"
+        showIcon
+        style={{ marginBottom: 16 }}
+      />
+    )
+  }
+
+  return (
+    <Card title={<><ApiOutlined /> AI 助手配置</>} style={{ marginBottom: 24 }}>
+      {getStatusAlert()}
+      <Form form={form} layout="vertical" initialValues={{ provider: 'zhipu' }}>
+        <Form.Item label="API 服务商" name="provider" rules={[{ required: true, message: '请选择服务商' }]}>
+          <Select onChange={handleProviderChange}>
+            {Object.entries(PROVIDER_DEFAULTS).map(([key, value]) => (
+              <Select.Option key={key} value={key}>{value.name}</Select.Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        {isCustomProvider && (
+          <Form.Item 
+            label="服务商名称" 
+            name="provider_name" 
+            rules={[{ required: true, message: '请输入服务商名称' }]}
+            extra="为自定义服务商设置一个显示名称"
+          >
+            <Input placeholder="如：我的私有 API" />
+          </Form.Item>
+        )}
+
+        <Form.Item 
+          label="接口地址" 
+          name="api_base" 
+          rules={[{ required: true, message: '请输入接口地址' }]}
+          extra="可修改为自定义端点地址"
+        >
+          <Input placeholder="https://api.example.com/v1" />
+        </Form.Item>
+
+        <Form.Item 
+          label="模型版本" 
+          name="model" 
+          rules={[{ required: true, message: '请选择或输入模型' }]}
+          extra={isCustomProvider || modelOptions.length === 0 ? '请输入模型名称' : '选择预设模型或手动输入'}
+        >
+          {isCustomProvider || modelOptions.length === 0 ? (
+            <Input placeholder="请输入模型名称，如 gpt-4o" />
+          ) : (
+            <Select showSearch allowClear optionFilterProp="children">
+              {modelOptions.map(m => (
+                <Select.Option key={m} value={m}>{m}</Select.Option>
+              ))}
+            </Select>
+          )}
+        </Form.Item>
+
+        <Form.Item label="API 密钥" name="api_key" extra="首次使用请输入您的 API 密钥并保存；留空提交则保持已有密钥不变">
+          <Input.Password placeholder="请输入API密钥" />
+        </Form.Item>
+
+        {testResult && (
+          <Alert
+            type={testResult.success ? 'success' : 'error'}
+            message={testResult.message}
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
+        <Space>
+          <Button type="primary" onClick={handleSave} loading={loading}>
+            保存配置
+          </Button>
+          <Button onClick={handleTest} loading={testing} icon={<ApiOutlined />}>
+            测试连接
+          </Button>
+          <Button onClick={handleReset} icon={<ReloadOutlined />}>
+            重置为默认值
+          </Button>
+        </Space>
+      </Form>
+    </Card>
+  )
+}
 const Settings: React.FC = () => {
   const [basicForm] = Form.useForm<BasicSettingsFormData>()
   const [optionForm] = Form.useForm()
@@ -58,7 +293,7 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     basicForm.setFieldsValue(localSettingsService.getBasicSettings())
-  }, [basicForm])
+  }, [])
 
   const loadOptions = async (groupKey: string) => {
     setOptionsLoading(true)
@@ -79,14 +314,12 @@ const Settings: React.FC = () => {
   }, [selectedGroup])
 
   useEffect(() => {
-    if (!editingId) {
-      optionForm.resetFields()
-      optionForm.setFieldsValue({
-        is_active: true,
-        sort_order: options.length,
-      })
-    }
-  }, [editingId, optionForm, options.length])
+    optionForm.resetFields()
+    optionForm.setFieldsValue({
+      is_active: true,
+      sort_order: options.length,
+    })
+  }, [editingId, options.length])
 
   const handleSaveBasic = async (values: BasicSettingsFormData) => {
     setLoading(true)

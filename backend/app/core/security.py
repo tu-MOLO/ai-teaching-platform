@@ -304,3 +304,33 @@ async def get_current_user_id_with_version_check(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return await get_current_user_id_from_token_with_version_check(credentials.credentials, db)
+
+
+from cryptography.fernet import Fernet
+import base64
+import hashlib
+
+
+def _get_encryption_key() -> bytes:
+    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    return base64.urlsafe_b64encode(key)
+
+
+def encrypt_api_key(key: str) -> str:
+    if not key:
+        return ""
+    f = Fernet(_get_encryption_key())
+    return f.encrypt(key.encode()).decode()
+
+
+def decrypt_api_key(encrypted: str) -> str:
+    if not encrypted:
+        return ""
+    f = Fernet(_get_encryption_key())
+    return f.decrypt(encrypted.encode()).decode()
+
+
+def mask_api_key(key: str) -> str:
+    if not key or len(key) <= 8:
+        return "****"
+    return key[:4] + "****" + key[-4:]

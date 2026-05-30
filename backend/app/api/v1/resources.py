@@ -118,6 +118,11 @@ async def create_resource(
         user_id=current_user_id
     )
 
+    # 重新查询以预加载tags关系，避免async上下文中的懒加载问题
+    resource = await resource_service.get_resource_by_id(db, resource.id, user_id=current_user_id)
+    if not resource:
+        raise NotFoundException("Resource", resource_id="")
+
     # 获取文件URL
     file_url = await resource_service.get_resource_file_url(resource)
     resource_dict = serialize_resource(resource, file_url=file_url)
