@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import warnings
 from pathlib import Path
 
 backend_dir = Path(__file__).resolve().parent.parent
@@ -8,6 +9,13 @@ sys.path.insert(0, str(backend_dir))
 
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only-min-32-chars!!")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///./test.db")
+
+warnings.filterwarnings(
+    "ignore",
+    message="unclosed event loop",
+    category=ResourceWarning,
+    module="asyncio",
+)
 
 import pytest
 import pytest_asyncio
@@ -42,8 +50,14 @@ TestSessionLocal = async_sessionmaker(
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
+    try:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+    except RuntimeError:
+        pass
     loop.close()
+    asyncio.set_event_loop(None)
 
 
 @pytest_asyncio.fixture(scope="function")

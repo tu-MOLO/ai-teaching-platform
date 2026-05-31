@@ -165,10 +165,7 @@ class TestAuthEndpoints:
             "password": "TestPass123!",
         })
         refresh_cookie = login_resp.cookies.get("refresh_token")
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": refresh_cookie},
-        )
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 200
         assert "access_token" in resp.json()
 
@@ -182,10 +179,9 @@ class TestAuthEndpoints:
             "password": "TestPass123!",
         })
         access_token = login_resp.json()["token"]["access_token"]
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": access_token},
-        )
+        client.cookies.clear()
+        client.cookies.set("refresh_token", access_token, domain="test")
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
 
     async def test_refresh_token_expired(self, client, test_user):
@@ -202,10 +198,9 @@ class TestAuthEndpoints:
             settings.SECRET_KEY,
             algorithm=settings.ALGORITHM,
         )
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": expired_token},
-        )
+        client.cookies.clear()
+        client.cookies.set("refresh_token", expired_token, domain="test")
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
 
     async def test_refresh_token_no_subject(self, client, test_user):
@@ -220,10 +215,9 @@ class TestAuthEndpoints:
             settings.SECRET_KEY,
             algorithm=settings.ALGORITHM,
         )
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": no_sub_token},
-        )
+        client.cookies.clear()
+        client.cookies.set("refresh_token", no_sub_token, domain="test")
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
 
     async def test_refresh_token_user_not_found(self, client, db_session):
@@ -234,10 +228,9 @@ class TestAuthEndpoints:
             expires_delta=timedelta(days=1),
             token_version="1",
         )
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": token},
-        )
+        client.cookies.clear()
+        client.cookies.set("refresh_token", token, domain="test")
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
 
     async def test_refresh_token_version_mismatch(self, client, test_user, db_session):
@@ -248,10 +241,9 @@ class TestAuthEndpoints:
         refresh_cookie = login_resp.cookies.get("refresh_token")
         test_user.increment_token_version()
         await db_session.commit()
-        resp = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": refresh_cookie},
-        )
+        client.cookies.clear()
+        client.cookies.set("refresh_token", refresh_cookie, domain="test")
+        resp = await client.post("/api/v1/auth/refresh")
         assert resp.status_code == 401
 
     async def test_get_me_with_auth(self, client, auth_headers):

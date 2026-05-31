@@ -18,9 +18,6 @@ class BaseSchema(BaseModel):
         from_attributes=True,  # 允许从ORM模型创建
         populate_by_name=True,  # 允许通过字段名填充
         str_strip_whitespace=True,  # 自动去除字符串首尾空格
-        json_encoders={
-            datetime: lambda v: v.isoformat()  # datetime序列化为ISO格式
-        }
     )
 
 

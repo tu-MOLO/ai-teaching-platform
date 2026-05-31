@@ -1,3 +1,60 @@
+[project]
+name = "ai-teaching-platform-backend"
+version = "1.0.0"
+description = "AI教学平台后端 - 面向教师本地交付场景的全栈教学管理平台"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "AI Teaching Platform Team", email = "2570055126@qq.com" },
+]
+keywords = ["education", "teaching", "ai", "fastapi", "course-management"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastapi==0.109.2",
+    "uvicorn[standard]==0.27.1",
+    "sqlalchemy[asyncio]==2.0.27",
+    "alembic==1.13.1",
+    "aiosqlite==0.19.0",
+    "pydantic==2.6.1",
+    "pydantic-settings==2.1.0",
+    "email-validator==2.1.0.post1",
+    "PyJWT==2.8.0",
+    "bcrypt==4.1.2",
+    "python-multipart==0.0.9",
+    "minio==7.2.4",
+    "redis==5.0.1",
+    "httpx==0.26.0",
+    "aiohttp==3.9.3",
+    "python-dotenv==1.0.1",
+    "orjson==3.9.13",
+    "cryptography>=42.0.0",
+    "weasyprint==59.0",
+    "python-docx==0.8.11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.4",
+    "pytest-asyncio==0.23.4",
+    "pytest-cov==4.1.0",
+    "pytest-html==4.1.1",
+    "factory-boy==3.3.0",
+    "black==24.1.1",
+    "isort==5.13.2",
+    "flake8==7.0.0",
+    "mypy==1.8.0",
+]
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
@@ -60,6 +117,9 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::ResourceWarning:asyncio",
+]
 
 [tool.coverage.run]
 concurrency = ["greenlet", "thread"]

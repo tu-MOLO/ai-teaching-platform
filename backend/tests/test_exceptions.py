@@ -124,7 +124,7 @@ class TestValidationException:
     def test_default_message(self):
         exc = ValidationException()
         assert exc.detail == "数据验证失败"
-        assert exc.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert exc.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
         assert exc.error_code == ErrorCode.DATA_VALIDATION_ERROR
 
     def test_custom_message(self):

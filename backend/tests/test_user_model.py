@@ -50,7 +50,7 @@ class TestIsLocked:
 
     def test_locked_until_naive_datetime_past(self):
         user = _make_user(
-            locked_until=datetime.utcnow() - timedelta(hours=1)
+            locked_until=datetime.now(timezone.utc) - timedelta(hours=1)
         )
         assert user.is_locked() is False
 

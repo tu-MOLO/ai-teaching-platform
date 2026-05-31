@@ -112,10 +112,7 @@ class TestTokenRefresh:
         })
         refresh_cookie = login_resp.cookies.get("refresh_token")
 
-        response = await client.post(
-            "/api/v1/auth/refresh",
-            cookies={"refresh_token": refresh_cookie},
-        )
+        response = await client.post("/api/v1/auth/refresh")
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data

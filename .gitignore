@@ -105,8 +105,25 @@ backend/reports/coverage/
 backend/reports/coverage.xml
 backend/reports/test_report.html
 
+# 上传的本地文件存储（仅保留目录结构）
+backend/storage/resources/
+backend/storage/*.db
+
 # Alembic迁移生成的临时文件
 backend/alembic/__pycache__/
 
 # Vite缓存
 .vite/
+
+# ============================================
+# 覆盖率临时输出文件
+# ============================================
+cov_*.txt
+coverage_output.txt
+test_results.txt
+test_async_cov.py
+
+# ============================================
+# 其他临时文件
+# ============================================
+42.0.0
