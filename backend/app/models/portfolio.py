@@ -11,9 +11,9 @@ class Portfolio(BaseModel):
     """成长档案模型"""
     __tablename__ = "portfolios"
     
-    user_id: Mapped[str | None] = mapped_column(
+    user_id: Mapped[str] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=True,
+        nullable=False,
         index=True,
         comment="用户ID"
     )

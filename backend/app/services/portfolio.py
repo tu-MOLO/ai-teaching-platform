@@ -7,7 +7,9 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.portfolio import Portfolio
+from app.models.student import Student
 from app.schemas.portfolio import PortfolioCreate, PortfolioUpdate
+from app.core.exceptions import NotFoundException
 
 
 class PortfolioService:
@@ -27,6 +29,15 @@ class PortfolioService:
             创建的成长档案对象
         """
         db_portfolio = Portfolio(**portfolio_in.model_dump(), user_id=user_id)
+        student_result = await db.execute(
+            select(Student).where(
+                Student.id == portfolio_in.student_id,
+                Student.user_id == user_id,
+                Student.is_deleted == False
+            )
+        )
+        if not student_result.scalar_one_or_none():
+            raise NotFoundException("学生")
         db.add(db_portfolio)
         await db.flush()
         await db.refresh(db_portfolio)

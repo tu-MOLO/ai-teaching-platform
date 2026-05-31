@@ -64,7 +64,15 @@ const TimelineItem: React.FC<TimelineItemProps> = ({ item, onDelete, onEdit }) =
   const { getIconForType, getNameForType } = usePortfolioTypesStore();
 
   // 解析附件JSON字符串为数组
-  const attachments: string[] = item.attachments ? JSON.parse(item.attachments) : [];
+  let attachments: string[] = [];
+  if (item.attachments) {
+    try {
+      const parsed = JSON.parse(item.attachments);
+      attachments = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch {
+      attachments = [];
+    }
+  }
 
   // 评价维度配置
   const evaluationDimensions = [

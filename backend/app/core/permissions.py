@@ -53,7 +53,7 @@ class PermissionChecker:
             if not has_perm:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"缺少权限: {perm_code}"
+                    detail="权限不足，请联系管理员"
                 )
         
         return True
@@ -102,7 +102,7 @@ class AnyPermissionChecker:
         if not has_any:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"缺少权限，需要以下任一权限: {', '.join(self.required_permissions)}"
+                detail="权限不足，请联系管理员"
             )
         
         return True

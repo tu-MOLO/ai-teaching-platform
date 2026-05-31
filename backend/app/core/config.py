@@ -65,8 +65,8 @@ class Settings(BaseSettings):
     
     # MinIO配置
     MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_ACCESS_KEY: str = "aiteachingminio"
-    MINIO_SECRET_KEY: str = "MinioLocal@2026Store"
+    MINIO_ACCESS_KEY: str = ""
+    MINIO_SECRET_KEY: str = ""
     MINIO_BUCKET_NAME: str = "ai-teaching"
     MINIO_SECURE: bool = False
     MINIO_REGION: str = "us-east-1"

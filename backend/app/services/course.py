@@ -107,9 +107,10 @@ class CourseService:
         )
 
         if keyword:
+            safe_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
             keyword_filter = or_(
-                Course.name.ilike(f"%{keyword}%"),
-                Course.teacher.ilike(f"%{keyword}%"),
+                Course.name.ilike(f"%{safe_keyword}%", escape="\\"),
+                Course.teacher.ilike(f"%{safe_keyword}%", escape="\\"),
             )
             query = query.where(keyword_filter)
 
@@ -159,9 +160,10 @@ class CourseService:
         )
 
         if keyword:
+            safe_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
             keyword_filter = or_(
-                Course.name.ilike(f"%{keyword}%"),
-                Course.teacher.ilike(f"%{keyword}%"),
+                Course.name.ilike(f"%{safe_keyword}%", escape="\\"),
+                Course.teacher.ilike(f"%{safe_keyword}%", escape="\\"),
             )
             query = query.where(keyword_filter)
 

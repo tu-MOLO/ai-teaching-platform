@@ -90,9 +90,9 @@ async def create_resource(
         创建的资源详情
     """
     # 检查文件类型
-    file_content = await file.read()
+    file_header = await file.read(64)
     await file.seek(0)
-    if not is_allowed_file(file.filename, file_content):
+    if not is_allowed_file(file.filename, file_header):
         raise BadRequestException("不支持的文件类型")
     
     # 检查文件大小

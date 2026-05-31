@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from app.core.exceptions import AlreadyExistsException
+
 from app.services.dropdown_option import DropdownOptionService
 from app.schemas.dropdown_option import DropdownOptionCreate, DropdownOptionUpdate
 
@@ -59,7 +61,7 @@ class TestUpdateOption:
 
         with patch.object(DropdownOptionService, "get_option", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = existing_option
-            with pytest.raises(ValueError, match="Option value already exists in this group"):
+            with pytest.raises(AlreadyExistsException):
                 await DropdownOptionService.update_option(mock_db, "opt-1", mock_option_in)
 
     @pytest.mark.asyncio
@@ -105,7 +107,7 @@ class TestDropdownOptionServiceIntegration:
             label="二年级重复",
             value="grade_2",
         )
-        with pytest.raises(ValueError, match="Option value already exists in this group"):
+        with pytest.raises(AlreadyExistsException):
             await DropdownOptionService.create_option(db_session, duplicate_in)
 
     @pytest.mark.asyncio
@@ -175,7 +177,7 @@ class TestDropdownOptionServiceIntegration:
         ))
 
         update_data = DropdownOptionUpdate(value="grade_5")
-        with pytest.raises(ValueError, match="Option value already exists in this group"):
+        with pytest.raises(AlreadyExistsException):
             await DropdownOptionService.update_option(db_session, created.id, update_data)
 
     @pytest.mark.asyncio

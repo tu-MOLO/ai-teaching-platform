@@ -1,6 +1,7 @@
 """
 成长档案相关的Pydantic schemas
 """
+import json
 from typing import Optional
 
 from pydantic import Field, field_validator
@@ -12,7 +13,7 @@ class PortfolioBase(BaseSchema):
     """成长档案基础模型"""
     student_id: str = Field(..., description="学生ID")
     type: str = Field(..., description="记录类型: work(作品), evaluation(评价), observation(观察), milestone(里程碑)")
-    title: str = Field(..., description="标题")
+    title: str = Field(..., max_length=200, description="标题")
     content: Optional[str] = Field(None, description="内容")
     attachments: Optional[str] = Field(None, description="附件（JSON格式）")
     cognitive_score: Optional[int] = Field(None, ge=0, le=100, description="认知维度评分")
@@ -30,6 +31,16 @@ class PortfolioBase(BaseSchema):
             raise ValueError(f"Invalid type. Must be one of: {valid_types}")
         return v
 
+    @field_validator('attachments')
+    @classmethod
+    def validate_attachments(cls, v):
+        if v is not None:
+            try:
+                json.loads(v)
+            except json.JSONDecodeError:
+                raise ValueError("attachments must be valid JSON")
+        return v
+
 
 class PortfolioCreate(PortfolioBase):
     """创建成长档案模型"""
@@ -39,7 +50,7 @@ class PortfolioCreate(PortfolioBase):
 class PortfolioUpdate(BaseSchema):
     """更新成长档案模型"""
     type: Optional[str] = Field(None, description="记录类型: work(作品), evaluation(评价), observation(观察), milestone(里程碑)")
-    title: Optional[str] = Field(None, description="标题")
+    title: Optional[str] = Field(None, max_length=200, description="标题")
     content: Optional[str] = Field(None, description="内容")
     attachments: Optional[str] = Field(None, description="附件（JSON格式）")
     cognitive_score: Optional[int] = Field(None, ge=0, le=100, description="认知维度评分")
@@ -51,11 +62,20 @@ class PortfolioUpdate(BaseSchema):
     @field_validator('type')
     @classmethod
     def validate_type(cls, v):
-        """验证记录类型"""
         if v is not None:
             valid_types = ['work', 'evaluation', 'observation', 'milestone']
             if v not in valid_types:
                 raise ValueError(f"Invalid type. Must be one of: {valid_types}")
+        return v
+
+    @field_validator('attachments')
+    @classmethod
+    def validate_attachments(cls, v):
+        if v is not None:
+            try:
+                json.loads(v)
+            except json.JSONDecodeError:
+                raise ValueError("attachments must be valid JSON")
         return v
 
 

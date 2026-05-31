@@ -36,7 +36,7 @@ const mapApiResourceToResource = (apiResource: ResourceListItem): ResourceRow =>
   return {
     id: apiResource?.id || '',
     name: apiResource?.name || '未命名资源',
-    description: '',
+    description: apiResource?.description || '',
     type: getType(apiResource?.file_type),
     tags: (apiResource?.tags || []).map((tag) => tag?.name || '').filter(Boolean),
     created_at: apiResource?.created_at ? apiResource.created_at.split('T')[0] : '',
@@ -172,7 +172,7 @@ const ResourceCenter: React.FC = () => {
 
       <div className="stats-bar">
         <div className="stats-item">
-          <span className="stats-value">{resources.length}</span>
+          <span className="stats-value">{total}</span>
           <span className="stats-label">资源总数</span>
         </div>
         <div className="stats-item">

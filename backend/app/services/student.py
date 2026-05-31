@@ -104,9 +104,10 @@ class StudentService:
         )
 
         if keyword:
+            safe_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
             keyword_filter = or_(
-                Student.name.ilike(f"%{keyword}%"),
-                Student.class_name.ilike(f"%{keyword}%"),
+                Student.name.ilike(f"%{safe_keyword}%", escape="\\"),
+                Student.class_name.ilike(f"%{safe_keyword}%", escape="\\"),
             )
             query = query.where(keyword_filter)
 
@@ -116,7 +117,7 @@ class StudentService:
         if class_name:
             query = query.where(Student.class_name == class_name)
 
-        query = query.offset(skip).limit(limit)
+        query = query.order_by(Student.created_at.desc()).offset(skip).limit(limit)
         result = await db.execute(query)
         students = result.scalars().all()
 
@@ -222,9 +223,10 @@ class StudentService:
         )
 
         if keyword:
+            safe_keyword = keyword.replace("%", "\\%").replace("_", "\\_")
             keyword_filter = or_(
-                Student.name.ilike(f"%{keyword}%"),
-                Student.class_name.ilike(f"%{keyword}%"),
+                Student.name.ilike(f"%{safe_keyword}%", escape="\\"),
+                Student.class_name.ilike(f"%{safe_keyword}%", escape="\\"),
             )
             query = query.where(keyword_filter)
 

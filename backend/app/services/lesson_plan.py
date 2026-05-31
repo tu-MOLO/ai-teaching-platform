@@ -80,9 +80,10 @@ class LessonPlanService:
             query = query.where(LessonPlan.status == status_filter)
 
         if search:
+            safe_search = search.replace("%", "\\%").replace("_", "\\_")
             query = query.where(
-                (LessonPlan.title.ilike(f"%{search}%")) |
-                (LessonPlan.subject.ilike(f"%{search}%"))
+                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\")) |
+                (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
             )
 
         query = query.order_by(LessonPlan.created_at.desc())
@@ -116,9 +117,10 @@ class LessonPlanService:
             query = query.where(LessonPlan.status == status_filter)
 
         if search:
+            safe_search = search.replace("%", "\\%").replace("_", "\\_")
             query = query.where(
-                (LessonPlan.title.ilike(f"%{search}%")) |
-                (LessonPlan.subject.ilike(f"%{search}%"))
+                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\")) |
+                (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
             )
 
         result = await self.db.execute(query)
@@ -188,7 +190,7 @@ class LessonPlanService:
         if not lesson_plan:
             return False
 
-        lesson_plan.is_deleted = True
+        lesson_plan.soft_delete()
         await self.db.flush()
         return True
 

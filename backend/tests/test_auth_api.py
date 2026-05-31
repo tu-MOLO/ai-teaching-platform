@@ -110,15 +110,15 @@ class TestTokenRefresh:
             "username": "testuser",
             "password": "TestPass123!",
         })
-        refresh_token = login_resp.json()["token"]["refresh_token"]
+        refresh_cookie = login_resp.cookies.get("refresh_token")
 
-        response = await client.post("/api/v1/auth/refresh", json={
-            "refresh_token": refresh_token,
-        })
+        response = await client.post(
+            "/api/v1/auth/refresh",
+            cookies={"refresh_token": refresh_cookie},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
-        assert "refresh_token" in data
 
     @pytest.mark.asyncio
     async def test_refresh_with_access_token(self, client, test_user):
@@ -150,7 +150,7 @@ class TestPasswordReset:
         response = await client.post("/api/v1/auth/password/reset/question", json={
             "username": "nonexistent",
         })
-        assert response.status_code == 400
+        assert response.status_code == 200
 
 
 class TestAuthLogout:

@@ -220,7 +220,6 @@ const AIConfigSection: React.FC = () => {
             {Object.entries(PROVIDER_DEFAULTS).map(([key, value]) => (
               <Select.Option key={key} value={key}>{value.name}</Select.Option>
             ))}
-            ))}
           </Select>
         </Form.Item>
 
@@ -288,7 +287,6 @@ const AIConfigSection: React.FC = () => {
       </Form>
     </Card>
   )
-}
 }
 
 const Settings: React.FC = () => {
@@ -443,6 +441,7 @@ const Settings: React.FC = () => {
   const items = [
     {
       key: 'basic',
+      forceRender: true,
       label: (
         <span>
           <SettingOutlined style={{ marginRight: 4 }} />
@@ -481,6 +480,7 @@ const Settings: React.FC = () => {
     },
     {
       key: 'ai',
+      forceRender: true,
       label: (
         <span>
           <ApiOutlined style={{ marginRight: 4 }} />
@@ -501,6 +501,7 @@ const Settings: React.FC = () => {
     },
     {
       key: 'dropdowns',
+      forceRender: true,
       label: (
         <span>
           <UnorderedListOutlined style={{ marginRight: 4 }} />

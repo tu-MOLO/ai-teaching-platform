@@ -1,14 +1,39 @@
+import ipaddress
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from urllib.parse import urlparse
 
 from app.models.ai_config import AIConfig
 from app.schemas.ai_config import AIConfigResponse, AIConfigUpdate, AIConfigTestRequest, AIConfigTestResponse
 from app.core.config import settings
 from app.core.security import encrypt_api_key, decrypt_api_key, mask_api_key
 from app.core.logging import get_logger
+from app.core.exceptions import BadRequestException
 
 logger = get_logger(__name__)
+
+ALLOWED_API_DOMAINS = {
+    "open.bigmodel.cn", "api.openai.com", "api.deepseek.com",
+    "api.moonshot.cn", "dashscope.aliyuncs.com",
+}
+
+
+def _validate_api_base_url(api_base: str) -> None:
+    parsed = urlparse(api_base)
+    hostname = parsed.hostname
+    if not hostname:
+        raise BadRequestException("API地址格式无效")
+    if hostname in ALLOWED_API_DOMAINS:
+        return
+    try:
+        resolved = ipaddress.ip_address(hostname)
+        if resolved.is_private or resolved.is_loopback or resolved.is_link_local or resolved.is_reserved:
+            raise BadRequestException("API地址不允许指向内部网络")
+    except ValueError:
+        pass
+    if hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+        raise BadRequestException("API地址不允许指向本地主机")
 
 PROVIDER_DEFAULTS = {
     "zhipu": {
@@ -131,6 +156,7 @@ class AIConfigService:
             model = effective["model"]
 
         try:
+            _validate_api_base_url(api_base)
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(
                     f"{api_base}/chat/completions",

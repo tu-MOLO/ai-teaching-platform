@@ -3,6 +3,7 @@
 提供全局查询过滤功能，如软删除过滤
 """
 from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import Optional, Type, TypeVar, Any
 
 from sqlalchemy import event
@@ -15,23 +16,23 @@ T = TypeVar("T", bound=Base)
 
 class SoftDeleteFilter:
     """软删除查询过滤器"""
-    
-    _enabled = True
-    
+
+    _enabled_var: ContextVar[bool] = ContextVar('soft_delete_filter_enabled', default=True)
+
     @classmethod
     def enable(cls):
         """启用软删除过滤"""
-        cls._enabled = True
-    
+        cls._enabled_var.set(True)
+
     @classmethod
     def disable(cls):
         """禁用软删除过滤（用于查询已删除数据）"""
-        cls._enabled = False
-    
+        cls._enabled_var.set(False)
+
     @classmethod
     def is_enabled(cls) -> bool:
         """检查软删除过滤是否启用"""
-        return cls._enabled
+        return cls._enabled_var.get()
 
 
 @contextmanager
@@ -44,11 +45,11 @@ def include_deleted():
             # 这里的查询会包含软删除的数据
             deleted_users = db.query(User).filter(User.is_deleted == True).all()
     """
-    SoftDeleteFilter.disable()
+    token = SoftDeleteFilter._enabled_var.set(False)
     try:
         yield
     finally:
-        SoftDeleteFilter.enable()
+        SoftDeleteFilter._enabled_var.reset(token)
 
 
 def apply_soft_delete_filter(query: Query, model_class: Optional[Type[T]] = None) -> Query:

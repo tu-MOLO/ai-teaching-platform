@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.exceptions import BadRequestException, NotFoundException
+from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.base import DataResponse, ListResponse, MessageResponse
 from app.schemas.dropdown_option import (
@@ -55,10 +55,7 @@ async def create_dropdown_option(
     db: DBSession,
     user_id: CurrentUser,
 ) -> DataResponse[DropdownOptionResponse]:
-    try:
-        option = await DropdownOptionService.create_option(db, option_in)
-    except ValueError as exc:
-        raise BadRequestException(str(exc)) from exc
+    option = await DropdownOptionService.create_option(db, option_in)
 
     return DataResponse(data=DropdownOptionResponse.model_validate(option))
 
@@ -70,10 +67,7 @@ async def update_dropdown_option(
     db: DBSession,
     user_id: CurrentUser,
 ) -> DataResponse[DropdownOptionResponse]:
-    try:
-        option = await DropdownOptionService.update_option(db, option_id, option_in)
-    except ValueError as exc:
-        raise BadRequestException(str(exc)) from exc
+    option = await DropdownOptionService.update_option(db, option_id, option_in)
 
     if not option:
         raise NotFoundException("下拉选项")

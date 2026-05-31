@@ -156,9 +156,7 @@ class TestNotificationAPI:
     async def test_delete_notification(self, client, test_user, auth_headers, seed_notifications):
         notification_id = seed_notifications[0].id
         response = await client.delete(f"/api/v1/notifications/{notification_id}", headers=auth_headers)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["code"] == "success"
+        assert response.status_code == 204
 
         get_resp = await client.get(f"/api/v1/notifications/{notification_id}", headers=auth_headers)
         assert get_resp.status_code == 404

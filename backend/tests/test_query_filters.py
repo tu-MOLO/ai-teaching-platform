@@ -49,7 +49,7 @@ class TestIncludeDeleted:
             assert SoftDeleteFilter.is_enabled() is False
             with include_deleted():
                 assert SoftDeleteFilter.is_enabled() is False
-            assert SoftDeleteFilter.is_enabled() is True
+            assert SoftDeleteFilter.is_enabled() is False
         assert SoftDeleteFilter.is_enabled() is True
 
 

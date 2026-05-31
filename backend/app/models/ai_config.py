@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import String, Text, Boolean, Index
+from sqlalchemy import String, Text, Boolean, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.ai import AIModelBase
@@ -11,6 +11,7 @@ class AIConfig(AIModelBase):
 
     user_id: Mapped[str] = mapped_column(
         String(36),
+        ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         unique=True,
         index=True,

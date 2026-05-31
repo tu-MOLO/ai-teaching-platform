@@ -121,6 +121,7 @@ class ResourceService:
                 count_result = await db.execute(count_query)
                 total = count_result.scalar() or 0
 
+            query = query.order_by(Resource.created_at.desc())
             query = query.offset(params.offset).limit(params.page_size)
             query = query.options(selectinload(Resource.tags))
 
@@ -161,7 +162,8 @@ class ResourceService:
             ).group_by(Resource.id)
 
         if params.file_type:
-            query = query.where(Resource.file_type.ilike(f"%{params.file_type}%"))
+            safe_file_type = params.file_type.replace("%", "\\%").replace("_", "\\_")
+            query = query.where(Resource.file_type.ilike(f"%{safe_file_type}%", escape="\\"))
 
         if params.user_id:
             query = query.where(Resource.user_id == params.user_id)
@@ -246,13 +248,6 @@ class ResourceService:
             if db_resource.user_id != user_id:
                 raise AuthorizationException("无权操作此资源")
             
-            # 删除MinIO中的文件
-            try:
-                await get_storage().delete_file_async(db_resource.file_path)
-            except Exception as e:
-                logger.warning(f"Failed to delete file from storage: {e}")
-            
-            # 软删除资源
             db_resource.soft_delete()
             await db.commit()
             logger.info(f"Deleted resource: {db_resource.name}")
@@ -280,7 +275,7 @@ class ResourceService:
         return f"{settings.API_V1_STR}/resources/{resource.id}/file"
     
     @staticmethod
-    async def download_resource(db: AsyncSession, resource_id: str, file_path: str) -> str:
+    async def download_resource(db: AsyncSession, resource_id: str, file_path: str, user_id: str = None) -> str:
         """
         下载资源文件
         
@@ -293,7 +288,7 @@ class ResourceService:
             保存的文件路径
         """
         try:
-            resource = await ResourceService.get_resource_by_id(db, resource_id)
+            resource = await ResourceService.get_resource_by_id(db, resource_id, user_id=user_id)
             if not resource:
                 raise ValueError("Resource not found")
             

@@ -22,10 +22,10 @@ class LessonPlanBase(BaseSchema):
     """
     教案基础schema
     """
-    title: str = Field(..., description="教案标题")
-    subject: str = Field(..., description="学科")
-    grade: str = Field(..., description="年级")
-    duration: int = Field(..., description="课时时长（分钟）")
+    title: str = Field(..., max_length=200, description="教案标题")
+    subject: str = Field(..., max_length=100, description="学科")
+    grade: str = Field(..., max_length=50, description="年级")
+    duration: int = Field(..., gt=0, le=480, description="课时时长（分钟）")
     teaching_objectives: Optional[str] = Field(None, description="教学目标")
     teaching_content: Optional[str] = Field(None, description="教学内容")
     teaching_methods: Optional[str] = Field(None, description="教学方法")
@@ -45,17 +45,16 @@ class LessonPlanUpdate(BaseSchema):
     """
     更新教案的schema
     """
-    title: Optional[str] = Field(None, description="教案标题")
-    subject: Optional[str] = Field(None, description="学科")
-    grade: Optional[str] = Field(None, description="年级")
-    duration: Optional[int] = Field(None, description="课时时长（分钟）")
+    title: Optional[str] = Field(None, max_length=200, description="教案标题")
+    subject: Optional[str] = Field(None, max_length=100, description="学科")
+    grade: Optional[str] = Field(None, max_length=50, description="年级")
+    duration: Optional[int] = Field(None, gt=0, le=480, description="课时时长（分钟）")
     teaching_objectives: Optional[str] = Field(None, description="教学目标")
     teaching_content: Optional[str] = Field(None, description="教学内容")
     teaching_methods: Optional[str] = Field(None, description="教学方法")
     teaching_process: Optional[str] = Field(None, description="教学过程")
     teaching_resources: Optional[str] = Field(None, description="教学资源")
     notes: Optional[str] = Field(None, description="备注")
-    status: Optional[LessonPlanStatus] = Field(None, description="教案状态")
 
 
 class LessonPlanResponse(LessonPlanBase):

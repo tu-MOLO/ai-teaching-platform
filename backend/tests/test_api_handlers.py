@@ -164,10 +164,10 @@ class TestAuthEndpoints:
             "username": "testuser",
             "password": "TestPass123!",
         })
-        refresh_token = login_resp.json()["token"]["refresh_token"]
+        refresh_cookie = login_resp.cookies.get("refresh_token")
         resp = await client.post(
             "/api/v1/auth/refresh",
-            cookies={"refresh_token": refresh_token},
+            cookies={"refresh_token": refresh_cookie},
         )
         assert resp.status_code == 200
         assert "access_token" in resp.json()
@@ -245,12 +245,12 @@ class TestAuthEndpoints:
             "username": "testuser",
             "password": "TestPass123!",
         })
-        refresh_token = login_resp.json()["token"]["refresh_token"]
+        refresh_cookie = login_resp.cookies.get("refresh_token")
         test_user.increment_token_version()
         await db_session.commit()
         resp = await client.post(
             "/api/v1/auth/refresh",
-            cookies={"refresh_token": refresh_token},
+            cookies={"refresh_token": refresh_cookie},
         )
         assert resp.status_code == 401
 
@@ -308,7 +308,7 @@ class TestAuthEndpoints:
         resp = await client.post("/api/v1/auth/password/reset/question", json={
             "username": "nonexistent",
         })
-        assert resp.status_code == 400
+        assert resp.status_code == 200
 
     async def test_password_reset_success(self, client, test_user):
         resp = await client.post("/api/v1/auth/password/reset", json={
@@ -914,7 +914,7 @@ class TestNotificationEndpoints:
     async def test_delete_notification(self, client, auth_headers, test_user, db_session):
         notification = await self._create_notification(db_session, test_user.id)
         resp = await client.delete(f"/api/v1/notifications/{notification.id}", headers=auth_headers)
-        assert resp.status_code == 200
+        assert resp.status_code == 204
 
     async def test_delete_notification_not_found(self, client, auth_headers):
         resp = await client.delete("/api/v1/notifications/nonexistent-id", headers=auth_headers)
@@ -1395,7 +1395,7 @@ class TestDropdownOptionEndpoints:
             "sort_order": 1,
             "is_active": True,
         }, headers=auth_headers)
-        assert resp.status_code == 400
+        assert resp.status_code == 409
 
     async def test_update_dropdown_option(self, client, auth_headers, db_session):
         option = DropdownOption(
@@ -1441,7 +1441,7 @@ class TestDropdownOptionEndpoints:
         resp = await client.put(f"/api/v1/dropdown-options/{option2.id}", json={
             "value": "value_1",
         }, headers=auth_headers)
-        assert resp.status_code == 400
+        assert resp.status_code == 409
 
     async def test_delete_dropdown_option(self, client, auth_headers, db_session):
         option = DropdownOption(

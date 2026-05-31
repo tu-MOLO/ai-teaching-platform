@@ -2,7 +2,7 @@
 权限相关数据模型
 定义权限、角色及其关联关系
 """
-from sqlalchemy import Boolean, ForeignKey, String, Text
+from sqlalchemy import Boolean, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
@@ -142,6 +142,10 @@ class RolePermission(BaseModel):
         nullable=False,
         comment="权限ID"
     )
-    
+
+    __table_args__ = (
+        UniqueConstraint('role_id', 'permission_id', name='uq_role_permission'),
+    )
+
     def __repr__(self) -> str:
         return f"<RolePermission(role_id={self.role_id}, permission_id={self.permission_id})>"

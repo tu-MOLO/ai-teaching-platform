@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.dropdown_option import DropdownOption
 from app.schemas.dropdown_option import DropdownOptionCreate, DropdownOptionUpdate
+from app.core.exceptions import AlreadyExistsException
 
 
 class DropdownOptionService:
@@ -61,7 +62,7 @@ class DropdownOptionService:
         )
         existing_option = existing.scalar_one_or_none()
         if existing_option:
-            raise ValueError("Option value already exists in this group")
+            raise AlreadyExistsException("下拉选项", "分组下已存在相同值")
 
         option = DropdownOption(**option_in.model_dump())
         db.add(option)
@@ -101,7 +102,7 @@ class DropdownOptionService:
                 )
             )
             if existing.scalar_one_or_none():
-                raise ValueError("Option value already exists in this group")
+                raise AlreadyExistsException("下拉选项", "分组下已存在相同值")
 
         for field, value in update_data.items():
             setattr(option, field, value)

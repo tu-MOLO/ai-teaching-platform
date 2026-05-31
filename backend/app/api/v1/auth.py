@@ -112,7 +112,7 @@ async def login(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=False,
+        secure=not settings.DEBUG,
         samesite="lax",
         max_age=int(refresh_token_expires.total_seconds()),
         path="/api/v1/auth",
@@ -121,7 +121,7 @@ async def login(
     return LoginResponse(
         token=TokenData(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token="",
             token_type="bearer",
             expires_in=int(access_token_expires.total_seconds()),
             refresh_expires_in=int(refresh_token_expires.total_seconds()),
@@ -237,7 +237,7 @@ async def refresh_token(
         key="refresh_token",
         value=new_refresh_token,
         httponly=True,
-        secure=False,
+        secure=not settings.DEBUG,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
         path="/api/v1/auth",
@@ -245,7 +245,7 @@ async def refresh_token(
 
     return TokenData(
         access_token=access_token,
-        refresh_token=new_refresh_token,
+        refresh_token="",
         token_type="bearer",
         expires_in=int(access_token_expires.total_seconds()),
         refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600,
@@ -341,7 +341,11 @@ async def get_security_question(
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
-        raise BadRequestException("无法获取密保问题，请检查用户名或邮箱")
+        return SecurityQuestionResponse(
+            username=question_data.username,
+            security_question="请回答密保问题以验证身份",
+            is_legacy=True,
+        )
 
     return SecurityQuestionResponse(
         username=user.username,

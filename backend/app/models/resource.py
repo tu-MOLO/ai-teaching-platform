@@ -13,8 +13,8 @@ from sqlalchemy import Column
 resource_tag_association = Table(
     'resource_tag_association',
     Base.metadata,
-    Column('resource_id', String(36), ForeignKey('resources.id'), primary_key=True),
-    Column('tag_id', String(36), ForeignKey('tags.id'), primary_key=True)
+    Column('resource_id', String(36), ForeignKey('resources.id', ondelete='CASCADE'), primary_key=True),
+    Column('tag_id', String(36), ForeignKey('tags.id', ondelete='CASCADE'), primary_key=True)
 )
 
 

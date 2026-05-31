@@ -43,7 +43,9 @@ async def create_course(
     创建新课程
     """
     user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))
-    user = user_result.scalar_one()
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise NotFoundException("用户")
     teacher_name = user.full_name or user.username
     course = await CourseService.create(db, course_in, user_id, teacher_name)
     return DataResponse(data=CourseResponse.model_validate(course))
@@ -138,7 +140,9 @@ async def update_course(
     更新课程信息
     """
     user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))
-    user = user_result.scalar_one()
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise NotFoundException("用户")
     teacher_name = user.full_name or user.username
     course = await CourseService.update(db, course_id, course_in, user_id, teacher_name)
     if not course:

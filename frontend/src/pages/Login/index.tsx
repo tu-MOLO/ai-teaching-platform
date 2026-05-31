@@ -186,8 +186,8 @@ const Login: React.FC = () => {
       <Modal
         title={`重置密码 - 步骤${resetStep}/2`}
         open={resetVisible}
-        destroyOnHidden
         onCancel={handleResetModalClose}
+        forceRender
         footer={
           resetStep === 1
             ? [

@@ -139,3 +139,16 @@ class UserPasswordReset(BaseSchema):
     """用户密码重置请求"""
     username: str = Field(..., description="用户名或邮箱")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("密码长度至少8位")
+        if not any(c.isupper() for c in v):
+            raise ValueError("密码必须包含至少一个大写字母")
+        if not any(c.islower() for c in v):
+            raise ValueError("密码必须包含至少一个小写字母")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("密码必须包含至少一个数字")
+        return v

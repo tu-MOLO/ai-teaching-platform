@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id_with_version_check
 from app.schemas.ai_config import AIConfigResponse, AIConfigUpdate, AIConfigTestRequest, AIConfigTestResponse
 from app.services.ai_config import AIConfigService
 
 router = APIRouter()
 
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
-CurrentUser = Annotated[str, Depends(get_current_user_id)]
+CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
 @router.get("/config", response_model=AIConfigResponse, summary="获取AI配置")
