@@ -46,6 +46,3 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(dropdown_options.router)
 api_router.include_router(ai.router, prefix="/ai", tags=["AI助手"])
 api_router.include_router(ai_config.router, prefix="/ai", tags=["AI配置"])
-# api_router.include_router(assignments.router, prefix="/assignments", tags=["作业"])
-# api_router.include_router(quizzes.router, prefix="/quizzes", tags=["测验"])
-# api_router.include_router(ai.router, prefix="/ai", tags=["AI功能"])

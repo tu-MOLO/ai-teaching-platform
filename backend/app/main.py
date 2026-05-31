@@ -71,17 +71,43 @@ async def lifespan(app: FastAPI):
 def create_application() -> FastAPI:
     """
     创建FastAPI应用实例
-    
+
     Returns:
         FastAPI应用实例
     """
+    # OpenAPI 标签分组及描述
+    openapi_tags = [
+        {"name": "健康检查", "description": "应用健康状态与环境信息"},
+        {"name": "根路径", "description": "API基本信息入口"},
+        {"name": "auth", "description": "用户认证：登录、注册、Token刷新、密码管理"},
+        {"name": "用户", "description": "用户资料查看与更新"},
+        {"name": "课程", "description": "课程CRUD与学生关联管理"},
+        {"name": "课程管理", "description": "课程创建、编辑、删除与状态管理"},
+        {"name": "学生", "description": "学生信息CRUD与成长报告导出"},
+        {"name": "学生管理", "description": "学生信息管理与数据导出"},
+        {"name": "教案", "description": "教案CRUD、发布/归档生命周期"},
+        {"name": "教案管理", "description": "教案创建、编辑、发布与归档"},
+        {"name": "教案模板", "description": "系统预设教案模板查询"},
+        {"name": "成长档案", "description": "学生成长档案记录管理"},
+        {"name": "成长档案管理", "description": "学生成长档案CRUD与评价维度"},
+        {"name": "资源", "description": "教学资源上传、下载与标签管理"},
+        {"name": "标签", "description": "资源标签分类管理"},
+        {"name": "通知", "description": "站内通知列表、已读/未读管理"},
+        {"name": "报告", "description": "数据报告与统计分析"},
+        {"name": "报告分析", "description": "仪表盘统计、课程/学生报告与月度趋势"},
+        {"name": "dropdown-options", "description": "可配置下拉选项（学科、年级等）的CRUD"},
+        {"name": "AI助手", "description": "AI对话、对话历史管理"},
+        {"name": "AI配置", "description": "AI服务商配置与连接测试"},
+    ]
+
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-        description="AI教学平台后端API - 提供智能教学、课程管理、作业批改等功能",
+        description="AI教学平台后端API - 提供智能教学、课程管理、教案设计、学生档案、资源管理与AI助手等功能",
         docs_url="/docs" if settings.DEBUG else None,
         redoc_url="/redoc" if settings.DEBUG else None,
         openapi_url="/openapi.json" if settings.DEBUG else None,
+        openapi_tags=openapi_tags,
         lifespan=lifespan
     )
     
