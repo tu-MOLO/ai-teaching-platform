@@ -368,10 +368,9 @@ class TestGetCurrentUserFullFlow:
         assert data["email"] == "test@example.com"
         assert "id" in data
         assert "role" in data
+        assert data["role"] == "teacher"
         assert "status" in data
         assert "is_active" in data
-        assert "permissions" in data
-        assert isinstance(data["permissions"], list)
 
 
 class TestLogoutFullFlow:

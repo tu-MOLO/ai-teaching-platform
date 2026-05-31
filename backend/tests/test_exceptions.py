@@ -160,8 +160,8 @@ class TestAuthorizationException:
         assert exc.error_code == ErrorCode.PERMISSION_DENIED
 
     def test_custom_message(self):
-        exc = AuthorizationException(message="需要管理员权限")
-        assert exc.detail == "需要管理员权限"
+        exc = AuthorizationException(message="无权访问此资源")
+        assert exc.detail == "无权访问此资源"
 
 
 class TestRateLimitException:

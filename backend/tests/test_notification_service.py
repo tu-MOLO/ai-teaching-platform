@@ -75,9 +75,9 @@ class TestNotificationServiceIntegration:
         assert notification.read is False
 
     @pytest.mark.asyncio
-    async def test_create_bulk_with_real_db(self, db_session, test_user, admin_user):
+    async def test_create_bulk_with_real_db(self, db_session, test_user, inactive_user):
         bulk_in = NotificationCreateBulk(
-            user_ids=[test_user.id, admin_user.id],
+            user_ids=[test_user.id, inactive_user.id],
             title="批量通知",
             content="批量通知内容",
             type=NotificationType.COURSE,
@@ -116,7 +116,7 @@ class TestNotificationServiceIntegration:
         assert notification.id == created.id
 
     @pytest.mark.asyncio
-    async def test_get_returns_none_for_wrong_user(self, db_session, test_user, admin_user):
+    async def test_get_returns_none_for_wrong_user(self, db_session, test_user, inactive_user):
         notification_in = NotificationCreate(
             title="他人通知",
             content="内容",
@@ -125,7 +125,7 @@ class TestNotificationServiceIntegration:
         )
         created = await NotificationService.create(db_session, notification_in)
 
-        notification = await NotificationService.get(db_session, created.id, admin_user.id)
+        notification = await NotificationService.get(db_session, created.id, inactive_user.id)
         assert notification is None
 
     @pytest.mark.asyncio
@@ -235,7 +235,7 @@ class TestNotificationServiceIntegration:
         assert updated.read is True
 
     @pytest.mark.asyncio
-    async def test_mark_as_read_returns_none_for_wrong_user(self, db_session, test_user, admin_user):
+    async def test_mark_as_read_returns_none_for_wrong_user(self, db_session, test_user, inactive_user):
         notification_in = NotificationCreate(
             title="他人通知",
             content="内容",
@@ -244,7 +244,7 @@ class TestNotificationServiceIntegration:
         )
         created = await NotificationService.create(db_session, notification_in)
 
-        result = await NotificationService.mark_as_read(db_session, created.id, admin_user.id)
+        result = await NotificationService.mark_as_read(db_session, created.id, inactive_user.id)
         assert result is None
 
     @pytest.mark.asyncio
@@ -281,7 +281,7 @@ class TestNotificationServiceIntegration:
         assert notification is None
 
     @pytest.mark.asyncio
-    async def test_delete_returns_false_for_wrong_user(self, db_session, test_user, admin_user):
+    async def test_delete_returns_false_for_wrong_user(self, db_session, test_user, inactive_user):
         notification_in = NotificationCreate(
             title="他人通知",
             content="内容",
@@ -290,7 +290,7 @@ class TestNotificationServiceIntegration:
         )
         created = await NotificationService.create(db_session, notification_in)
 
-        result = await NotificationService.delete(db_session, created.id, admin_user.id)
+        result = await NotificationService.delete(db_session, created.id, inactive_user.id)
         assert result is False
 
     @pytest.mark.asyncio

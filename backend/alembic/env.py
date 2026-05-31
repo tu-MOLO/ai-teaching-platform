@@ -17,7 +17,6 @@ from app.core.config import settings
 
 # 导入所有模型以确保它们被注册到 metadata
 from app.models.user import User
-from app.models.permission import Permission, Role, RolePermission
 from app.models.course import Course
 from app.models.student import Student
 from app.models.portfolio import Portfolio

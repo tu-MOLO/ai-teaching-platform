@@ -115,29 +115,6 @@ async def test_user(db_session: AsyncSession):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def admin_user(db_session: AsyncSession):
-    user = User(
-        email="admin@example.com",
-        username="adminuser",
-        full_name="Admin User",
-        hashed_password=bcrypt.hashpw(
-            "AdminPass123!".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
-        role=UserRole.ADMIN,
-        is_active=True,
-        token_version=1,
-        security_question="What is your favorite color?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Blue".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
-    )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
-    return user
-
-
-@pytest_asyncio.fixture(scope="function")
 async def inactive_user(db_session: AsyncSession):
     user = User(
         email="inactive@example.com",
@@ -193,16 +170,6 @@ async def auth_headers(client, test_user) -> dict:
     login_resp = await client.post("/api/v1/auth/login", json={
         "username": "testuser",
         "password": "TestPass123!",
-    })
-    token = login_resp.json()["token"]["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
-@pytest_asyncio.fixture(scope="function")
-async def admin_auth_headers(client, admin_user) -> dict:
-    login_resp = await client.post("/api/v1/auth/login", json={
-        "username": "adminuser",
-        "password": "AdminPass123!",
     })
     token = login_resp.json()["token"]["access_token"]
     return {"Authorization": f"Bearer {token}"}

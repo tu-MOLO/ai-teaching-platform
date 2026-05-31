@@ -40,7 +40,6 @@ from app.schemas.auth import (
     UserAuthInfo,
 )
 from app.schemas.base import MessageResponse
-from app.services.permission import PermissionService
 from app.core.rate_limiter import rate_limit_dep
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -263,7 +262,6 @@ async def get_current_user(
     if not user:
         raise NotFoundException("用户")
 
-    permissions = await PermissionService(db).get_permissions_by_user_id(user.id)
     return CurrentUserResponse(
         id=user.id,
         email=user.email,
@@ -275,7 +273,6 @@ async def get_current_user(
         is_active=user.is_active,
         last_login_at=user.last_login_at,
         login_count=user.login_count,
-        permissions=permissions,
     )
 
 

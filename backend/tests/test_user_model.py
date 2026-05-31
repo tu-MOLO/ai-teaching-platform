@@ -135,30 +135,6 @@ class TestIncrementTokenVersion:
         assert user.token_version == 2
 
 
-class TestHasRole:
-    def test_matching_role(self):
-        user = _make_user(role=UserRole.TEACHER)
-        assert user.has_role(UserRole.TEACHER) is True
-
-    def test_non_matching_role(self):
-        user = _make_user(role=UserRole.TEACHER)
-        assert user.has_role(UserRole.ADMIN) is False
-
-
-class TestHasAnyRole:
-    def test_list_contains_user_role(self):
-        user = _make_user(role=UserRole.TEACHER)
-        assert user.has_any_role([UserRole.ADMIN, UserRole.TEACHER]) is True
-
-    def test_list_does_not_contain_user_role(self):
-        user = _make_user(role=UserRole.TEACHER)
-        assert user.has_any_role([UserRole.ADMIN]) is False
-
-    def test_empty_list(self):
-        user = _make_user(role=UserRole.TEACHER)
-        assert user.has_any_role([]) is False
-
-
 class TestIsResetLocked:
     def test_reset_locked_until_in_future(self):
         user = _make_user(

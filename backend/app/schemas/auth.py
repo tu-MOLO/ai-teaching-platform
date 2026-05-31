@@ -141,7 +141,6 @@ class CurrentUserResponse(BaseSchema):
     is_active: bool = Field(..., description="是否激活")
     last_login_at: Optional[datetime] = Field(default=None, description="最后登录时间")
     login_count: int = Field(default=0, description="登录次数")
-    permissions: list[str] = Field(default_factory=list, description="权限列表")
 
 
 # ============== 令牌载荷（内部使用） ==============

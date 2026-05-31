@@ -11,7 +11,6 @@ from app.services.tag import TagService, get_tag_service
 from app.services.resource import ResourceService, get_resource_service
 from app.services.student import StudentService
 from app.services.portfolio import PortfolioService
-from app.services.permission import PermissionService
 
 __all__ = [
     "MinIOStorage",
@@ -23,6 +22,5 @@ __all__ = [
     "ResourceService",
     "get_resource_service",
     "StudentService",
-    "PortfolioService",
-    "PermissionService"
+    "PortfolioService"
 ]

@@ -28,7 +28,6 @@ class UserBase(BaseSchema):
 class UserCreate(UserBase):
     """用户创建请求"""
     password: str = Field(..., min_length=8, max_length=100, description="密码")
-    role: UserRole = Field(default=UserRole.TEACHER, description="用户角色")
     
     @field_validator("password")
     @classmethod

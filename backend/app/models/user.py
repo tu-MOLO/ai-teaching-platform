@@ -4,7 +4,7 @@
 """
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -14,7 +14,6 @@ from app.models.base import BaseModel
 
 class UserRole(str, PyEnum):
     """用户角色枚举"""
-    ADMIN = "admin"          # 管理员
     TEACHER = "teacher"      # 教师
 
 
@@ -206,14 +205,6 @@ class User(BaseModel):
         """增加令牌版本（用于强制重新登录）"""
         self.token_version += 1
     
-    def has_role(self, role: UserRole) -> bool:
-        """检查是否具有指定角色"""
-        return self.role == role
-    
-    def has_any_role(self, roles: List[UserRole]) -> bool:
-        """检查是否具有任一指定角色"""
-        return self.role in roles
-
     def verify_security_answer(self, answer: str) -> bool:
         from app.core.security import verify_password
         return verify_password(answer, self.hashed_security_answer)

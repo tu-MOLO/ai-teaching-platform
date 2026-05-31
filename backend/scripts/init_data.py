@@ -21,7 +21,6 @@ from app.models.base import Base
 from app.models.lesson_template import LessonTemplate
 from app.models.tag import Tag
 from app.models.user import User, UserRole, UserStatus
-from app.services.permission import DEFAULT_TEACHER_PERMISSIONS
 
 
 DEFAULT_TEACHER = {
@@ -29,13 +28,6 @@ DEFAULT_TEACHER = {
     "email": os.getenv("DEFAULT_TEACHER_EMAIL", "teacher@example.com"),
     "password": os.getenv("DEFAULT_TEACHER_PASSWORD", "Teacher@Local2026!"),
     "full_name": os.getenv("DEFAULT_TEACHER_FULL_NAME", "本地教师账号"),
-}
-
-DEFAULT_ADMIN = {
-    "username": os.getenv("ADMIN_USERNAME", "admin"),
-    "email": os.getenv("ADMIN_EMAIL", "admin@example.com"),
-    "password": os.getenv("ADMIN_PASSWORD", "Admin123456"),
-    "full_name": os.getenv("ADMIN_FULL_NAME", "系统管理员"),
 }
 
 TAGS = [
@@ -150,33 +142,6 @@ def seed_teacher(db: Session) -> tuple[User, bool]:
     return user, True
 
 
-def seed_admin(db: Session) -> tuple[User, bool]:
-    username = DEFAULT_ADMIN["username"]
-    email = DEFAULT_ADMIN["email"]
-    user = db.execute(
-        select(User).where(
-            (User.username == username) | (User.email == email),
-            User.is_deleted == False,
-        )
-    ).scalar_one_or_none()
-    if user:
-        return user, False
-
-    user = User(
-        username=username,
-        email=email,
-        hashed_password=get_password_hash(DEFAULT_ADMIN["password"]),
-        full_name=DEFAULT_ADMIN["full_name"],
-        role=UserRole.ADMIN,
-        status=UserStatus.ACTIVE,
-        is_active=True,
-        security_question="您的母校名称是什么？",
-        hashed_security_answer=get_password_hash("default_answer"),
-    )
-    db.add(user)
-    return user, True
-
-
 def main() -> None:
     engine = get_engine()
     ensure_schema(engine)
@@ -192,14 +157,11 @@ def main() -> None:
         tag_count = seed_tags(db)
         template_count = seed_templates(db)
         user, created_teacher = seed_teacher(db)
-        admin_user, created_admin = seed_admin(db)
         db.commit()
         total_tags = db.execute(select(Tag)).scalars().all()
         total_templates = db.execute(select(LessonTemplate)).scalars().all()
         teacher_username = user.username
         teacher_email = user.email
-        admin_username = admin_user.username
-        admin_email = admin_user.email
 
     print("Local data initialization completed.")
     print(f"Seeded tags this run: {tag_count}")
@@ -211,11 +173,6 @@ def main() -> None:
     print(f"Teacher email: {teacher_email}")
     print(f"Teacher default password: {DEFAULT_TEACHER['password']}")
     print("Please change the teacher password after first login if this environment will be shared.")
-    print(f"Teacher permissions baseline: {', '.join(DEFAULT_TEACHER_PERMISSIONS[:4])} ...")
-    print(f"Admin account created: {'yes' if created_admin else 'no'}")
-    print(f"Admin username: {admin_username}")
-    print(f"Admin email: {admin_email}")
-    print(f"Admin default password: {DEFAULT_ADMIN['password']}")
 
 
 if __name__ == "__main__":

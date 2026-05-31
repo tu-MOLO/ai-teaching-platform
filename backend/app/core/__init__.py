@@ -10,14 +10,6 @@ from app.core.security import (
     verify_password,
     get_current_user_id
 )
-from app.core.permissions import (
-    PermissionChecker,
-    AnyPermissionChecker,
-    require_permissions,
-    require_any_permission,
-    check_permission,
-    check_any_permission
-)
 
 __all__ = [
     "settings",
@@ -28,10 +20,4 @@ __all__ = [
     "get_password_hash",
     "verify_password",
     "get_current_user_id",
-    "PermissionChecker",
-    "AnyPermissionChecker",
-    "require_permissions",
-    "require_any_permission",
-    "check_permission",
-    "check_any_permission"
 ]

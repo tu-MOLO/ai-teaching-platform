@@ -2,7 +2,6 @@
 """
 from app.models.base import Base
 from app.models.user import User, UserRole, UserStatus
-from app.models.permission import Permission, Role, RolePermission
 from app.models.tag import Tag
 from app.models.resource import Resource, resource_tag_association
 from app.models.student import Student, Gender
@@ -18,7 +17,6 @@ from app.models.ai_config import AIConfig
 
 __all__ = [
     "Base", "User", "UserRole", "UserStatus",
-    "Permission", "Role", "RolePermission",
     "Tag", "Resource", "resource_tag_association",
     "Student", "Gender", "Portfolio", "Course", "course_student",
     "Notification", "NotificationType",
