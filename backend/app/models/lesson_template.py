@@ -19,19 +19,19 @@ class LessonTemplate(BaseModel):
         index=True,
         comment="模板名称"
     )
-    
+
     description: Mapped[str] = mapped_column(
         Text,
         nullable=True,
         comment="模板描述"
     )
-    
+
     structure: Mapped[str] = mapped_column(
         Text,
         nullable=False,
         comment="模板结构（JSON格式）"
     )
-    
+
     is_default: Mapped[bool] = mapped_column(
         default=False,
         nullable=False,

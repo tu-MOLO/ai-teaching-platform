@@ -5,7 +5,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator
 
 from app.models.user import UserRole, UserStatus
 from app.schemas.base import AuditSchema, BaseSchema
@@ -28,7 +28,7 @@ class UserBase(BaseSchema):
 class UserCreate(UserBase):
     """用户创建请求"""
     password: str = Field(..., min_length=8, max_length=100, description="密码")
-    
+
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
@@ -57,7 +57,7 @@ class UserPasswordUpdate(BaseSchema):
     """用户密码更新请求"""
     current_password: str = Field(..., description="当前密码")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
-    
+
     @field_validator("new_password")
     @classmethod
     def validate_new_password(cls, v: str) -> str:
@@ -78,7 +78,7 @@ class UserPasswordUpdate(BaseSchema):
 class UserInDB(AuditSchema):
     """数据库中的用户（包含敏感信息）"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str = Field(..., description="用户ID")
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., description="用户名")
@@ -99,7 +99,7 @@ class UserInDB(AuditSchema):
 class UserResponse(AuditSchema):
     """用户响应模型（公开信息）"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str = Field(..., description="用户ID")
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., description="用户名")

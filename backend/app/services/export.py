@@ -1,23 +1,23 @@
 """
 导出服务
 """
-from typing import Optional
 from io import BytesIO
 from html import escape
+from typing import Any
 
 
 class ExportService:
     """
     导出服务类
     """
-    
+
     def export_to_pdf(self, lesson_plan) -> bytes:
         """
         导出教案为PDF
-        
+
         Args:
             lesson_plan: 教案对象
-        
+
         Returns:
             PDF文件内容（字节流）
         """
@@ -25,10 +25,10 @@ class ExportService:
             from weasyprint import HTML, CSS
         except ImportError:
             return self._render_simple_pdf(self._build_lesson_plan_lines(lesson_plan))
-        
+
         # 构建HTML内容
         html_content = self._generate_html(lesson_plan)
-        
+
         # 生成PDF
         css = CSS(string="""
             body {
@@ -63,38 +63,37 @@ class ExportService:
                 margin-bottom: 5px;
             }
         """)
-        
+
         pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
         return pdf_bytes
-    
+
     def export_to_word(self, lesson_plan) -> bytes:
         """
         导出教案为Word
-        
+
         Args:
             lesson_plan: 教案对象
-        
+
         Returns:
             Word文件内容（字节流）
         """
         try:
             from docx import Document
-            from docx.shared import Inches
         except ImportError:
             raise ImportError("Word export not supported: python-docx dependencies missing")
-        
+
         doc = Document()
-        
+
         # 添加标题
         doc.add_heading(lesson_plan.title, 0)
-        
+
         # 添加基本信息
         doc.add_heading('基本信息', level=1)
         doc.add_paragraph(f'学科: {escape(lesson_plan.subject or "")}')
         doc.add_paragraph(f'年级: {escape(lesson_plan.grade or "")}')
         doc.add_paragraph(f'课时时长: {lesson_plan.duration}分钟')
         doc.add_paragraph(f'状态: {lesson_plan.status.value}')
-        
+
         # 添加教学目标
         doc.add_heading('教学目标', level=1)
         if lesson_plan.teaching_goals_a:
@@ -106,50 +105,50 @@ class ExportService:
         if lesson_plan.teaching_goals_c:
             doc.add_heading('C层（拓展）', level=2)
             doc.add_paragraph(escape(lesson_plan.teaching_goals_c or ''))
-        
+
         # 添加教学内容
         if lesson_plan.teaching_content:
             doc.add_heading('教学内容', level=1)
             doc.add_paragraph(escape(lesson_plan.teaching_content or ''))
-        
+
         # 添加教学方法
         if lesson_plan.teaching_methods:
             doc.add_heading('教学方法', level=1)
             doc.add_paragraph(escape(lesson_plan.teaching_methods or ''))
-        
+
         # 添加教学过程
         if lesson_plan.teaching_process:
             doc.add_heading('教学过程', level=1)
             doc.add_paragraph(escape(lesson_plan.teaching_process or ''))
-        
+
         # 添加教学资源
         if lesson_plan.teaching_resources:
             doc.add_heading('教学资源', level=1)
             doc.add_paragraph(escape(lesson_plan.teaching_resources or ''))
-        
+
         # 添加评价方式
         if lesson_plan.assessment:
             doc.add_heading('评价方式', level=1)
             doc.add_paragraph(escape(lesson_plan.assessment or ''))
-        
+
         # 添加备注
         if lesson_plan.notes:
             doc.add_heading('备注', level=1)
             doc.add_paragraph(escape(lesson_plan.notes or ''))
-        
+
         # 保存为字节流
         stream = BytesIO()
         doc.save(stream)
         stream.seek(0)
         return stream.getvalue()
-    
+
     def _generate_html(self, lesson_plan) -> str:
         """
         生成HTML内容
-        
+
         Args:
             lesson_plan: 教案对象
-        
+
         Returns:
             HTML字符串
         """
@@ -162,7 +161,7 @@ class ExportService:
         </head>
         <body>
             <h1>{escape(lesson_plan.title or '')}</h1>
-            
+
             <div class="section">
                 <h2>基本信息</h2>
                 <p>学科: {escape(lesson_plan.subject or '')}</p>
@@ -170,11 +169,11 @@ class ExportService:
                 <p>课时时长: {lesson_plan.duration}分钟</p>
                 <p>状态: {escape(str(lesson_plan.status.value))}</p>
             </div>
-            
+
             <div class="section">
                 <h2>教学目标</h2>
         """
-        
+
         # 添加分层教学目标
         if lesson_plan.teaching_goals_a:
             html += f"""
@@ -183,7 +182,7 @@ class ExportService:
                     <p>{escape(lesson_plan.teaching_goals_a or '')}</p>
                 </div>
             """
-        
+
         if lesson_plan.teaching_goals_b:
             html += f"""
                 <div class="goal-level">
@@ -191,7 +190,7 @@ class ExportService:
                     <p>{escape(lesson_plan.teaching_goals_b or '')}</p>
                 </div>
             """
-        
+
         if lesson_plan.teaching_goals_c:
             html += f"""
                 <div class="goal-level">
@@ -199,7 +198,7 @@ class ExportService:
                     <p>{escape(lesson_plan.teaching_goals_c or '')}</p>
                 </div>
             """
-        
+
         # 添加其他内容
         sections = [
             ('教学内容', lesson_plan.teaching_content),
@@ -209,7 +208,7 @@ class ExportService:
             ('评价方式', lesson_plan.assessment),
             ('备注', lesson_plan.notes)
         ]
-        
+
         for section_name, content in sections:
             if content:
                 html += f"""
@@ -218,33 +217,33 @@ class ExportService:
                 <p>{escape(content or '')}</p>
             </div>
         """
-        
+
         html += """
         </body>
         </html>
         """
-        
+
         return html
-    
+
     def export_student_portfolio_to_pdf(self, student, portfolios) -> bytes:
         """
         导出学生成长报告为PDF
-        
+
         Args:
             student: 学生对象
             portfolios: 学生的成长档案列表
-        
+
         Returns:
             PDF文件内容（字节流）
         """
         try:
             from weasyprint import HTML, CSS
-        except ImportError:
+        except (ImportError, OSError):
             return self._render_simple_pdf(self._build_portfolio_report_lines(student, portfolios))
-        
+
         # 构建HTML内容
         html_content = self._generate_portfolio_html(student, portfolios)
-        
+
         # 生成PDF
         css = CSS(string="""
             body {
@@ -313,18 +312,18 @@ class ExportService:
                 margin-right: 5px;
             }
         """)
-        
+
         pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
         return pdf_bytes
-    
+
     def _generate_portfolio_html(self, student, portfolios) -> str:
         """
         生成学生成长报告的HTML内容
-        
+
         Args:
             student: 学生对象
             portfolios: 学生的成长档案列表
-        
+
         Returns:
             HTML字符串
         """
@@ -337,7 +336,7 @@ class ExportService:
         </head>
         <body>
             <h1>{escape(student.name or '')}的成长报告</h1>
-            
+
             <div class="student-info">
                 <h2>学生基本信息</h2>
                 <p>姓名: {escape(student.name or '')}</p>
@@ -348,14 +347,14 @@ class ExportService:
                 <p>家长联系方式: {escape(student.parent_contact or '未提供')}</p>
             </div>
         """
-        
+
         # 按类型分组成长档案
-        portfolios_by_type = {}
+        portfolios_by_type: dict[str, list[Any]] = {}
         for portfolio in portfolios:
             if portfolio.type not in portfolios_by_type:
                 portfolios_by_type[portfolio.type] = []
             portfolios_by_type[portfolio.type].append(portfolio)
-        
+
         # 类型名称映射
         type_names = {
             'work': '作品',
@@ -363,7 +362,7 @@ class ExportService:
             'observation': '观察',
             'milestone': '里程碑'
         }
-        
+
         # 添加各类型的成长档案
         for type_key, type_portfolios in portfolios_by_type.items():
             type_name = type_names.get(type_key, type_key)
@@ -371,7 +370,7 @@ class ExportService:
             <div class="section">
                 <h2>{escape(type_name)}</h2>
             """
-            
+
             for portfolio in type_portfolios:
                 html += f"""
                 <div class="portfolio-item">
@@ -379,14 +378,18 @@ class ExportService:
                     <div class="portfolio-meta">创建时间: {portfolio.created_at.strftime('%Y-%m-%d %H:%M:%S')}</div>
                     {f'<p>{escape(portfolio.content or "")}</p>' if portfolio.content else ''}
                 """
-                
+
                 # 添加评价分数
-                if any([portfolio.cognitive_score, portfolio.skill_score, portfolio.creativity_score, portfolio.cooperation_score, portfolio.attention_score]):
+                if any([portfolio.cognitive_score,
+    portfolio.skill_score,
+    portfolio.creativity_score,
+    portfolio.cooperation_score,
+     portfolio.attention_score]):
                     html += f"""
                     <div class="evaluation-scores">
                         <h3>多维度评价</h3>
                     """
-                    
+
                     scores = [
                         ('认知', portfolio.cognitive_score),
                         ('技能', portfolio.skill_score),
@@ -394,22 +397,22 @@ class ExportService:
                         ('合作', portfolio.cooperation_score),
                         ('注意力', portfolio.attention_score)
                     ]
-                    
+
                     for score_name, score_value in scores:
                         if score_value is not None:
                             html += f"<div class='score-item'><span class='score-label'>{score_name}:</span>{score_value}</div>"
-                    
+
                     html += "</div>"
-                
+
                 html += "</div>"
-            
+
             html += "</div>"
-        
+
         html += """
         </body>
         </html>
         """
-        
+
         return html
 
     def _build_lesson_plan_lines(self, lesson_plan) -> list[str]:
@@ -498,7 +501,8 @@ class ExportService:
         line_height = 18
         max_lines_per_page = 38
 
-        pages = [lines[i:i + max_lines_per_page] for i in range(0, len(lines), max_lines_per_page)] or [[]]
+        pages = [lines[i:i + max_lines_per_page]
+            for i in range(0, len(lines), max_lines_per_page)] or [[]]
 
         objects: list[bytes] = []
 
@@ -511,7 +515,7 @@ class ExportService:
         font_id = add_object(
             "<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [4 0 R] >>"
         )
-        descendant_font_id = add_object(
+        _ = add_object(
             "<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 >>"
         )
 
@@ -528,7 +532,8 @@ class ExportService:
                 stream_lines.append(f"<{hex_text}> Tj")
             stream_lines.append("ET")
             stream = "\n".join(stream_lines).encode("utf-8")
-            content_id = add_object(f"<< /Length {len(stream)} >>\nstream\n{stream.decode('utf-8')}\nendstream")
+            content_id = add_object(
+                f"<< /Length {len(stream)} >>\nstream\n{stream.decode('utf-8')}\nendstream")
             content_object_ids.append(content_id)
             page_id = add_object(
                 f"<< /Type /Page /Parent {pages_id} 0 R /MediaBox [0 0 {page_width} {page_height}] "
@@ -537,7 +542,8 @@ class ExportService:
             page_object_ids.append(page_id)
 
         kids = " ".join(f"{page_id} 0 R" for page_id in page_object_ids)
-        objects[pages_id - 1] = f"<< /Type /Pages /Kids [{kids}] /Count {len(page_object_ids)} >>".encode("utf-8")
+        objects[pages_id - \
+            1] = f"<< /Type /Pages /Kids [{kids}] /Count {len(page_object_ids)} >>".encode("utf-8")
 
         pdf = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
         offsets = [0]

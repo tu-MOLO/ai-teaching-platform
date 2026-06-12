@@ -4,12 +4,24 @@ repos:
     hooks:
       - id: black
         language_version: python3.11
+        files: ^backend/.*\.py$
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
         args: ["--profile", "black"]
+        files: ^backend/.*\.py$
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
+        files: ^backend/.*\.py$
+  - repo: local
+    hooks:
+      - id: frontend-lint
+        name: Frontend Lint Check
+        entry: bash -c 'cd frontend && npm run lint'
+        language: system
+        pass_filenames: false
+        files: ^frontend/.*\.(ts|tsx|json)$
+        types: [file]

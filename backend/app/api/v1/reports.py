@@ -2,7 +2,7 @@
 报告API模块
 实现教学数据分析报告的查询接口
 """
-from typing import Annotated, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.base import DataResponse
-from app.services.report import ReportService
+from app.services.reports import ReportService
 
 router = APIRouter(tags=["报告分析"])
 

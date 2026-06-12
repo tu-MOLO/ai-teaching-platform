@@ -1,8 +1,8 @@
 import json
-from typing import AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Optional, cast
 
 import httpx
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -465,7 +465,7 @@ TOOL_DEFINITIONS = [
 
 
 async def _create_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.course import CourseService
+    from app.services.courses import CourseService
     from app.schemas.course import CourseCreate
     from app.models.user import User
 
@@ -475,11 +475,16 @@ async def _create_course(db: AsyncSession, user_id: str, **kwargs):
 
     course = await CourseService.create(db, CourseCreate(**kwargs), user_id, teacher_name)
     await db.commit()
-    return {"id": course.id, "name": course.name, "subject": course.subject, "grade": course.grade, "status": course.status}
+    return {
+    "id": course.id,
+    "name": course.name,
+    "subject": course.subject,
+    "grade": course.grade,
+     "status": course.status}
 
 
 async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.course import CourseService
+    from app.services.courses import CourseService
 
     page = kwargs.pop("page", 1)
     page_size = kwargs.pop("page_size", 10)
@@ -488,7 +493,8 @@ async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
     total = await CourseService.count(db, user_id, **kwargs)
     return {
         "items": [
-            {"id": c.id, "name": c.name, "subject": c.subject, "grade": c.grade, "status": c.status, "teacher": c.teacher}
+            {"id": c.id, "name": c.name, "subject": c.subject,
+                "grade": c.grade, "status": c.status, "teacher": c.teacher}
             for c in courses
         ],
         "total": total,
@@ -498,7 +504,7 @@ async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.course import CourseService
+    from app.services.courses import CourseService
 
     course = await CourseService.get_by_id(db, kwargs["course_id"], user_id)
     if not course:
@@ -516,7 +522,7 @@ async def _get_course(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.course import CourseService
+    from app.services.courses import CourseService
     from app.schemas.course import CourseUpdate
     from app.models.user import User
 
@@ -529,11 +535,16 @@ async def _update_course(db: AsyncSession, user_id: str, **kwargs):
     if not course:
         return {"error": "课程不存在或无权限"}
     await db.commit()
-    return {"id": course.id, "name": course.name, "subject": course.subject, "grade": course.grade, "status": course.status}
+    return {
+    "id": course.id,
+    "name": course.name,
+    "subject": course.subject,
+    "grade": course.grade,
+     "status": course.status}
 
 
 async def _delete_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.course import CourseService
+    from app.services.courses import CourseService
 
     success = await CourseService.delete(db, kwargs["course_id"], user_id)
     if success:
@@ -542,16 +553,20 @@ async def _delete_course(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _create_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.student import StudentService
+    from app.services.students import StudentService
     from app.schemas.student import StudentCreate
 
     student = await StudentService.create(db, StudentCreate(**kwargs), user_id)
     await db.commit()
-    return {"id": student.id, "name": student.name, "grade": student.grade, "class_name": student.class_name}
+    return {
+    "id": student.id,
+    "name": student.name,
+    "grade": student.grade,
+     "class_name": student.class_name}
 
 
 async def _list_students(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.student import StudentService
+    from app.services.students import StudentService
 
     page = kwargs.pop("page", 1)
     page_size = kwargs.pop("page_size", 10)
@@ -560,7 +575,8 @@ async def _list_students(db: AsyncSession, user_id: str, **kwargs):
     total = await StudentService.count(db, user_id, **kwargs)
     return {
         "items": [
-            {"id": s.id, "name": s.name, "grade": s.grade, "class_name": s.class_name, "gender": str(s.gender)}
+            {"id": s.id, "name": s.name, "grade": s.grade,
+                "class_name": s.class_name, "gender": str(s.gender)}
             for s in students
         ],
         "total": total,
@@ -570,7 +586,7 @@ async def _list_students(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.student import StudentService
+    from app.services.students import StudentService
 
     student = await StudentService.get(db, kwargs["student_id"], user_id)
     if not student:
@@ -583,12 +599,12 @@ async def _get_student(db: AsyncSession, user_id: str, **kwargs):
         "grade": student.grade,
         "class_name": student.class_name,
         "parent_contact": student.parent_contact,
-        "progress": student.progress,
+        "progress": student.progress,  # type: ignore[attr-defined]
     }
 
 
 async def _update_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.student import StudentService
+    from app.services.students import StudentService
     from app.schemas.student import StudentUpdate
 
     student_id = kwargs.pop("student_id")
@@ -596,11 +612,15 @@ async def _update_student(db: AsyncSession, user_id: str, **kwargs):
     if not student:
         return {"error": "学生不存在或无权限"}
     await db.commit()
-    return {"id": student.id, "name": student.name, "grade": student.grade, "class_name": student.class_name}
+    return {
+    "id": student.id,
+    "name": student.name,
+    "grade": student.grade,
+     "class_name": student.class_name}
 
 
 async def _delete_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.student import StudentService
+    from app.services.students import StudentService
 
     success = await StudentService.delete(db, kwargs["student_id"], user_id)
     if success:
@@ -609,42 +629,47 @@ async def _delete_student(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_dashboard_stats(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.report import ReportService
+    from app.services.reports import ReportService
 
     return await ReportService.get_dashboard_stats(db, user_id)
 
 
 async def _get_course_statistics(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.report import ReportService
+    from app.services.reports import ReportService
 
     return await ReportService.get_course_statistics(db, user_id)
 
 
 async def _get_student_statistics(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.report import ReportService
+    from app.services.reports import ReportService
 
     return await ReportService.get_student_statistics(db, user_id)
 
 
 async def _get_monthly_trends(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.report import ReportService
+    from app.services.reports import ReportService
 
     months = kwargs.get("months", 6)
     return await ReportService.get_monthly_trends(db, months, user_id)
 
 
 async def _create_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
     from app.schemas.lesson_plan import LessonPlanCreate
 
     service = LessonPlanService(db)
     plan = await service.create(LessonPlanCreate(**kwargs), user_id)
     await db.commit()
-    return {"id": plan.id, "title": plan.title, "subject": plan.subject, "grade": plan.grade, "status": plan.status}
+    return {
+    "id": plan.id,
+    "title": plan.title,
+    "subject": plan.subject,
+    "grade": plan.grade,
+     "status": plan.status}
 
 
 async def _list_lesson_plans(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
 
     page = kwargs.pop("page", 1)
     page_size = kwargs.pop("page_size", 10)
@@ -667,7 +692,7 @@ async def _list_lesson_plans(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
 
     service = LessonPlanService(db)
     plan = await service.get_by_id(kwargs["plan_id"], user_id)
@@ -690,7 +715,7 @@ async def _get_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
     from app.schemas.lesson_plan import LessonPlanUpdate
 
     plan_id = kwargs.pop("plan_id")
@@ -699,11 +724,16 @@ async def _update_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
     if not plan:
         return {"error": "教案不存在或无权限"}
     await db.commit()
-    return {"id": plan.id, "title": plan.title, "subject": plan.subject, "grade": plan.grade, "status": plan.status}
+    return {
+    "id": plan.id,
+    "title": plan.title,
+    "subject": plan.subject,
+    "grade": plan.grade,
+     "status": plan.status}
 
 
 async def _publish_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
 
     service = LessonPlanService(db)
     plan = await service.publish(kwargs["plan_id"], user_id)
@@ -714,7 +744,7 @@ async def _publish_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _delete_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plan import LessonPlanService
+    from app.services.lesson_plans import LessonPlanService
 
     service = LessonPlanService(db)
     success = await service.delete(kwargs["plan_id"], user_id)
@@ -724,7 +754,7 @@ async def _delete_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _list_resources(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resource import ResourceService
+    from app.services.resources import ResourceService
     from app.schemas.resource import ResourceSearchParams
 
     page = kwargs.pop("page", 1)
@@ -735,11 +765,13 @@ async def _list_resources(db: AsyncSession, user_id: str, **kwargs):
         user_id=user_id,
         page=page,
         page_size=page_size,
+        tag_ids=None,
     )
     resources, total = await ResourceService.get_resources(db, params)
     return {
         "items": [
-            {"id": r.id, "name": r.name, "file_type": r.file_type, "file_size": r.file_size, "description": r.description}
+            {"id": r.id, "name": r.name, "file_type": r.file_type,
+                "file_size": r.file_size, "description": r.description}
             for r in resources
         ],
         "total": total,
@@ -749,7 +781,7 @@ async def _list_resources(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_resource(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resource import ResourceService
+    from app.services.resources import ResourceService
 
     resource = await ResourceService.get_resource_by_id(db, kwargs["resource_id"], user_id)
     if not resource:
@@ -765,7 +797,7 @@ async def _get_resource(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_resource(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resource import ResourceService
+    from app.services.resources import ResourceService
     from app.schemas.resource import ResourceUpdate
 
     resource_id = kwargs.pop("resource_id")
@@ -776,14 +808,14 @@ async def _update_resource(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _delete_resource(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resource import ResourceService
+    from app.services.resources import ResourceService
 
     success = await ResourceService.delete_resource(db, kwargs["resource_id"], user_id)
     return {"success": success}
 
 
 async def _list_notifications(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notification import NotificationService
+    from app.services.notifications import NotificationService
     from app.models.notification import NotificationType
 
     page = kwargs.pop("page", 1)
@@ -803,7 +835,8 @@ async def _list_notifications(db: AsyncSession, user_id: str, **kwargs):
     total = await NotificationService.count(db, user_id, notification_type=notification_type, read=read)
     return {
         "items": [
-            {"id": n.id, "title": n.title, "content": n.content, "type": str(n.type), "read": n.read}
+            {"id": n.id, "title": n.title, "content": n.content,
+                "type": str(n.type), "read": n.read}
             for n in notifications
         ],
         "total": total,
@@ -813,7 +846,7 @@ async def _list_notifications(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _get_notification(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notification import NotificationService
+    from app.services.notifications import NotificationService
 
     notification = await NotificationService.get(db, kwargs["notification_id"], user_id)
     if not notification:
@@ -828,7 +861,7 @@ async def _get_notification(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _mark_notification_read(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notification import NotificationService
+    from app.services.notifications import NotificationService
 
     notification = await NotificationService.mark_as_read(db, kwargs["notification_id"], user_id)
     if not notification:
@@ -837,14 +870,14 @@ async def _mark_notification_read(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _mark_all_notifications_read(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notification import NotificationService
+    from app.services.notifications import NotificationService
 
     count = await NotificationService.mark_all_as_read(db, user_id)
     return {"marked_count": count}
 
 
 async def _delete_notification(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notification import NotificationService
+    from app.services.notifications import NotificationService
 
     success = await NotificationService.delete(db, kwargs["notification_id"], user_id)
     return {"success": success}
@@ -956,7 +989,7 @@ class AIService:
     async def _get_next_session_number(db: AsyncSession, user_id: str) -> int:
         result = await db.execute(
             select(AIConversation.id)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)
+            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
         )
         existing_ids = result.scalars().all()
         max_num = 0
@@ -964,7 +997,7 @@ class AIService:
             pass
         result2 = await db.execute(
             select(AIConversation.title)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)
+            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
         )
         existing_titles = result2.scalars().all()
         for title in existing_titles:
@@ -979,13 +1012,17 @@ class AIService:
         return max_num + 1
 
     @staticmethod
-    async def _get_or_create_conversation(db: AsyncSession, user_id: str, conversation_id: Optional[str], message: str) -> AIConversation:
+    async def _get_or_create_conversation(
+    db: AsyncSession,
+    user_id: str,
+    conversation_id: Optional[str],
+     message: str) -> AIConversation:
         if conversation_id:
             result = await db.execute(
                 select(AIConversation).where(
                     AIConversation.id == conversation_id,
                     AIConversation.user_id == user_id,
-                    AIConversation.is_deleted == False,
+                    AIConversation.is_deleted == False,  # noqa: E712
                 )
             )
             conv = result.scalar_one_or_none()
@@ -1026,7 +1063,10 @@ class AIService:
         return msg
 
     @staticmethod
-    async def _build_messages(db: AsyncSession, conversation_id: str, module: Optional[str] = None) -> list:
+    async def _build_messages(
+    db: AsyncSession,
+    conversation_id: str,
+     module: Optional[str] = None) -> list:
         result = await db.execute(
             select(AIMessage)
             .where(
@@ -1055,34 +1095,65 @@ class AIService:
                         pass
                 messages.append(entry)
             elif msg.role == "tool":
-                messages.append({"role": "tool", "content": msg.content, "tool_call_id": msg.tool_call_id})
+                messages.append({"role": "tool", "content": msg.content,
+                                "tool_call_id": msg.tool_call_id or ""})
 
         return messages
 
     @staticmethod
     def _get_module_tag(tool_name: str) -> str:
-        if tool_name in ("create_course", "list_courses", "get_course", "update_course", "delete_course"):
+        if tool_name in (
+    "create_course",
+    "list_courses",
+    "get_course",
+    "update_course",
+     "delete_course"):
             return "course"
-        if tool_name in ("create_student", "list_students", "get_student", "update_student", "delete_student"):
+        if tool_name in (
+    "create_student",
+    "list_students",
+    "get_student",
+    "update_student",
+     "delete_student"):
             return "student"
-        if tool_name in ("get_dashboard_stats", "get_course_statistics", "get_student_statistics", "get_monthly_trends"):
+        if tool_name in (
+    "get_dashboard_stats",
+    "get_course_statistics",
+    "get_student_statistics",
+     "get_monthly_trends"):
             return "data"
-        if tool_name in ("create_lesson_plan", "list_lesson_plans", "get_lesson_plan", "update_lesson_plan", "publish_lesson_plan", "delete_lesson_plan"):
+        if tool_name in (
+    "create_lesson_plan",
+    "list_lesson_plans",
+    "get_lesson_plan",
+    "update_lesson_plan",
+    "publish_lesson_plan",
+     "delete_lesson_plan"):
             return "lesson_plan"
         if tool_name in ("list_resources", "get_resource", "update_resource", "delete_resource"):
             return "resource"
-        if tool_name in ("list_notifications", "get_notification", "mark_notification_read", "mark_all_notifications_read", "delete_notification"):
+        if tool_name in (
+    "list_notifications",
+    "get_notification",
+    "mark_notification_read",
+    "mark_all_notifications_read",
+     "delete_notification"):
             return "notification"
         return ""
 
     @staticmethod
-    async def _stream_chat(db: AsyncSession, user_id: str, conversation: AIConversation, messages: list, effective_config: dict) -> AsyncGenerator:
+    async def _stream_chat(
+    db: AsyncSession,
+    user_id: str,
+    conversation: AIConversation,
+    messages: list,
+     effective_config: dict) -> AsyncGenerator:
         max_iterations = 5
         current_messages = messages.copy()
 
         for iteration in range(max_iterations):
             response_content = ""
-            tool_calls_list = []
+            tool_calls_list: list[dict[str, Any]] = []
 
             async with httpx.AsyncClient(timeout=60.0) as client:
                 async with client.stream(
@@ -1100,7 +1171,7 @@ class AIService:
                     },
                 ) as response:
                     if response.status_code != 200:
-                        error_body = await response.aread()
+                        await response.aread()
                         yield f"data: {json.dumps({'type': 'error', 'content': 'AI服务调用失败'}, ensure_ascii=False)}\n\n"
                         return
 
@@ -1122,7 +1193,9 @@ class AIService:
                                 for tc in delta["tool_calls"]:
                                     idx = tc.get("index", 0)
                                     while len(tool_calls_list) <= idx:
-                                        tool_calls_list.append({"id": "", "function": {"name": "", "arguments": ""}, "type": "function"})
+                                        tool_calls_list.append(
+                                            {"id": "", "function": {"name": "", "arguments": ""},
+                                             "type": "function"})
                                     if tc.get("id"):
                                         tool_calls_list[idx]["id"] = tc["id"]
                                     if tc.get("function", {}).get("name"):
@@ -1142,7 +1215,8 @@ class AIService:
                 yield f"data: {json.dumps({'type': 'done', 'conversation_id': conversation.id}, ensure_ascii=False)}\n\n"
                 return
 
-            current_messages.append({"role": "assistant", "content": response_content, "tool_calls": tool_calls_list})
+            current_messages.append(
+                {"role": "assistant", "content": response_content, "tool_calls": tool_calls_list})
 
             for tc in tool_calls_list:
                 tool_name = tc["function"]["name"]
@@ -1165,13 +1239,19 @@ class AIService:
                 else:
                     result_str = json.dumps({"error": f"未知工具: {tool_name}"}, ensure_ascii=False)
 
-                current_messages.append({"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
+                current_messages.append(
+                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
                 await AIService._save_message(db, conversation.id, "tool", result_str, tool_call_id=tc["id"], module_tag=module_tag)
 
         yield f"data: {json.dumps({'type': 'done', 'conversation_id': conversation.id}, ensure_ascii=False)}\n\n"
 
     @staticmethod
-    async def _non_stream_chat(db: AsyncSession, user_id: str, conversation: AIConversation, messages: list, effective_config: dict) -> ChatResponse:
+    async def _non_stream_chat(
+    db: AsyncSession,
+    user_id: str,
+    conversation: AIConversation,
+    messages: list,
+     effective_config: dict) -> ChatResponse:
         max_iterations = 5
         current_messages = messages.copy()
         module_tag = None
@@ -1214,7 +1294,9 @@ class AIService:
                     module_tag=module_tag,
                 )
 
-            current_messages.append({"role": "assistant", "content": response_content, "tool_calls": [tc for tc in tool_calls]})
+            current_messages.append( {"role": "assistant",
+    "content": response_content,
+     "tool_calls": [tc for tc in tool_calls]})
 
             for tc in tool_calls:
                 tool_name = tc["function"]["name"]
@@ -1235,7 +1317,8 @@ class AIService:
                 else:
                     result_str = json.dumps({"error": f"未知工具: {tool_name}"}, ensure_ascii=False)
 
-                current_messages.append({"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
+                current_messages.append(
+                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
                 await AIService._save_message(db, conversation.id, "tool", result_str, tool_call_id=tc["id"], module_tag=module_tag)
 
         return ChatResponse(
@@ -1248,7 +1331,7 @@ class AIService:
     async def get_conversations(db: AsyncSession, user_id: str):
         result = await db.execute(
             select(AIConversation)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)
+            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
             .order_by(AIConversation.updated_at.desc())
         )
         conversations = result.scalars().all()
@@ -1269,7 +1352,7 @@ class AIService:
             select(AIConversation).where(
                 AIConversation.id == conversation_id,
                 AIConversation.user_id == user_id,
-                AIConversation.is_deleted == False,
+                AIConversation.is_deleted == False,  # noqa: E712
             )
         )
         conv = result.scalar_one_or_none()
@@ -1281,7 +1364,7 @@ class AIService:
             .where(AIMessage.conversation_id == conversation_id)
             .order_by(AIMessage.created_at.asc())
         )
-        messages = result.scalars().all()
+        messages: list[AIMessage] = cast(list[AIMessage], result.scalars().all())
         return MessageListSchema(
             data=[
                 MessageSchema(
@@ -1304,7 +1387,7 @@ class AIService:
             select(AIConversation).where(
                 AIConversation.id == conversation_id,
                 AIConversation.user_id == user_id,
-                AIConversation.is_deleted == False,
+                AIConversation.is_deleted == False,  # noqa: E712
             )
         )
         conv = result.scalar_one_or_none()
@@ -1315,12 +1398,16 @@ class AIService:
         return True
 
     @staticmethod
-    async def rename_conversation(db: AsyncSession, conversation_id: str, user_id: str, new_title: str) -> bool:
+    async def rename_conversation(
+    db: AsyncSession,
+    conversation_id: str,
+    user_id: str,
+     new_title: str) -> bool:
         result = await db.execute(
             select(AIConversation).where(
                 AIConversation.id == conversation_id,
                 AIConversation.user_id == user_id,
-                AIConversation.is_deleted == False,
+                AIConversation.is_deleted == False,  # noqa: E712
             )
         )
         conv = result.scalar_one_or_none()

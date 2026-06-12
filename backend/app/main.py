@@ -18,7 +18,7 @@ from app.core.database import close_db, init_db
 from app.core.logging import get_logger, setup_logging
 from app.core.rate_limiter import init_rate_limiter
 from app.core.query_filters import setup_soft_delete_filter
-from app.core.exceptions import BusinessException, ErrorCode, get_error_message
+from app.core.exceptions import BusinessException, ErrorCode
 
 # 设置日志
 setup_logging()
@@ -40,11 +40,11 @@ async def lifespan(app: FastAPI):
         # 初始化限流器
         init_rate_limiter()
         logger.info("Rate limiter initialized")
-        
+
         # 初始化软删除过滤器
         setup_soft_delete_filter()
         logger.info("Soft delete filter initialized")
-        
+
         # 初始化数据库（开发环境自动创建表）
         if settings.DEBUG:
             await init_db()
@@ -52,11 +52,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize application: {e}")
         raise
-    
+
     logger.info(f"Application started: {settings.APP_NAME} v{settings.APP_VERSION}")
-    
+
     yield
-    
+
     # 关闭事件
     logger.info("Shutting down AI Teaching Platform API...")
     try:
@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
         logger.info("Database connections closed")
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
-    
+
     logger.info("Application shutdown complete")
 
 
@@ -110,23 +110,23 @@ def create_application() -> FastAPI:
         openapi_tags=openapi_tags,
         lifespan=lifespan
     )
-    
+
     # 注册中间件
     register_middlewares(app)
-    
+
     # 注册路由
     register_routers(app)
-    
+
     # 注册异常处理
     register_exception_handlers(app)
-    
+
     return app
 
 
 def register_middlewares(app: FastAPI) -> None:
     """
     注册中间件
-    
+
     Args:
         app: FastAPI应用实例
     """
@@ -135,7 +135,8 @@ def register_middlewares(app: FastAPI) -> None:
     if settings.DEBUG:
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+            allow_origins=["http://localhost:5173",
+                "http://localhost:3000", "http://127.0.0.1:5173"],
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -152,7 +153,7 @@ def register_middlewares(app: FastAPI) -> None:
             expose_headers=["X-Request-ID"]
         )
         logger.info(f"CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
-    
+
     # GZip压缩中间件
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
@@ -187,32 +188,32 @@ def register_middlewares(app: FastAPI) -> None:
     async def log_requests(request: Request, call_next):
         """记录请求日志"""
         import time
-        
+
         start_time = time.time()
-        
+
         # 获取请求信息
         method = request.method
         url = request.url.path
         client_host = request.client.host if request.client else "unknown"
-        
+
         logger.debug(f"Request started: {method} {url} from {client_host}")
-        
+
         try:
             response = await call_next(request)
-            
+
             # 计算处理时间
             process_time = time.time() - start_time
             response.headers["X-Process-Time"] = str(process_time)
-            
+
             # 记录响应信息
             status_code = response.status_code
             logger.info(
                 f"Request completed: {method} {url} - {status_code} "
                 f"({process_time:.3f}s)"
             )
-            
+
             return response
-            
+
         except Exception as e:
             process_time = time.time() - start_time
             logger.error(
@@ -241,13 +242,13 @@ async def require_internal_ip(request: Request):
 def register_routers(app: FastAPI) -> None:
     """
     注册路由
-    
+
     Args:
         app: FastAPI应用实例
     """
     from app.core.database import async_engine
     from app.core.performance import get_cache
-    
+
     # 健康检查端点
     @app.get("/health", tags=["健康检查"], summary="健康检查")
     async def health_check():
@@ -262,7 +263,7 @@ def register_routers(app: FastAPI) -> None:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": {}
         }
-        
+
         # 检查数据库连接
         try:
             from sqlalchemy import text
@@ -273,13 +274,13 @@ def register_routers(app: FastAPI) -> None:
                 "status": "healthy",
                 "message": "Database connection OK"
             }
-        except Exception as e:
+        except Exception as _e:  # noqa: F841
             health_status["status"] = "unhealthy"
             health_status["checks"]["database"] = {
                 "status": "unhealthy",
                 "message": "Database connection failed"
             }
-        
+
         # 检查缓存状态
         try:
             cache = get_cache()
@@ -293,9 +294,9 @@ def register_routers(app: FastAPI) -> None:
                 "status": "warning",
                 "message": f"Cache check failed: {str(e)}"
             }
-        
+
         return health_status
-    
+
     # 详细健康检查端点（生产环境仅允许内网IP访问）
     @app.get("/health/detailed", tags=["健康检查"], summary="详细健康检查")
     async def health_check_detailed(
@@ -307,7 +308,7 @@ def register_routers(app: FastAPI) -> None:
         """
         import platform
         import sys
-        
+
         return {
             "status": "healthy",
             "app": settings.APP_NAME,
@@ -325,7 +326,7 @@ def register_routers(app: FastAPI) -> None:
                 "cors_origins_count": len(settings.BACKEND_CORS_ORIGINS)
             }
         }
-    
+
     # API根端点
     @app.get("/", tags=["根路径"], summary="API信息")
     async def root():
@@ -337,20 +338,20 @@ def register_routers(app: FastAPI) -> None:
             "api_prefix": settings.API_V1_STR,
             "health_check": "/health"
         }
-    
+
     # 注册V1 API路由
     app.include_router(
         api_router,
         prefix=settings.API_V1_STR
     )
-    
+
     logger.info(f"Registered API router with prefix: {settings.API_V1_STR}")
 
 
 def register_exception_handlers(app: FastAPI) -> None:
     """
     注册全局异常处理器
-    
+
     Args:
         app: FastAPI应用实例
     """
@@ -359,27 +360,29 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def business_exception_handler(request: Request, exc: BusinessException):
         """处理业务异常"""
         logger.warning(f"Business exception: {exc.error_code} - {exc.detail}")
-        
+
         response_data = {
-            "error": exc.error_code,
-            "code": exc.error_code.value if isinstance(exc.error_code, ErrorCode) else str(exc.error_code),
-            "message": exc.detail
-        }
-        
+    "error": exc.error_code,
+    "code": exc.error_code.value if isinstance(
+        exc.error_code,
+        ErrorCode) else str(
+            exc.error_code),
+             "message": exc.detail }
+
         if exc.details:
             response_data["details"] = exc.details
-        
+
         # 添加请求追踪ID
         response_data["request_id"] = str(uuid.uuid4())[:8]
-        
+
         return JSONResponse(
             status_code=exc.status_code,
             content=response_data
         )
-    
+
     # 验证错误处理器
     from fastapi.exceptions import RequestValidationError
-    
+
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request,
@@ -393,7 +396,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "message": error["msg"],
                 "type": error["type"]
             })
-        
+
         logger.warning(f"Validation error: {errors}")
         return JSONResponse(
             status_code=422,
@@ -405,10 +408,10 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "request_id": str(uuid.uuid4())[:8]
             }
         )
-    
+
     # HTTP 异常处理器
     from fastapi.exceptions import HTTPException
-    
+
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
         """处理 HTTP 异常"""
@@ -416,12 +419,12 @@ def register_exception_handlers(app: FastAPI) -> None:
             logger.error(f"HTTP exception: {exc.status_code} - {exc.detail}")
         else:
             logger.warning(f"HTTP exception: {exc.status_code} - {exc.detail}")
-        
+
         # 脱敏处理
         message = exc.detail
         if exc.status_code == 500 and not settings.DEBUG:
             message = "服务器内部错误"
-        
+
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -432,14 +435,14 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
             headers=exc.headers
         )
-    
+
     # 通用异常处理器（最后捕获）
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
         """处理所有未捕获的异常"""
         request_id = str(uuid.uuid4())[:8]
         logger.error(f"Unhandled exception [req:{request_id}]: {exc}", exc_info=True)
-        
+
         return JSONResponse(
             status_code=500,
             content={
@@ -458,7 +461,7 @@ app = create_application()
 # 开发环境直接运行
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

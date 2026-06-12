@@ -5,7 +5,7 @@ from datetime import date
 from enum import Enum as PyEnum
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import String, Index, Date, Enum, ForeignKey, Boolean, and_
+from sqlalchemy import String, Index, Date, Enum, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
@@ -98,7 +98,7 @@ class Student(BaseModel):
         "Course",
         secondary="course_student",
         back_populates="students",
-        primaryjoin="and_(Student.id == course_student.c.student_id, Course.is_deleted == False)",
+        primaryjoin="and_(Student.id == course_student.c.student_id, Course.is_deleted == False)  # noqa: E712",
         secondaryjoin="Course.id == course_student.c.course_id",
         lazy="selectin"
     )

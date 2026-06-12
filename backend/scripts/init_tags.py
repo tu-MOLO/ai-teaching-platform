@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.core.database import AsyncSessionLocal
 from app.schemas.tag import TagCreate
-from app.services.tag import TagService
+from app.services.tags import TagService
 
 
 DEFAULT_TAGS = [

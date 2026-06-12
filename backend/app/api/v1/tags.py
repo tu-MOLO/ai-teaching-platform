@@ -1,7 +1,7 @@
 """
 标签相关API
 """
-from typing import List, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +11,7 @@ from app.core.exceptions import AlreadyExistsException, InternalException, NotFo
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.tag import TagCreate, TagListResponse, TagResponse, TagUpdate
 from app.schemas.base import ListResponse, DataResponse
-from app.services.tag import get_tag_service, TagService
+from app.services.tags import get_tag_service, TagService
 
 router = APIRouter(tags=["标签"])
 
@@ -50,7 +50,7 @@ async def get_tags(
             page_size=page_size,
             pages=pages
         )
-    except Exception as e:
+    except Exception as _e:  # noqa: F841
         raise InternalException("获取标签列表失败")
 
 
@@ -80,7 +80,7 @@ async def get_tag(
         return DataResponse(data=tag)
     except NotFoundException:
         raise
-    except Exception as e:
+    except Exception as _e:  # noqa: F841
         raise InternalException("获取标签失败")
 
 

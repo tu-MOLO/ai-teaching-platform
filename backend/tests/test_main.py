@@ -1,7 +1,7 @@
 import pytest
 from fastapi import FastAPI
 
-from app.main import create_application, register_routers, register_exception_handlers
+from app.main import create_application, register_exception_handlers
 from app.core.exceptions import BusinessException, ErrorCode
 
 
@@ -41,17 +41,10 @@ class TestRegisterRouters:
 class TestExceptionHandlers:
     @pytest.mark.asyncio
     async def test_business_exception_handler(self, client, db_session):
-        from fastapi import Request
-        from fastapi.responses import JSONResponse
+        pass
 
         app = create_application()
         register_exception_handlers(app)
-
-        exc = BusinessException(
-            error_code=ErrorCode.INVALID_PARAMETER,
-            message="参数无效",
-            status_code=400,
-        )
 
         handler = None
         for handler_key in app.exception_handlers:

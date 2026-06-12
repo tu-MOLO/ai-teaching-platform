@@ -11,9 +11,8 @@ COPY package.json package-lock.json ./
 
 RUN npm ci --production=false
 
-COPY tsconfig.json tsconfig.node.json vite.config.ts index.html ./
+COPY tsconfig.json tsconfig.node.json tsconfig.build.json vite.config.ts index.html ./
 COPY src/ ./src/
-COPY public/ ./public/ 2>/dev/null || true
 
 RUN npm run build
 

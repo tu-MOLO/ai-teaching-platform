@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 let capturedRequestInterceptor: ((config: any) => any) | null = null
 let capturedResponseInterceptors: { onFulfilled: any; onRejected: any } | null = null
 
-const mockAuthGetState = vi.fn(() => ({
+const mockAuthGetState = vi.fn((): any => ({
   token: null,
   logout: vi.fn(),
   setToken: vi.fn(),
@@ -16,7 +16,7 @@ const mockUserGetState = vi.fn(() => ({
 vi.mock('axios', () => {
   const interceptors = {
     request: {
-      use: vi.fn((onFulfilled: any, onRejected: any) => {
+      use: vi.fn((onFulfilled: any, _onRejected: any) => {
         capturedRequestInterceptor = onFulfilled
       }),
     },
@@ -44,13 +44,13 @@ vi.mock('axios', () => {
 
 vi.mock('../../stores/auth', () => ({
   useAuthStore: {
-    getState: (...args: any[]) => mockAuthGetState(...args),
+    getState: () => mockAuthGetState(),
   },
 }))
 
 vi.mock('../../stores/user', () => ({
   useUserStore: {
-    getState: (...args: any[]) => mockUserGetState(...args),
+    getState: () => mockUserGetState(),
   },
 }))
 
@@ -167,5 +167,16 @@ describe('request module', () => {
 
     const result = capturedResponseInterceptors!.onFulfilled(response)
     expect(result).toBe(blobData)
+  })
+
+  it('should return the error in onRejected interceptor', async () => {
+    await import('../request')
+    const error = { response: { status: 401, data: { detail: 'Unauthorized' } } }
+
+    const result = capturedResponseInterceptors!.onRejected(error)
+
+    await expect(result).rejects.toBeInstanceOf(Error)
+    await expect(result).rejects.toHaveProperty('statusCode', 401)
+    await expect(result).rejects.toHaveProperty('message', '未授权，请先登录')
   })
 })

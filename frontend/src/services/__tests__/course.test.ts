@@ -133,4 +133,18 @@ describe('course service', () => {
       expect(mockDelete).toHaveBeenCalledWith('/courses/123')
     })
   })
+
+  describe('error handling', () => {
+    it('getCourses throws on network error', async () => {
+      const { getCourses } = await import('../course')
+      mockGet.mockRejectedValue(new Error('Network Error'))
+      await expect(getCourses()).rejects.toThrow('Network Error')
+    })
+
+    it('createCourse throws on network error', async () => {
+      const { createCourse } = await import('../course')
+      mockPost.mockRejectedValue(new Error('Network Error'))
+      await expect(createCourse({ name: 'New Course', subject: 'Math', grade: '5' })).rejects.toThrow('Network Error')
+    })
+  })
 })

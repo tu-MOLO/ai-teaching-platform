@@ -2,8 +2,7 @@
 课程API模块
 实现课程的CRUD操作
 """
-from datetime import datetime, timezone
-from typing import Annotated, List, Optional
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import select, delete, func
@@ -12,13 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException, ConflictException
 from app.core.security import get_current_user_id_with_version_check
-from app.models.course import Course, course_student
+from app.models.course import course_student
 from app.models.student import Student
 from app.models.user import User
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 from app.schemas.student import Student as StudentSchema
-from app.services.course import CourseService
+from app.services.courses import CourseService
 
 router = APIRouter(tags=["课程管理"])
 
@@ -42,7 +41,7 @@ async def create_course(
     """
     创建新课程
     """
-    user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))
+    user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))  # noqa: E712
     user = user_result.scalar_one_or_none()
     if not user:
         raise NotFoundException("用户")
@@ -139,7 +138,7 @@ async def update_course(
     """
     更新课程信息
     """
-    user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))
+    user_result = await db.execute(select(User).where(User.id == user_id, User.is_deleted == False))  # noqa: E712
     user = user_result.scalar_one_or_none()
     if not user:
         raise NotFoundException("用户")
@@ -188,7 +187,7 @@ async def enroll_student(
         select(Student).where(
             Student.id == student_id,
             Student.user_id == user_id,
-            Student.is_deleted == False
+            Student.is_deleted == False  # noqa: E712
         )
     )
     student = student_result.scalar_one_or_none()
@@ -231,7 +230,7 @@ async def unenroll_student(
         select(Student).where(
             Student.id == student_id,
             Student.user_id == user_id,
-            Student.is_deleted == False
+            Student.is_deleted == False  # noqa: E712
         )
     )
     if not student_result.scalar_one_or_none():
@@ -243,7 +242,7 @@ async def unenroll_student(
             course_student.c.student_id == student_id
         )
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise NotFoundException("该学生未关联到此课程")
 
 
@@ -268,7 +267,7 @@ async def get_course_students(
         .join(course_student, Student.id == course_student.c.student_id)
         .where(
             course_student.c.course_id == course_id,
-            Student.is_deleted == False
+            Student.is_deleted == False  # noqa: E712
         )
     )
     total_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
@@ -280,7 +279,7 @@ async def get_course_students(
         .join(course_student, Student.id == course_student.c.student_id)
         .where(
             course_student.c.course_id == course_id,
-            Student.is_deleted == False
+            Student.is_deleted == False  # noqa: E712
         )
         .offset(offset)
         .limit(page_size)

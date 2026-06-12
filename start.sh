@@ -16,7 +16,7 @@ if command -v python3 &>/dev/null; then
 elif command -v python &>/dev/null; then
     PYTHON="python"
 else
-    echo "[错误] 未找到 Python，请安装 Python 3.9+"
+    echo "[错误] 未找到 Python，请安装 Python 3.11+"
     exit 1
 fi
 echo "   使用 Python: $PYTHON ($($PYTHON --version 2>&1))"

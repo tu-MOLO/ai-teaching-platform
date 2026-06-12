@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.core.database import AsyncSessionLocal
 from app.schemas.dropdown_option import DropdownOptionCreate
-from app.services.dropdown_option import DropdownOptionService
+from app.services.dropdown_options import DropdownOptionService
 
 
 DEFAULTS: dict[str, list[tuple[str, str]]] = {

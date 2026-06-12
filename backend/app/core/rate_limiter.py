@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Optional, Callable, Dict, List
 
-from fastapi import Request, HTTPException, status, Depends
+from fastapi import Request, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 
 
@@ -46,7 +46,8 @@ class RateLimiter:
             return request.client.host
         return "unknown"
 
-    def _generate_key(self, request: Request, config_name: str, credentials: Optional[HTTPAuthorizationCredentials] = None) -> str:
+    def _generate_key(self, request: Request, config_name: str,
+                      credentials: Optional[HTTPAuthorizationCredentials] = None) -> str:
         config = self._configs.get(config_name)
         if config and config.key_func:
             return config.key_func(request)
@@ -148,7 +149,7 @@ rate_limiter = RateLimiter()
 def rate_limit(config_name: str):
     """
     限流装饰器
-    
+
     使用示例：
         @router.post("/login")
         @rate_limit("login")
@@ -161,26 +162,26 @@ def rate_limit(config_name: str):
             # 从参数中获取 request 和 credentials
             request = kwargs.get('request')
             credentials = kwargs.get('credentials')
-            
+
             # 如果参数中没有，尝试从 args 中查找
             if not request:
                 for arg in args:
                     if isinstance(arg, Request):
                         request = arg
                         break
-            
+
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Rate limiting requires Request parameter"
                 )
-            
+
             # 生成限流键
             key = rate_limiter._generate_key(request, config_name, credentials)
-            
+
             # 检查限流
             allowed, info = rate_limiter.is_allowed(key, config_name)
-            
+
             if not allowed:
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -192,10 +193,10 @@ def rate_limit(config_name: str):
                         "Retry-After": str(info["retry_after"])
                     }
                 )
-            
+
             # 添加限流信息到响应头（通过 request state）
             request.state.rate_limit_info = info
-            
+
             return await func(*args, **kwargs)
         return wrapper
     return decorator
@@ -250,7 +251,7 @@ rate_limit_strict = RateLimitDependency("strict")
 def rate_limit_dep(config_name: str):
     """
     获取限流依赖
-    
+
     使用示例：
         @router.post("/login")
         async def login(
@@ -288,7 +289,8 @@ def init_rate_limiter():
             raise ImportError("No REDIS_URL configured")
     except Exception:
         from app.core.logging import get_logger
-        get_logger(__name__).warning("Redis unavailable, using in-memory rate limiter (single-worker only)")
+        get_logger(__name__).warning(
+            "Redis unavailable, using in-memory rate limiter (single-worker only)")
 
     for name, requests, window in configs:
         rate_limiter.configure(name=name, requests=requests, window=window)

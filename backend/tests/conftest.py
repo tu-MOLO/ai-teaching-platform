@@ -17,17 +17,17 @@ warnings.filterwarnings(
     module="asyncio",
 )
 
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+import pytest  # noqa: E402
+import pytest_asyncio  # noqa: E402
+from httpx import AsyncClient, ASGITransport  # noqa: E402
+from sqlalchemy import text  # noqa: E402
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
 
-import bcrypt
-from app.main import create_application
-from app.core.database import Base, get_async_session
-from app.models.user import User, UserRole, UserStatus
+import bcrypt  # noqa: E402
+from app.main import create_application  # noqa: E402
+from app.core.database import Base, get_async_session  # noqa: E402
+from app.models.user import User, UserRole, UserStatus  # noqa: E402
 
 TEST_DB_URL = "sqlite+aiosqlite://"
 

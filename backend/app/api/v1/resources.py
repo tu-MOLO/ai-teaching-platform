@@ -25,7 +25,7 @@ from app.schemas.resource import (
     ResourceListResponse, ResourceSearchParams
 )
 from app.schemas.base import ListResponse, DataResponse
-from app.services.resource import get_resource_service, ResourceService
+from app.services.resources import get_resource_service, ResourceService
 from app.core.config import settings
 from app.services.storage import is_allowed_file
 
@@ -76,7 +76,7 @@ async def create_resource(
 ):
     """
     创建资源
-    
+
     Args:
         file: 上传的文件
         name: 资源名称
@@ -85,30 +85,32 @@ async def create_resource(
         user_id: 创建者ID
         db: 数据库会话
         resource_service: 资源服务
-        
+
     Returns:
         创建的资源详情
     """
     # 检查文件类型
+    if not file.filename:
+        raise BadRequestException("文件名不能为空")
     file_header = await file.read(64)
     await file.seek(0)
     if not is_allowed_file(file.filename, file_header):
         raise BadRequestException("不支持的文件类型")
-    
+
     # 检查文件大小
     file.file.seek(0, 2)
     file_size = file.file.tell()
     file.file.seek(0)
     if file_size > settings.MAX_UPLOAD_SIZE:
         raise BadRequestException(f"文件大小超过限制（最大{settings.MAX_UPLOAD_SIZE//1024//1024}MB）")
-    
+
     # 构建资源创建数据
     resource_data = ResourceCreate(
         name=name,
         description=description,
         tag_ids=tag_ids or []
     )
-    
+
     # 创建资源
     resource = await resource_service.create_resource(
         db=db,
@@ -119,9 +121,10 @@ async def create_resource(
     )
 
     # 重新查询以预加载tags关系，避免async上下文中的懒加载问题
-    resource = await resource_service.get_resource_by_id(db, resource.id, user_id=current_user_id)
-    if not resource:
+    resource_with_tags = await resource_service.get_resource_by_id(db, resource.id, user_id=current_user_id)
+    if not resource_with_tags:
         raise NotFoundException("Resource", resource_id="")
+    resource = resource_with_tags
 
     # 获取文件URL
     file_url = await resource_service.get_resource_file_url(resource)
@@ -233,13 +236,13 @@ async def update_resource(
 ):
     """
     更新资源
-    
+
     Args:
         resource_id: 资源ID
         resource_data: 资源更新数据
         db: 数据库会话
         resource_service: 资源服务
-        
+
     Returns:
         更新后的资源详情
     """
@@ -267,12 +270,12 @@ async def delete_resource(
 ):
     """
     删除资源
-    
+
     Args:
         resource_id: 资源ID
         db: 数据库会话
         resource_service: 资源服务
-        
+
     Returns:
         成功消息
     """
@@ -295,7 +298,8 @@ async def get_resource_file(
             resource_id=resource_id,
             user_id=current_user_id
         )
-        media_type = resource.file_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        media_type = resource.file_type or mimetypes.guess_type(
+            filename)[0] or "application/octet-stream"
         quoted_filename = quote(filename)
         headers = {
             "Content-Disposition": f"inline; filename*=UTF-8''{quoted_filename}",

@@ -19,7 +19,7 @@ from app.schemas.notification import (
     NotificationStats,
     NotificationUpdate
 )
-from app.services.notification import NotificationService
+from app.services.notifications import NotificationService
 
 router = APIRouter(tags=["通知"])
 

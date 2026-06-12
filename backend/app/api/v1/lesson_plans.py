@@ -8,14 +8,14 @@ from typing import Annotated, Optional
 from app.core.database import get_async_session
 from app.core.security import get_current_user_id_with_version_check
 from app.core.exceptions import NotFoundException
-from app.models.lesson_plan import LessonPlan, LessonPlanStatus
+from app.models.lesson_plan import LessonPlanStatus
 from app.schemas.lesson_plan import (
     LessonPlanCreate,
     LessonPlanUpdate,
     LessonPlanResponse
 )
 from app.schemas.base import DataResponse, ListResponse
-from app.services.lesson_plan import LessonPlanService
+from app.services.lesson_plans import LessonPlanService
 
 
 DBSession = Annotated[AsyncSession, Depends(get_async_session)]
@@ -24,7 +24,9 @@ CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 router = APIRouter(tags=["教案管理"])
 
 
-@router.post("", response_model=DataResponse[LessonPlanResponse], status_code=status.HTTP_201_CREATED)
+@router.post("",
+    response_model=DataResponse[LessonPlanResponse],
+     status_code=status.HTTP_201_CREATED)
 async def create_lesson_plan(
     lesson_plan: LessonPlanCreate,
     db: DBSession,

@@ -77,7 +77,8 @@ class AIConfigService:
         config = result.scalar_one_or_none()
 
         if config:
-            decrypted_key = decrypt_api_key(config.api_key_encrypted) if config.api_key_encrypted else None
+            decrypted_key = decrypt_api_key(
+                config.api_key_encrypted) if config.api_key_encrypted else None
             return AIConfigResponse(
                 provider=config.provider,
                 provider_name=config.provider_name,
@@ -99,7 +100,10 @@ class AIConfigService:
         )
 
     @staticmethod
-    async def save_config(db: AsyncSession, user_id: str, config_update: AIConfigUpdate) -> AIConfigResponse:
+    async def save_config(
+    db: AsyncSession,
+    user_id: str,
+     config_update: AIConfigUpdate) -> AIConfigResponse:
         result = await db.execute(select(AIConfig).where(AIConfig.user_id == user_id))
         config = result.scalar_one_or_none()
 
@@ -142,7 +146,10 @@ class AIConfigService:
         return await AIConfigService.get_user_config(db, user_id)
 
     @staticmethod
-    async def test_connection(db: AsyncSession, user_id: str, test_request: AIConfigTestRequest = None) -> AIConfigTestResponse:
+    async def test_connection(
+    db: AsyncSession,
+    user_id: str,
+     test_request: AIConfigTestRequest = None) -> AIConfigTestResponse:
         if test_request and test_request.api_key:
             api_key = test_request.api_key
             api_base = test_request.api_base or settings.BIGMODEL_API_BASE
@@ -178,8 +185,10 @@ class AIConfigService:
                 elif response.status_code == 401:
                     return AIConfigTestResponse(success=False, message="认证失败，请检查API密钥是否正确")
                 else:
-                    error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
-                    error_msg = error_data.get("error", {}).get("message", f"HTTP {response.status_code}")
+                    error_data = response.json() if response.headers.get(
+                        "content-type", "").startswith("application/json") else {}
+                    error_msg = error_data.get("error", {}).get(
+                        "message", f"HTTP {response.status_code}")
                     return AIConfigTestResponse(success=False, message=f"连接失败: {error_msg}")
         except httpx.TimeoutException:
             return AIConfigTestResponse(success=False, message="连接超时，请检查网络或API地址")

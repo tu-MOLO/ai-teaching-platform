@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 class BaseSchema(BaseModel):
     """基础Schema类"""
-    
+
     model_config = ConfigDict(
         from_attributes=True,  # 允许从ORM模型创建
         populate_by_name=True,  # 允许通过字段名填充
@@ -23,7 +23,6 @@ class BaseSchema(BaseModel):
 
 class ResponseBase(BaseSchema):
     """基础响应模型"""
-    pass
 
 
 class DataResponse(ResponseBase, Generic[T]):
@@ -80,7 +79,7 @@ class PaginationParams(BaseSchema):
     """
     page: int = Field(default=1, ge=1, description="页码")
     page_size: int = Field(default=20, ge=1, le=100, description="每页数量")
-    
+
     @property
     def offset(self) -> int:
         """计算偏移量"""
@@ -127,4 +126,3 @@ class AuditSchema(TimestampSchema, SoftDeleteSchema):
     审计Schema
     包含完整的审计字段
     """
-    pass

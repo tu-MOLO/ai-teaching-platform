@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.database import get_async_session as get_db
 from app.core.exceptions import BadRequestException, NotFoundException, RateLimitException
 from app.core.security import get_current_user_id_with_version_check
-from app.schemas.ai import ChatRequest, ChatResponse, ConversationListSchema, ConversationSchema, MessageListSchema, MessageSchema, ConversationRenameRequest
+from app.schemas.ai import ChatRequest, ConversationListSchema, MessageListSchema, ConversationRenameRequest
 from app.services.ai import AIService
 
 router = APIRouter()

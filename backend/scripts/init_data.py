@@ -90,7 +90,7 @@ def seed_tags(db: Session) -> int:
     created = 0
     for item in TAGS:
         exists = db.execute(
-            select(Tag).where(Tag.name == item["name"], Tag.is_deleted == False)
+            select(Tag).where(Tag.name == item["name"], Tag.is_deleted is False)
         ).scalar_one_or_none()
         if exists:
             continue
@@ -105,7 +105,7 @@ def seed_templates(db: Session) -> int:
         exists = db.execute(
             select(LessonTemplate).where(
                 LessonTemplate.name == item["name"],
-                LessonTemplate.is_deleted == False,
+                LessonTemplate.is_deleted is False,
             )
         ).scalar_one_or_none()
         if exists:
@@ -121,7 +121,7 @@ def seed_teacher(db: Session) -> tuple[User, bool]:
     user = db.execute(
         select(User).where(
             (User.username == username) | (User.email == email),
-            User.is_deleted == False,
+            User.is_deleted is False,
         )
     ).scalar_one_or_none()
     if user:

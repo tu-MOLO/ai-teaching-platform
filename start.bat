@@ -47,6 +47,14 @@ start "AI-Teaching-Backend" cmd /c "cd /d %~dp0backend && call venv\Scripts\acti
 :: Wait for backend to start
 timeout /t 3 /nobreak >nul
 
+:: Check Node.js
+node --version >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 未找到 Node.js，请安装 Node.js 18+
+    pause
+    exit /b 1
+)
+
 :: 6. Start Frontend
 echo [6/6] Starting frontend server (port 5173)...
 cd /d "%~dp0frontend"

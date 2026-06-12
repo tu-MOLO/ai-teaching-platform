@@ -34,7 +34,6 @@ class LessonTemplateCreate(LessonTemplateBase):
     """
     创建教案模板的schema
     """
-    pass
 
 
 class LessonTemplateUpdate(BaseSchema):
@@ -54,5 +53,5 @@ class LessonTemplateResponse(LessonTemplateBase):
     id: str = Field(..., description="模板ID")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: datetime = Field(..., description="更新时间")
-    
+
     model_config = ConfigDict(from_attributes=True)

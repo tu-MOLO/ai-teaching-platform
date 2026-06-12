@@ -6,11 +6,9 @@ import asyncio
 import io
 import mimetypes
 import re
-import socket
 from datetime import timedelta
 from pathlib import Path
 from typing import BinaryIO, Optional, Union
-from urllib.parse import urlparse
 
 from minio import Minio
 from minio.error import S3Error
@@ -158,7 +156,8 @@ class MinIOStorage:
             return True
 
         except Exception as e:
-            logger.warning(f"MinIO connection failed: {e}. Will use local file storage as fallback.")
+            logger.warning(
+                f"MinIO connection failed: {e}. Will use local file storage as fallback.")
             self.client = None
             self.bucket_name = None
             self._minio_available = False
@@ -193,6 +192,8 @@ class MinIOStorage:
 
         # 测试连接
         try:
+            if self.client is None:
+                return False
             self.client.list_buckets()
             return True
         except Exception as e:
@@ -208,6 +209,8 @@ class MinIOStorage:
             return
 
         try:
+            if self.bucket_name is None:
+                raise RuntimeError("Storage bucket is not set")
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
                 logger.info(f"Created bucket: {self.bucket_name}")
@@ -242,8 +245,14 @@ class MinIOStorage:
             logger.info(f"Using local storage fallback for upload: {object_name}")
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             # 处理不同类型的输入
+            file_stream: BinaryIO
             if isinstance(file_data, (str, Path)):
                 # 文件路径
                 file_path = Path(file_data)
@@ -290,11 +299,13 @@ class MinIOStorage:
             return result
 
         except S3Error as e:
-            logger.error(f"Failed to upload file {object_name} to MinIO: {e}. Falling back to local storage.")
+            logger.error(
+                f"Failed to upload file {object_name} to MinIO: {e}. Falling back to local storage.")
             # MinIO失败时降级到本地存储
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
         except Exception as e:
-            logger.error(f"Unexpected error uploading file {object_name}: {e}. Falling back to local storage.")
+            logger.error(
+                f"Unexpected error uploading file {object_name}: {e}. Falling back to local storage.")
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
 
     async def upload_file_async(
@@ -343,6 +354,11 @@ class MinIOStorage:
             logger.info(f"Using local storage fallback for download: {object_name}")
             return self._get_fallback_storage().download_file(object_name, file_path)
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             if file_path:
                 # 下载到文件
@@ -366,11 +382,13 @@ class MinIOStorage:
                 return data
 
         except S3Error as e:
-            logger.error(f"Failed to download file {object_name} from MinIO: {e}. Trying local storage.")
+            logger.error(
+                f"Failed to download file {object_name} from MinIO: {e}. Trying local storage.")
             # MinIO失败时尝试本地存储
             return self._get_fallback_storage().download_file(object_name, file_path)
         except Exception as e:
-            logger.error(f"Unexpected error downloading file {object_name}: {e}. Trying local storage.")
+            logger.error(
+                f"Unexpected error downloading file {object_name}: {e}. Trying local storage.")
             return self._get_fallback_storage().download_file(object_name, file_path)
 
     def delete_file(self, object_name: str) -> None:
@@ -389,6 +407,11 @@ class MinIOStorage:
             self._get_fallback_storage().delete_file(object_name)
             return
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             self.client.remove_object(
                 bucket_name=self.bucket_name,
@@ -396,11 +419,13 @@ class MinIOStorage:
             )
             logger.info(f"Deleted file from MinIO: {object_name}")
         except S3Error as e:
-            logger.error(f"Failed to delete file {object_name} from MinIO: {e}. Trying local storage.")
+            logger.error(
+                f"Failed to delete file {object_name} from MinIO: {e}. Trying local storage.")
             # MinIO失败时尝试本地存储
             self._get_fallback_storage().delete_file(object_name)
         except Exception as e:
-            logger.error(f"Unexpected error deleting file {object_name}: {e}. Trying local storage.")
+            logger.error(
+                f"Unexpected error deleting file {object_name}: {e}. Trying local storage.")
             self._get_fallback_storage().delete_file(object_name)
 
     def delete_files(self, object_names: list[str]) -> None:
@@ -419,11 +444,16 @@ class MinIOStorage:
                 self._get_fallback_storage().delete_file(object_name)
             return
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             delete_object_list = [DeleteObject(name) for name in object_names]
             errors = self.client.remove_objects(
-                bucket_name=self.bucket_name,
-                objects_list=delete_object_list
+                self.bucket_name,
+                delete_object_list,
             )
 
             for error in errors:
@@ -466,6 +496,11 @@ class MinIOStorage:
             logger.info(f"Using local storage fallback for get_file_url: {object_name}")
             return self._get_fallback_storage().get_file_url(object_name)
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             url = self.client.presigned_get_object(
                 bucket_name=self.bucket_name,
@@ -474,10 +509,12 @@ class MinIOStorage:
             )
             return url
         except S3Error as e:
-            logger.error(f"Failed to generate presigned URL for {object_name}: {e}. Using local URL.")
+            logger.error(
+                f"Failed to generate presigned URL for {object_name}: {e}. Using local URL.")
             return self._get_fallback_storage().get_file_url(object_name)
         except Exception as e:
-            logger.error(f"Unexpected error generating URL for {object_name}: {e}. Using local URL.")
+            logger.error(
+                f"Unexpected error generating URL for {object_name}: {e}. Using local URL.")
             return self._get_fallback_storage().get_file_url(object_name)
 
     def get_upload_url(
@@ -505,6 +542,11 @@ class MinIOStorage:
             logger.warning(f"Cannot generate upload URL in local storage mode for: {object_name}")
             raise RuntimeError("MinIO is not available, cannot generate presigned upload URL")
 
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+
         try:
             url = self.client.presigned_put_object(
                 bucket_name=self.bucket_name,
@@ -529,6 +571,11 @@ class MinIOStorage:
         # 检查连接
         if not self._check_connection():
             return self._get_fallback_storage().file_exists(object_name)
+
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
 
         try:
             self.client.stat_object(
@@ -561,6 +608,11 @@ class MinIOStorage:
         if not self._check_connection():
             logger.warning(f"Cannot get file info in local storage mode for: {object_name}")
             raise RuntimeError("MinIO is not available, cannot get file info")
+
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
 
         try:
             stat = self.client.stat_object(
@@ -598,6 +650,11 @@ class MinIOStorage:
         if not self._check_connection():
             logger.warning("Cannot list files in local storage mode")
             return []
+
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
 
         try:
             objects = self.client.list_objects(
@@ -640,14 +697,20 @@ class MinIOStorage:
         """
         # 检查连接
         if not self._check_connection():
-            logger.warning(f"Cannot copy file in local storage mode: {source_object} -> {dest_object}")
+            logger.warning(
+                f"Cannot copy file in local storage mode: {source_object} -> {dest_object}")
             raise RuntimeError("MinIO is not available, cannot copy file")
+
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
 
         try:
             result = self.client.copy_object(
                 bucket_name=self.bucket_name,
                 object_name=dest_object,
-                source_copy_condition=CopySource(self.bucket_name, source_object)
+                source=CopySource(self.bucket_name, source_object)
             )
             logger.info(f"Copied file from {source_object} to {dest_object}")
             return result
@@ -702,7 +765,8 @@ def generate_object_name(
     import uuid
 
     if folder and not re.match(r'^[a-zA-Z0-9_-]+$', folder):
-        raise ValueError("Invalid folder name: only alphanumeric characters, underscores and hyphens are allowed")
+        raise ValueError(
+            "Invalid folder name: only alphanumeric characters, underscores and hyphens are allowed")
 
     ext = Path(file_name).suffix
     unique_name = f"{uuid.uuid4().hex}{ext}"
@@ -731,17 +795,17 @@ MAGIC_BYTES_MAP = {
 def _verify_magic_bytes(ext: str, file_content: bytes) -> bool:
     """
     验证文件魔数（magic bytes）是否匹配扩展名
-    
+
     Args:
         ext: 文件扩展名
         file_content: 文件内容
-        
+
     Returns:
         校验通过返回True，否则返回False
     """
     header = file_content[:32]
     magic = MAGIC_BYTES_MAP.get(ext)
-    
+
     if magic is not None:
         if not header.startswith(magic):
             if ext == '.mp3':
@@ -752,12 +816,12 @@ def _verify_magic_bytes(ext: str, file_content: bytes) -> bool:
                     return False
             else:
                 return False
-    
+
     if ext == '.mp4':
         # mp4 ftyp检查
         if b'ftyp' not in header[4:8]:
             return False
-    
+
     return True
 
 
@@ -779,11 +843,11 @@ ALLOWED_MIME_TYPES = {
 def _verify_mime_type(ext: str, filename: str) -> bool:
     """
     验证文件的MIME类型是否匹配扩展名
-    
+
     Args:
         ext: 文件扩展名
         filename: 文件名
-        
+
     Returns:
         校验通过返回True，否则返回False
     """
@@ -798,21 +862,21 @@ def _verify_mime_type(ext: str, filename: str) -> bool:
 def is_allowed_file(filename: str, file_content: bytes = None) -> bool:
     """
     检查文件是否允许上传
-    
+
     验证步骤：
         1. 检查扩展名是否在允许列表中
         2. 检查文件魔数是否匹配
         3. 检查MIME类型是否匹配
-    
+
     Args:
         filename: 文件名
         file_content: 文件内容（可选，用于魔数和MIME校验）
-        
+
     Returns:
         允许上传返回True，否则返回False
     """
     ext = Path(filename).suffix.lower()
-    
+
     # 1. 检查扩展名
     if ext not in settings.ALLOWED_EXTENSIONS:
         return False

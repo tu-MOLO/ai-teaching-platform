@@ -20,7 +20,7 @@ class StudentBase(BaseSchema):
     parent_contact: Optional[str] = Field(None, description="家长联系方式")
     is_active: Optional[bool] = Field(True, description="是否在读")
     enrollment_date: Optional[date] = Field(None, description="入学日期")
-    
+
     @field_validator('gender', mode='before')
     @classmethod
     def convert_gender_to_str(cls, v):
@@ -39,7 +39,7 @@ class StudentBase(BaseSchema):
         if val not in valid:
             raise ValueError(f"性别必须是 male、female 或 other")
         return v
-    
+
     @field_validator('birth_date', mode='before')
     @classmethod
     def convert_str_to_date(cls, v):
@@ -55,7 +55,6 @@ class StudentBase(BaseSchema):
 
 class StudentCreate(StudentBase):
     """创建学生模型"""
-    pass
 
 
 class StudentUpdate(BaseSchema):
@@ -69,7 +68,7 @@ class StudentUpdate(BaseSchema):
     parent_contact: Optional[str] = Field(None, description="家长联系方式")
     is_active: Optional[bool] = Field(None, description="是否在读")
     enrollment_date: Optional[date] = Field(None, description="入学日期")
-    
+
     @field_validator('birth_date', mode='before')
     @classmethod
     def convert_str_to_date(cls, v):
@@ -92,7 +91,7 @@ class StudentInDB(StudentBase, AuditSchema):
 
 class Student(StudentInDB):
     """学生响应模型 - 输出时转换格式"""
-    
+
     @field_validator('gender', mode='before')
     @classmethod
     def convert_gender_for_output(cls, v):
@@ -106,7 +105,7 @@ class Student(StudentInDB):
         if isinstance(v, str) and 'Gender.' in v:
             return v.replace('Gender.', '').lower()
         return str(v).lower() if isinstance(v, str) else v
-    
+
     @field_validator('birth_date', mode='before')
     @classmethod
     def convert_date_to_str(cls, v):

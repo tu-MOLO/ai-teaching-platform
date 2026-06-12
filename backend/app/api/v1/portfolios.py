@@ -12,7 +12,7 @@ from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.portfolio import Portfolio as PortfolioSchema, PortfolioCreate, PortfolioUpdate
-from app.services.portfolio import PortfolioService
+from app.services.portfolios import PortfolioService
 
 router = APIRouter(tags=["成长档案管理"])
 
@@ -22,7 +22,10 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.post("", response_model=DataResponse[PortfolioSchema], status_code=status.HTTP_201_CREATED, summary="创建成长档案")
+@router.post("",
+    response_model=DataResponse[PortfolioSchema],
+    status_code=status.HTTP_201_CREATED,
+     summary="创建成长档案")
 async def create_portfolio(
     portfolio_in: PortfolioCreate,
     db: DBSession,
@@ -64,18 +67,18 @@ async def get_portfolios(
     """
     # 计算偏移量
     skip = (page - 1) * page_size
-    
+
     # 获取成长档案列表
     portfolios = await PortfolioService.get_list(
         db, user_id, skip=skip, limit=page_size, student_id=student_id, type=type
     )
-    
+
     # 获取总数
     total = await PortfolioService.count(db, user_id, student_id=student_id, type=type)
-    
+
     # 计算总页数
     pages = (total + page_size - 1) // page_size
-    
+
     return ListResponse(
         data=[PortfolioSchema.model_validate(portfolio) for portfolio in portfolios],
         total=total,

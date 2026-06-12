@@ -20,7 +20,7 @@ from app.core.database import AsyncSessionLocal  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.notification import NotificationType  # noqa: E402
 from app.schemas.notification import NotificationCreate  # noqa: E402
-from app.services.notification import NotificationService  # noqa: E402
+from app.services.notifications import NotificationService  # noqa: E402
 
 
 class AcceptanceRunner:
@@ -66,8 +66,9 @@ class AcceptanceRunner:
         response = await self.client.request(method, url, headers=merged_headers, **kwargs)
         if response.status_code != expected:
             raise AssertionError(
-                f"{method} {url} expected {expected}, got {response.status_code}, body={response.text}"
-            )
+    f"{method} {url} expected {expected}, got {
+        response.status_code}, body={
+            response.text}" )
         if expected == 204:
             return None
         content_type = response.headers.get("content-type", "")
@@ -447,7 +448,6 @@ class AcceptanceRunner:
 
     async def test_database_assertions(self) -> None:
         from app.models.course import Course
-        from app.models.dropdown_option import DropdownOption
         from app.models.lesson_plan import LessonPlan
         from app.models.portfolio import Portfolio
         from app.models.resource import Resource

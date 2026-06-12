@@ -5,7 +5,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
@@ -33,10 +33,10 @@ async def get_user(
     if current_user_id != user_id:
         raise AuthorizationException("仅可访问当前登录教师自己的资料")
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise NotFoundException("用户")
 
@@ -54,7 +54,7 @@ async def update_user(
     if current_user_id != user_id:
         raise AuthorizationException("仅可修改当前登录教师自己的资料")
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
@@ -67,7 +67,7 @@ async def update_user(
         stmt = select(User).where(
             User.username == payload["username"],
             User.id != user_id,
-            User.is_deleted == False,
+            User.is_deleted == False,  # noqa: E712
         )
         result = await db.execute(stmt)
         if result.scalar_one_or_none():
@@ -77,7 +77,7 @@ async def update_user(
         stmt = select(User).where(
             User.email == payload["email"],
             User.id != user_id,
-            User.is_deleted == False,
+            User.is_deleted == False,  # noqa: E712
         )
         result = await db.execute(stmt)
         if result.scalar_one_or_none():

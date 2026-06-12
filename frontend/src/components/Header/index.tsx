@@ -303,7 +303,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
           placement="bottomRight"
           overlayClassName="header-dropdown"
         >
-          <button className="header-user">
+          <button className="header-user" data-testid="user-menu">
             <div className="user-avatar">
               <UserOutlined />
             </div>

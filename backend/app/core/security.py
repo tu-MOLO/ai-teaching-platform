@@ -8,7 +8,6 @@ from typing import Any, Optional, Union
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from jwt.exceptions import InvalidTokenError as JWTError
 import bcrypt
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -25,7 +24,7 @@ security = HTTPBearer(auto_error=False)
 class TokenPayload(BaseModel):
     """JWT Token载荷"""
     model_config = {"populate_by_name": True}
-    
+
     sub: Optional[str] = None  # 用户ID
     exp: Optional[datetime] = None  # 过期时间
     type: Optional[str] = None  # token类型：access/refresh
@@ -55,13 +54,13 @@ def create_access_token(
 ) -> str:
     """
     创建访问令牌
-    
+
     Args:
         subject: 令牌主题（通常是用户ID）
         expires_delta: 过期时间增量
         extra_claims: 额外声明
         token_version: 令牌版本号，用于失效控制
-        
+
     Returns:
         JWT令牌字符串
     """
@@ -71,21 +70,21 @@ def create_access_token(
         expire = datetime.now(timezone.utc) + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-    
+
     to_encode = {
         "exp": expire,
         "sub": str(subject),
         "type": "access",
         "iat": datetime.now(timezone.utc)  # 签发时间
     }
-    
+
     # 添加令牌版本号（用于失效控制）
     if token_version:
         to_encode["jti"] = str(token_version)
-    
+
     if extra_claims:
         to_encode.update(extra_claims)
-    
+
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -105,7 +104,7 @@ def create_refresh_token(
         expire = datetime.now(timezone.utc) + timedelta(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS
         )
-    
+
     to_encode = {
         "exp": expire,
         "sub": str(subject),
@@ -115,7 +114,7 @@ def create_refresh_token(
 
     if token_version:
         to_encode["jti"] = str(token_version)
-    
+
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -127,10 +126,10 @@ def create_refresh_token(
 def decode_token(token: str) -> Optional[TokenPayload]:
     """
     解码JWT令牌
-    
+
     Args:
         token: JWT令牌字符串
-        
+
     Returns:
         TokenPayload对象，如果无效则返回None
     """
@@ -148,29 +147,29 @@ def decode_token(token: str) -> Optional[TokenPayload]:
 def verify_token(token: str, token_type: str = "access") -> Optional[str]:
     """
     验证JWT令牌
-    
+
     Args:
         token: JWT令牌字符串
         token_type: 期望的令牌类型（access/refresh）
-        
+
     Returns:
         用户ID（sub），如果无效则返回None
     """
     payload = decode_token(token)
-    
+
     if not payload:
         return None
-    
+
     if payload.type != token_type:
         return None
-    
+
     if not payload.sub:
         return None
-    
+
     # 检查是否过期
     if payload.exp and datetime.now(timezone.utc) > payload.exp:
         return None
-    
+
     return payload.sub
 
 
@@ -179,13 +178,13 @@ async def get_current_user_id(
 ) -> str:
     """
     获取当前用户ID（FastAPI依赖）
-    
+
     Args:
         credentials: HTTP认证凭证
-        
+
     Returns:
         用户ID字符串
-        
+
     Raises:
         HTTPException: 认证失败时抛出
     """
@@ -195,16 +194,16 @@ async def get_current_user_id(
             detail="未提供认证凭证",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     user_id = verify_token(credentials.credentials, token_type="access")
-    
+
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="无效的认证凭证或令牌已过期",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return user_id
 
 
@@ -250,7 +249,7 @@ async def get_current_user_id_from_token_with_version_check(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
@@ -283,17 +282,17 @@ async def get_current_user_id_with_version_check(
 ) -> str:
     """
     获取当前用户ID并校验Token版本（FastAPI依赖）
-    
+
     此依赖会检查Token中的版本号是否与数据库中一致，
     用于确保用户登出或修改密码后Token立即失效。
-    
+
     Args:
         credentials: HTTP认证凭证
         db: 数据库会话
-        
+
     Returns:
         用户ID字符串
-        
+
     Raises:
         HTTPException: 认证失败或Token版本不匹配时抛出
     """

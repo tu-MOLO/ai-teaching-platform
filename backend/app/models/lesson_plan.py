@@ -115,7 +115,11 @@ class LessonPlan(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<LessonPlan(id={self.id}, title={self.title}, subject={self.subject}, status={self.status})>"
+        return f"<LessonPlan(id={
+    self.id}, title={
+        self.title}, subject={
+            self.subject}, status={
+                self.status})>"
 
     def publish(self) -> None:
         """发布教案"""

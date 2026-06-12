@@ -99,6 +99,7 @@ const EditStudent: React.FC = () => {
     <div style={{ padding: 24 }}>
       <Card title={<Title level={4}>编辑学生</Title>}>
         <StudentForm
+          key={student?.id || 'loading'}
           initialData={getInitialData()}
           onSubmit={handleSubmit}
           onCancel={() => navigate(returnTo)}

@@ -2,7 +2,6 @@
 初始化教案模板数据
 """
 import json
-from sqlalchemy.orm import Session
 from backend.app.models.lesson_template import LessonTemplate
 from backend.app.core.database import get_sync_session
 
@@ -65,23 +64,23 @@ def init_templates():
             "is_default": False
         }
     ]
-    
+
     # 获取数据库会话
     session_generator = get_sync_session()
     session = next(session_generator)
-    
+
     try:
         # 检查是否已存在模板
         existing_templates = session.query(LessonTemplate).count()
         if existing_templates > 0:
             print(f"模板数据已存在（{existing_templates}个），跳过初始化")
             return
-        
+
         # 创建模板
         for template_data in templates:
             template = LessonTemplate(**template_data)
             session.add(template)
-        
+
         session.commit()
         print(f"成功初始化{len(templates)}个教案模板")
     except Exception as e:

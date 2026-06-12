@@ -120,10 +120,20 @@ backend/alembic/__pycache__/
 # ============================================
 cov_*.txt
 coverage_output.txt
+coverage-output.txt
 test_results.txt
 test_async_cov.py
 
 # ============================================
-# 其他临时文件
+# 前端测试和覆盖率输出
 # ============================================
-42.0.0
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/test-output.txt
+
+# ============================================
+# 后端测试报告
+# ============================================
+backend/reports/
+backend/htmlcov/

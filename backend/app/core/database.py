@@ -26,12 +26,12 @@ class Base(AsyncAttrs, DeclarativeBase):
     基础模型类
     所有模型都继承此类
     """
-    
+
     @declared_attr.directive
     def __tablename__(cls) -> str:
         """自动生成表名（小写类名）"""
         return cls.__name__.lower()
-    
+
     def __repr__(self) -> str:
         """模型字符串表示"""
         columns = [f"{k}={v}" for k, v in self.__dict__.items() if not k.startswith("_")]

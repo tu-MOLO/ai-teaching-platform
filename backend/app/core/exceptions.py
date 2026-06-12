@@ -10,7 +10,7 @@ from fastapi import HTTPException, status
 
 class ErrorCode(str, Enum):
     """业务错误码枚举"""
-    
+
     # 通用错误 (1000-1999)
     UNKNOWN_ERROR = "1000"
     INVALID_PARAMETER = "1001"
@@ -19,7 +19,7 @@ class ErrorCode(str, Enum):
     RESOURCE_ALREADY_EXISTS = "1004"
     OPERATION_NOT_ALLOWED = "1005"
     VERSION_CONFLICT = "1006"  # 乐观锁冲突
-    
+
     # 认证授权错误 (2000-2999)
     UNAUTHORIZED = "2000"
     TOKEN_EXPIRED = "2001"
@@ -29,28 +29,28 @@ class ErrorCode(str, Enum):
     PERMISSION_DENIED = "2005"
     ACCOUNT_LOCKED = "2006"
     ACCOUNT_DISABLED = "2007"
-    
+
     # 用户相关错误 (3000-3999)
     USER_NOT_FOUND = "3000"
     USER_ALREADY_EXISTS = "3001"
     INVALID_CREDENTIALS = "3002"
     PASSWORD_TOO_WEAK = "3003"
     PASSWORD_INCORRECT = "3004"
-    
+
     # 数据相关错误 (4000-4999)
     DATA_VALIDATION_ERROR = "4000"
     DATA_INTEGRITY_ERROR = "4001"
     DATABASE_ERROR = "4002"
-    
+
     # 文件相关错误 (5000-5999)
     FILE_NOT_FOUND = "5000"
     FILE_TOO_LARGE = "5001"
     INVALID_FILE_TYPE = "5002"
     FILE_UPLOAD_ERROR = "5003"
-    
+
     # 限流错误 (6000-6999)
     RATE_LIMIT_EXCEEDED = "6000"
-    
+
     # 服务器错误 (7000-7999)
     INTERNAL_ERROR = "7001"
     SERVICE_UNAVAILABLE = "7002"
@@ -59,14 +59,14 @@ class ErrorCode(str, Enum):
 class BusinessException(HTTPException):
     """
     业务异常基类
-    
+
     Attributes:
         error_code: 业务错误码
         message: 错误消息
         details: 错误详情
         status_code: HTTP 状态码
     """
-    
+
     def __init__(
         self,
         error_code: ErrorCode,
@@ -81,7 +81,7 @@ class BusinessException(HTTPException):
 
 class NotFoundException(BusinessException):
     """资源不存在异常"""
-    
+
     def __init__(self, resource_name: str = "资源", resource_id: Optional[str] = None):
         message = f"{resource_name}不存在"
         if resource_id:
@@ -95,7 +95,7 @@ class NotFoundException(BusinessException):
 
 class AlreadyExistsException(BusinessException):
     """资源已存在异常"""
-    
+
     def __init__(self, resource_name: str = "资源", field: Optional[str] = None):
         message = f"{resource_name}已存在"
         if field:
@@ -109,19 +109,19 @@ class AlreadyExistsException(BusinessException):
 
 class ValidationException(BusinessException):
     """数据验证异常"""
-    
+
     def __init__(self, message: str = "数据验证失败", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             error_code=ErrorCode.DATA_VALIDATION_ERROR,
             message=message,
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             details=details
         )
 
 
 class AuthenticationException(BusinessException):
     """认证异常"""
-    
+
     def __init__(
         self,
         message: str = "认证失败",
@@ -136,7 +136,7 @@ class AuthenticationException(BusinessException):
 
 class AuthorizationException(BusinessException):
     """授权异常"""
-    
+
     def __init__(self, message: str = "权限不足"):
         super().__init__(
             error_code=ErrorCode.PERMISSION_DENIED,
@@ -147,7 +147,7 @@ class AuthorizationException(BusinessException):
 
 class RateLimitException(BusinessException):
     """请求频率限制异常"""
-    
+
     def __init__(self, retry_after: int = 60):
         super().__init__(
             error_code=ErrorCode.RATE_LIMIT_EXCEEDED,
@@ -159,7 +159,7 @@ class RateLimitException(BusinessException):
 
 class OptimisticLockException(BusinessException):
     """乐观锁冲突异常"""
-    
+
     def __init__(
         self,
         message: str = "数据已被其他用户修改，请刷新后重试",
@@ -171,7 +171,7 @@ class OptimisticLockException(BusinessException):
             details["expected_version"] = expected_version
         if actual_version is not None:
             details["actual_version"] = actual_version
-            
+
         super().__init__(
             error_code=ErrorCode.VERSION_CONFLICT,
             message=message,
@@ -182,7 +182,7 @@ class OptimisticLockException(BusinessException):
 
 class DatabaseException(BusinessException):
     """数据库操作异常"""
-    
+
     def __init__(self, message: str = "数据库操作失败"):
         super().__init__(
             error_code=ErrorCode.DATABASE_ERROR,
@@ -193,7 +193,7 @@ class DatabaseException(BusinessException):
 
 class BadRequestException(BusinessException):
     """请求参数错误异常 (400)"""
-    
+
     def __init__(self, message: str = "请求参数错误", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             error_code=ErrorCode.INVALID_PARAMETER,
@@ -205,7 +205,7 @@ class BadRequestException(BusinessException):
 
 class ConflictException(BusinessException):
     """资源冲突异常 (409) - 通用版本，适用于各种冲突场景"""
-    
+
     def __init__(self, resource_name: str, reason: str = "已存在或发生冲突"):
         super().__init__(
             error_code=ErrorCode.RESOURCE_ALREADY_EXISTS,
@@ -216,7 +216,7 @@ class ConflictException(BusinessException):
 
 class InternalException(BusinessException):
     """服务器内部错误异常 (500)"""
-    
+
     def __init__(self, message: str = "服务器内部错误", details: Optional[Dict[str, Any]] = None):
         super().__init__(
             error_code=ErrorCode.INTERNAL_ERROR,
@@ -228,7 +228,7 @@ class InternalException(BusinessException):
 
 class ServiceUnavailableException(BusinessException):
     """服务不可用异常 (503)"""
-    
+
     def __init__(self, service_name: str = "服务", retry_after: int = 30):
         super().__init__(
             error_code=ErrorCode.SERVICE_UNAVAILABLE,
@@ -241,10 +241,10 @@ class ServiceUnavailableException(BusinessException):
 def get_error_message(error_code: ErrorCode) -> str:
     """
     获取错误码对应的默认错误消息
-    
+
     Args:
         error_code: 错误码
-        
+
     Returns:
         错误消息
     """

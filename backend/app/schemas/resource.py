@@ -3,7 +3,7 @@
 """
 from typing import List, Optional
 from datetime import datetime
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from app.schemas.base import BaseSchema, AuditSchema, PaginationParams
 from app.schemas.tag import TagListResponse
@@ -22,7 +22,6 @@ class ResourceCreate(ResourceBase):
     """
     创建资源模型
     """
-    pass
 
 
 class ResourceUpdate(BaseSchema):

@@ -36,6 +36,7 @@ export interface Resource {
 export interface ResourceListItem {
   id: string;
   name: string;
+  description?: string;
   file_name: string;
   file_size: number;
   file_type: string;

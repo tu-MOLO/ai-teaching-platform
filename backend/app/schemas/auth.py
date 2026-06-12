@@ -5,7 +5,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator
 
 from app.models.user import UserRole
 from app.schemas.base import BaseSchema
@@ -81,7 +81,7 @@ class LoginResponse(BaseSchema):
 class UserAuthInfo(BaseSchema):
     """认证用户信息"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str = Field(..., description="用户ID")
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., description="用户名")
@@ -130,7 +130,7 @@ class PasswordResetRequest(BaseSchema):
 class CurrentUserResponse(BaseSchema):
     """当前用户信息响应"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str = Field(..., description="用户ID")
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., description="用户名")

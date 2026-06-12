@@ -2,7 +2,7 @@
 标签相关的Pydantic schemas
 """
 from typing import Optional
-from pydantic import Field, field_validator
+from pydantic import Field
 
 from app.schemas.base import BaseSchema, AuditSchema
 
@@ -20,7 +20,6 @@ class TagCreate(TagBase):
     """
     创建标签模型
     """
-    pass
 
 
 class TagUpdate(BaseSchema):

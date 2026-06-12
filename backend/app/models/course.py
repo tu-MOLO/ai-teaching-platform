@@ -17,7 +17,8 @@ course_student = Table(
     'course_student',
     Base.metadata,
     Column('course_id', String(36), ForeignKey('courses.id', ondelete='CASCADE'), primary_key=True),
-    Column('student_id', String(36), ForeignKey('students.id', ondelete='CASCADE'), primary_key=True),
+    Column('student_id', String(36), ForeignKey(
+        'students.id', ondelete='CASCADE'), primary_key=True),
     Column('enrolled_at', DateTime(timezone=True), server_default=func.now()),
 )
 

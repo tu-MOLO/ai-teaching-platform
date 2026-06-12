@@ -2,10 +2,9 @@
 通知相关Schemas模块
 定义通知数据的Pydantic模型
 """
-from datetime import datetime
 from typing import Optional, List
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from app.models.notification import NotificationType
 from app.schemas.base import BaseSchema, AuditSchema
@@ -58,7 +57,7 @@ class NotificationReadRequest(BaseSchema):
 class NotificationResponse(AuditSchema):
     """通知响应模型"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str = Field(..., description="通知ID")
     user_id: str = Field(..., description="用户ID")
     title: str = Field(..., description="通知标题")

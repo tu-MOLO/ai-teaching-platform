@@ -35,7 +35,6 @@ from app.schemas.auth import (
     RegisterRequest,
     SecurityQuestionRequest,
     SecurityQuestionResponse,
-    SECURITY_QUESTIONS,
     TokenData,
     UserAuthInfo,
 )
@@ -60,7 +59,7 @@ async def login(
             User.username == login_data.username,
             User.email == login_data.username,
         ),
-        User.is_deleted == False,
+        User.is_deleted == False,  # noqa: E712
     )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
@@ -143,14 +142,14 @@ async def register(
 ) -> MessageResponse:
     username_stmt = select(User).where(
         User.username == register_data.username,
-        User.is_deleted == False,
+        User.is_deleted == False,  # noqa: E712
     )
     if (await db.execute(username_stmt)).scalar_one_or_none():
         raise ConflictException("用户名", "已存在")
 
     email_stmt = select(User).where(
         User.email == register_data.email,
-        User.is_deleted == False,
+        User.is_deleted == False,  # noqa: E712
     )
     if (await db.execute(email_stmt)).scalar_one_or_none():
         raise ConflictException("邮箱", "已被注册")
@@ -205,7 +204,7 @@ async def refresh_token(
             error_code=ErrorCode.TOKEN_EXPIRED,
         )
 
-    stmt = select(User).where(User.id == payload.sub, User.is_deleted == False)
+    stmt = select(User).where(User.id == payload.sub, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user or not user.is_active:
@@ -256,7 +255,7 @@ async def get_current_user(
     user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
     db: DBSession,
 ) -> CurrentUserResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
@@ -283,7 +282,7 @@ async def logout(
     db: DBSession,
     response: Response,
 ) -> MessageResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if user:
@@ -305,7 +304,7 @@ async def change_password(
     user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
     db: DBSession,
 ) -> MessageResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)
+    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
     if not user:
@@ -333,7 +332,7 @@ async def get_security_question(
             User.username == question_data.username,
             User.email == question_data.username,
         ),
-        User.is_deleted == False,
+        User.is_deleted == False,  # noqa: E712
     )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
@@ -363,7 +362,7 @@ async def reset_password(
             User.username == reset_data.username,
             User.email == reset_data.username,
         ),
-        User.is_deleted == False,
+        User.is_deleted == False,  # noqa: E712
     )
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()

@@ -89,4 +89,7 @@ class AIMessage(AIModelBase):
     )
 
     def __repr__(self) -> str:
-        return f"<AIMessage(id={self.id}, conversation_id={self.conversation_id}, role={self.role})>"
+        return f"<AIMessage(id={
+    self.id}, conversation_id={
+        self.conversation_id}, role={
+            self.role})>"

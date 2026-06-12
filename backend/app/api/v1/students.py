@@ -4,7 +4,7 @@
 """
 import asyncio
 from typing import Annotated, Optional
-from datetime import datetime, timezone, date
+from datetime import date
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, status
@@ -18,7 +18,7 @@ from app.models.student import Student
 from app.models.course import Course, course_student
 from app.schemas.base import DataResponse, ListResponse
 from app.schemas.student import Student as StudentSchema, StudentCreate, StudentUpdate
-from app.services.student import StudentService
+from app.services.students import StudentService
 
 
 def calculate_age(birth_date: Optional[date]) -> Optional[int]:
@@ -38,7 +38,8 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.post("", response_model=DataResponse[StudentSchema], status_code=status.HTTP_201_CREATED, summary="创建学生")
+@router.post("", response_model=DataResponse[StudentSchema],
+             status_code=status.HTTP_201_CREATED, summary="创建学生")
 async def create_student(
     student_in: StudentCreate,
     db: DBSession,
@@ -54,8 +55,8 @@ async def create_student(
     db_student = await StudentService.create(db, student_in, user_id)
 
     # 计算并设置进度和年龄
-    db_student.progress = await StudentService.calculate_progress(db, db_student.id)
-    db_student.age = calculate_age(db_student.birth_date)
+    db_student.progress = await StudentService.calculate_progress(db, db_student.id)  # type: ignore[attr-defined]
+    db_student.age = calculate_age(db_student.birth_date)  # type: ignore[attr-defined]
 
     return DataResponse(data=StudentSchema.model_validate(db_student))
 
@@ -74,7 +75,7 @@ async def get_student(
         raise NotFoundException("学生")
 
     # 计算年龄
-    student.age = calculate_age(student.birth_date)
+    student.age = calculate_age(student.birth_date)  # type: ignore[attr-defined]
 
     return DataResponse(data=StudentSchema.model_validate(student))
 
@@ -117,7 +118,7 @@ async def get_students(
 
     # 为每个学生计算年龄
     for student in students:
-        student.age = calculate_age(student.birth_date)
+        student.age = calculate_age(student.birth_date)  # type: ignore[attr-defined]
 
     # 计算总页数
     pages = (total + page_size - 1) // page_size
@@ -182,7 +183,7 @@ async def export_student_portfolio(
     portfolios_result = await db.execute(
         select(Portfolio).where(
             Portfolio.student_id == student_id,
-            Portfolio.is_deleted == False
+            Portfolio.is_deleted == False  # noqa: E712
         )
     )
     portfolios = portfolios_result.scalars().all()
@@ -223,7 +224,7 @@ async def get_student_courses(
         select(Student).where(
             Student.id == student_id,
             Student.user_id == user_id,
-            Student.is_deleted == False
+            Student.is_deleted == False  # noqa: E712
         )
     )
     student = student_result.scalar_one_or_none()
@@ -237,7 +238,7 @@ async def get_student_courses(
         .join(course_student, Course.id == course_student.c.course_id)
         .where(
             course_student.c.student_id == student_id,
-            Course.is_deleted == False
+            Course.is_deleted == False  # noqa: E712
         )
     )
     total_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
@@ -249,7 +250,7 @@ async def get_student_courses(
         .join(course_student, Course.id == course_student.c.course_id)
         .where(
             course_student.c.student_id == student_id,
-            Course.is_deleted == False
+            Course.is_deleted == False  # noqa: E712
         )
         .offset(offset)
         .limit(page_size)

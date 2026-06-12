@@ -1,10 +1,10 @@
 """
 教案模板相关的API接口
 """
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
-from typing import List, Annotated
+from typing import Annotated
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
@@ -43,14 +43,14 @@ async def get_lesson_templates(
     skip = (page - 1) * page_size
     result = await db.execute(
         select(LessonTemplate)
-        .where(LessonTemplate.is_deleted == False)
+        .where(LessonTemplate.is_deleted == False)  # noqa: E712
         .offset(skip)
         .limit(page_size)
     )
     templates = result.scalars().all()
     total = (
         await db.execute(
-            select(func.count(LessonTemplate.id)).where(LessonTemplate.is_deleted == False)
+            select(func.count(LessonTemplate.id)).where(LessonTemplate.is_deleted == False)  # noqa: E712
         )
     ).scalar() or 0
     pages = (total + page_size - 1) // page_size
@@ -83,7 +83,7 @@ async def get_lesson_template(
     result = await db.execute(
         select(LessonTemplate)
         .where(LessonTemplate.id == template_id)
-        .where(LessonTemplate.is_deleted == False)
+        .where(LessonTemplate.is_deleted == False)  # noqa: E712
     )
     template = result.scalar_one_or_none()
 
