@@ -275,6 +275,7 @@ def init_rate_limiter():
         ("password_reset", 3, 3600),
         ("api", 100, 60),
         ("strict", 10, 60),
+        ("ai_chat", 30, 60),
     ]
 
     try:

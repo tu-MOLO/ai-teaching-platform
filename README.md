@@ -1,7 +1,7 @@
 # AI教学平台
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python" alt="Python 3.11">
+  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python" alt="Python 3.13">
   <img src="https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react" alt="React 18">
   <img src="https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript" alt="TypeScript">
@@ -406,12 +406,13 @@ ai-teaching-platform/
 │   │   │   └── Theme/             # 主题组件
 │   │   ├── constants/             # 全局常量
 │   │   ├── hooks/                 # 自定义Hooks
-│   │   ├── pages/                 # 页面组件（16个页面）
+│   │   ├── pages/                 # 页面组件（13个页面）
 │   │   │   ├── AIAssistant/       # AI助手页面
 │   │   │   ├── Courses/           # 课程页面
 │   │   │   ├── Dashboard/         # 仪表盘
 │   │   │   ├── LessonPlanner/     # 教案页面
-│   │   │   ├── Login/ / Register/ # 登录/注册
+│   │   │   ├── Login/             # 登录
+│   │   │   ├── Register/          # 注册
 │   │   │   ├── Notifications/     # 通知页面
 │   │   │   ├── Portfolio/         # 成长档案页面
 │   │   │   ├── Profile/           # 个人中心
@@ -465,38 +466,156 @@ ai-teaching-platform/
 
 ### 主要API端点
 
+#### 认证
+
 | 端点 | 方法 | 描述 | 认证 |
 | ---- | ---- | ---- | ---- |
-| `POST /api/v1/auth/login` | POST | 用户登录 | 否 |
-| `POST /api/v1/auth/register` | POST | 用户注册 | 否 |
-| `POST /api/v1/auth/refresh` | POST | 刷新Access Token | 否（Cookie） |
-| `GET /api/v1/auth/me` | GET | 获取当前用户 | 是 |
-| `POST /api/v1/auth/logout` | POST | 用户退出 | 是 |
-| `POST /api/v1/auth/password/change` | POST | 修改密码 | 是 |
-| `POST /api/v1/auth/password/reset` | POST | 重置密码（密保） | 否 |
-| `GET/PUT /api/v1/users/{id}` | GET, PUT | 用户资料 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/courses` | CRUD | 课程管理 | 是 |
-| `POST /api/v1/courses/{id}/students/{sid}` | POST | 关联学生到课程 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/students` | CRUD | 学生管理 | 是 |
-| `GET /api/v1/students/{id}/export` | GET | 导出学生报告 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/lesson-plans` | CRUD | 教案管理 | 是 |
-| `POST /api/v1/lesson-plans/{id}/publish` | POST | 发布教案 | 是 |
-| `POST /api/v1/lesson-plans/{id}/archive` | POST | 归档教案 | 是 |
-| `GET /api/v1/lesson-templates` | GET | 教案模板列表 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/portfolios` | CRUD | 成长档案 | 是 |
-| `POST/GET/PUT/DELETE /api/v1/resources` | CRUD | 资源管理 | 是 |
-| `GET /api/v1/resources/{id}/file` | GET | 下载资源文件 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/tags` | CRUD | 标签管理 | 是 |
-| `GET/PUT/DELETE /api/v1/notifications` | CRUD | 通知管理 | 是 |
-| `PUT /api/v1/notifications/read-all` | PUT | 标记全部已读 | 是 |
-| `GET /api/v1/reports/dashboard` | GET | 仪表盘统计 | 是 |
-| `GET /api/v1/reports/trends` | GET | 月度趋势 | 是 |
-| `GET/POST/PUT/DELETE /api/v1/dropdown-options` | CRUD | 下拉选项 | 是 |
-| `POST /api/v1/ai/chat` | POST | AI对话（SSE流式） | 是 |
-| `GET/DELETE/PATCH /api/v1/ai/conversations` | CRUD | 对话历史 | 是 |
-| `GET/PUT/POST/DELETE /api/v1/ai/config` | CRUD | AI配置 | 是 |
-| `GET /health` | GET | 健康检查 | 否 |
-| `GET /health/detailed` | GET | 详细健康检查 | 否（内网） |
+| `/api/v1/auth/login` | POST | 用户登录 | 否 |
+| `/api/v1/auth/register` | POST | 用户注册 | 否 |
+| `/api/v1/auth/refresh` | POST | 刷新Access Token | 否（Cookie） |
+| `/api/v1/auth/me` | GET | 获取当前用户 | 是 |
+| `/api/v1/auth/logout` | POST | 用户退出 | 是 |
+| `/api/v1/auth/password/change` | POST | 修改密码 | 是 |
+| `/api/v1/auth/password/reset/question` | POST | 获取密保问题 | 否 |
+| `/api/v1/auth/password/reset` | POST | 重置密码（密保验证） | 否 |
+
+#### 用户
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/users/{id}` | GET | 获取用户资料 | 是 |
+| `/api/v1/users/{id}` | PUT | 更新用户资料 | 是 |
+
+#### 课程
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/courses` | POST | 创建课程 | 是 |
+| `/api/v1/courses` | GET | 课程列表 | 是 |
+| `/api/v1/courses/{id}` | GET | 课程详情 | 是 |
+| `/api/v1/courses/{id}` | PUT | 更新课程 | 是 |
+| `/api/v1/courses/{id}` | DELETE | 删除课程 | 是 |
+| `/api/v1/courses/{id}/students` | GET | 获取课程学生列表 | 是 |
+| `/api/v1/courses/{id}/students/{sid}` | POST | 关联学生到课程 | 是 |
+| `/api/v1/courses/{id}/students/{sid}` | DELETE | 移除课程学生关联 | 是 |
+
+#### 学生
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/students` | POST | 创建学生 | 是 |
+| `/api/v1/students` | GET | 学生列表 | 是 |
+| `/api/v1/students/{id}` | GET | 学生详情 | 是 |
+| `/api/v1/students/{id}` | PUT | 更新学生 | 是 |
+| `/api/v1/students/{id}` | DELETE | 删除学生 | 是 |
+| `/api/v1/students/{id}/export` | GET | 导出学生成长报告 | 是 |
+| `/api/v1/students/{id}/courses` | GET | 获取学生课程列表 | 是 |
+
+#### 教案
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/lesson-plans` | POST | 创建教案 | 是 |
+| `/api/v1/lesson-plans` | GET | 教案列表 | 是 |
+| `/api/v1/lesson-plans/stats/monthly` | GET | 教案月度统计 | 是 |
+| `/api/v1/lesson-plans/{id}` | GET | 教案详情 | 是 |
+| `/api/v1/lesson-plans/{id}` | PUT | 更新教案 | 是 |
+| `/api/v1/lesson-plans/{id}` | DELETE | 删除教案 | 是 |
+| `/api/v1/lesson-plans/{id}/publish` | POST | 发布教案 | 是 |
+| `/api/v1/lesson-plans/{id}/unpublish` | POST | 取消发布教案 | 是 |
+| `/api/v1/lesson-plans/{id}/archive` | POST | 归档教案 | 是 |
+| `/api/v1/lesson-plans/{id}/restore` | POST | 恢复教案 | 是 |
+
+#### 教案模板
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/lesson-templates` | GET | 教案模板列表 | 是 |
+
+#### 成长档案
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/portfolios` | POST | 创建成长档案 | 是 |
+| `/api/v1/portfolios` | GET | 成长档案列表 | 是 |
+| `/api/v1/portfolios/{id}` | GET | 成长档案详情 | 是 |
+| `/api/v1/portfolios/{id}` | PUT | 更新成长档案 | 是 |
+| `/api/v1/portfolios/{id}` | DELETE | 删除成长档案 | 是 |
+
+#### 资源
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/resources` | POST | 上传资源 | 是 |
+| `/api/v1/resources` | GET | 资源列表 | 是 |
+| `/api/v1/resources/{id}` | GET | 资源详情 | 是 |
+| `/api/v1/resources/{id}` | PUT | 更新资源 | 是 |
+| `/api/v1/resources/{id}` | DELETE | 删除资源 | 是 |
+| `/api/v1/resources/{id}/file` | GET | 下载资源文件 | 是 |
+
+#### 标签
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/tags` | GET | 标签列表 | 否 |
+| `/api/v1/tags` | POST | 创建标签 | 是 |
+| `/api/v1/tags/{id}` | GET | 标签详情 | 是 |
+| `/api/v1/tags/{id}` | PUT | 更新标签 | 是 |
+| `/api/v1/tags/{id}` | DELETE | 删除标签 | 是 |
+
+#### 通知
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/notifications` | GET | 通知列表 | 是 |
+| `/api/v1/notifications/stats` | GET | 通知统计 | 是 |
+| `/api/v1/notifications/unread-count` | GET | 未读通知数量 | 是 |
+| `/api/v1/notifications/read-all` | PUT | 标记全部已读 | 是 |
+| `/api/v1/notifications/read-batch` | PUT | 批量标记已读 | 是 |
+| `/api/v1/notifications/read/all` | DELETE | 删除全部已读通知 | 是 |
+| `/api/v1/notifications/{id}` | GET | 通知详情 | 是 |
+| `/api/v1/notifications/{id}` | PUT | 更新通知 | 是 |
+| `/api/v1/notifications/{id}` | DELETE | 删除通知 | 是 |
+| `/api/v1/notifications/{id}/read` | PUT | 标记通知已读 | 是 |
+
+#### 报告
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/reports/dashboard` | GET | 仪表盘统计 | 是 |
+| `/api/v1/reports/courses` | GET | 课程统计报告 | 是 |
+| `/api/v1/reports/students` | GET | 学生统计报告 | 是 |
+| `/api/v1/reports/trends` | GET | 月度趋势数据 | 是 |
+
+#### 下拉选项
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/dropdown-options` | GET | 下拉选项列表 | 是 |
+| `/api/v1/dropdown-options` | POST | 创建下拉选项 | 是 |
+| `/api/v1/dropdown-options/{id}` | PUT | 更新下拉选项 | 是 |
+| `/api/v1/dropdown-options/{id}` | DELETE | 删除下拉选项 | 是 |
+
+#### AI助手
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/api/v1/ai/chat` | POST | AI对话（SSE流式） | 是 |
+| `/api/v1/ai/conversations` | GET | 对话列表 | 是 |
+| `/api/v1/ai/conversations/{id}` | GET | 对话消息 | 是 |
+| `/api/v1/ai/conversations/{id}` | DELETE | 删除对话 | 是 |
+| `/api/v1/ai/conversations/{id}` | PATCH | 重命名对话 | 是 |
+| `/api/v1/ai/config` | GET | 获取AI配置 | 是 |
+| `/api/v1/ai/config` | PUT | 更新AI配置 | 是 |
+| `/api/v1/ai/config/test` | POST | 测试API连接 | 是 |
+| `/api/v1/ai/config` | DELETE | 重置AI配置 | 是 |
+
+#### 健康检查
+
+| 端点 | 方法 | 描述 | 认证 |
+| ---- | ---- | ---- | ---- |
+| `/health` | GET | 健康检查 | 否 |
+| `/health/detailed` | GET | 详细健康检查（内网） | 否 |
 
 > 完整API参考文档请查看 [docs/API.md](docs/API.md)
 
@@ -634,7 +753,6 @@ npm run lint
 | `BIGMODEL_API_BASE` | 智谱AI API地址 | `https://open.bigmodel.cn/api/paas/v4` |
 | `BIGMODEL_MODEL` | AI模型名称 | `glm-4.7-flash` |
 | `AI_MAX_CONTEXT_MESSAGES` | AI上下文消息数 | `20` |
-| `AI_REQUEST_RATE_LIMIT` | AI请求速率限制 | `30`（次/分钟） |
 | `LOG_LEVEL` | 日志级别 | `INFO` |
 | `REDIS_URL` | Redis连接 | `redis://localhost:6379/0`（可选） |
 

@@ -1,35 +1,15 @@
-import time
-from collections import defaultdict
-
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.database import get_async_session as get_db
-from app.core.exceptions import BadRequestException, NotFoundException, RateLimitException
+from app.core.exceptions import BadRequestException, NotFoundException
+from app.core.rate_limiter import rate_limit_dep
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.ai import ChatRequest, ConversationListSchema, MessageListSchema, ConversationRenameRequest
 from app.services.ai import AIService
 
 router = APIRouter()
-
-_rate_limit_store: dict[str, list[float]] = defaultdict(list)
-
-
-def _check_rate_limit(user_id: str) -> bool:
-    now = time.time()
-    window = 60.0
-    max_requests = settings.AI_REQUEST_RATE_LIMIT
-
-    timestamps = _rate_limit_store[user_id]
-    _rate_limit_store[user_id] = [t for t in timestamps if now - t < window]
-
-    if len(_rate_limit_store[user_id]) >= max_requests:
-        return False
-
-    _rate_limit_store[user_id].append(now)
-    return True
 
 
 @router.post("/chat", summary="AI对话")
@@ -37,9 +17,8 @@ async def chat(
     request: ChatRequest,
     user_id: str = Depends(get_current_user_id_with_version_check),
     db: AsyncSession = Depends(get_db),
+    _: None = Depends(rate_limit_dep("ai_chat")),
 ):
-    if not _check_rate_limit(user_id):
-        raise RateLimitException()
 
     try:
         if request.stream:
