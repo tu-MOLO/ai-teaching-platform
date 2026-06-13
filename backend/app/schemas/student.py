@@ -37,7 +37,7 @@ class StudentBase(BaseSchema):
         valid = {'male', 'female', 'other'}
         val = str(v).lower() if hasattr(v, 'value') else str(v).lower()
         if val not in valid:
-            raise ValueError(f"性别必须是 male、female 或 other")
+            raise ValueError("性别必须是 male、female 或 other")
         return v
 
     @field_validator('birth_date', mode='before')

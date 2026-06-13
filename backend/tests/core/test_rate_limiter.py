@@ -33,7 +33,8 @@ class TestConfigure:
         assert limiter._configs["login"].window == 60
 
     def test_add_config_with_key_func(self, limiter):
-        key_func = lambda req: "custom"
+        def key_func(req):
+            return "custom"
         limiter.configure("custom", requests=10, window=30, key_func=key_func)
         assert limiter._configs["custom"].key_func is key_func
 

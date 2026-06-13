@@ -5,6 +5,7 @@ AI教学平台后端主应用
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -361,13 +362,11 @@ def register_exception_handlers(app: FastAPI) -> None:
         """处理业务异常"""
         logger.warning(f"Business exception: {exc.error_code} - {exc.detail}")
 
-        response_data = {
-    "error": exc.error_code,
-    "code": exc.error_code.value if isinstance(
-        exc.error_code,
-        ErrorCode) else str(
-            exc.error_code),
-             "message": exc.detail }
+        response_data: dict[str, Any] = {
+            "error": exc.error_code,
+            "code": exc.error_code.value if isinstance(exc.error_code, ErrorCode) else str(exc.error_code),
+            "message": exc.detail,
+        }
 
         if exc.details:
             response_data["details"] = exc.details

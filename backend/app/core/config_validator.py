@@ -74,7 +74,7 @@ class ConfigValidator:
         entropy_score = sum([has_lower, has_upper, has_digit, has_special])
         if entropy_score < 3:
             errors.append(
-                f"SECRET_KEY 复杂度不足: 需要包含大写字母、小写字母、数字和特殊字符中的至少3种"
+                "SECRET_KEY 复杂度不足: 需要包含大写字母、小写字母、数字和特殊字符中的至少3种"
             )
 
         return len(errors) == 0, errors

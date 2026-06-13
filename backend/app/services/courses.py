@@ -18,10 +18,11 @@ class CourseService:
 
     @staticmethod
     async def create(
-    db: AsyncSession,
-    course_in: CourseCreate,
-    user_id: str,
-     teacher_name: str) -> Course:
+        db: AsyncSession,
+        course_in: CourseCreate,
+        user_id: str,
+        teacher_name: str
+    ) -> Course:
         """
         创建课程
 

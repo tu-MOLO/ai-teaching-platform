@@ -120,7 +120,7 @@ test.describe('学生管理', () => {
 
     // 3. 保存修改
     const editResponsePromise = page.waitForResponse(
-      (response) => response.url().match(/\/api\/v1\/students\/[^\/]+$/) && response.request().method() === 'PUT',
+      (response) => response.url().match(/\/api\/v1\/students\/[^/]+$/) && response.request().method() === 'PUT',
       { timeout: 15000 }
     ).catch(() => null)
     
@@ -195,7 +195,7 @@ test.describe('学生管理', () => {
     // 3. 保存修改
     // 先设置 API 响应监听，再点击
     const statusResponsePromise = page.waitForResponse(
-      (response) => response.url().match(/\/api\/v1\/students\/[^\/]+$/) && response.request().method() === 'PUT',
+      (response) => response.url().match(/\/api\/v1\/students\/[^/]+$/) && response.request().method() === 'PUT',
       { timeout: 15000 }
     )
     await page.locator('button').filter({ hasText: /保\s*存/ }).click()

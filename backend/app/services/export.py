@@ -67,6 +67,25 @@ class ExportService:
         pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
         return pdf_bytes
 
+    def _add_teaching_goals_to_doc(self, doc, lesson_plan) -> None:
+        """添加分层教学目标到Word文档"""
+        doc.add_heading('教学目标', level=1)
+        if lesson_plan.teaching_goals_a:
+            doc.add_heading('A层（基础）', level=2)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_a or ''))
+        if lesson_plan.teaching_goals_b:
+            doc.add_heading('B层（提高）', level=2)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_b or ''))
+        if lesson_plan.teaching_goals_c:
+            doc.add_heading('C层（拓展）', level=2)
+            doc.add_paragraph(escape(lesson_plan.teaching_goals_c or ''))
+
+    def _add_optional_section_to_doc(self, doc, heading: str, content: Any) -> None:
+        """添加可选章节到Word文档"""
+        if content:
+            doc.add_heading(heading, level=1)
+            doc.add_paragraph(escape(content or ''))
+
     def export_to_word(self, lesson_plan) -> bytes:
         """
         导出教案为Word
@@ -94,47 +113,13 @@ class ExportService:
         doc.add_paragraph(f'课时时长: {lesson_plan.duration}分钟')
         doc.add_paragraph(f'状态: {lesson_plan.status.value}')
 
-        # 添加教学目标
-        doc.add_heading('教学目标', level=1)
-        if lesson_plan.teaching_goals_a:
-            doc.add_heading('A层（基础）', level=2)
-            doc.add_paragraph(escape(lesson_plan.teaching_goals_a or ''))
-        if lesson_plan.teaching_goals_b:
-            doc.add_heading('B层（提高）', level=2)
-            doc.add_paragraph(escape(lesson_plan.teaching_goals_b or ''))
-        if lesson_plan.teaching_goals_c:
-            doc.add_heading('C层（拓展）', level=2)
-            doc.add_paragraph(escape(lesson_plan.teaching_goals_c or ''))
-
-        # 添加教学内容
-        if lesson_plan.teaching_content:
-            doc.add_heading('教学内容', level=1)
-            doc.add_paragraph(escape(lesson_plan.teaching_content or ''))
-
-        # 添加教学方法
-        if lesson_plan.teaching_methods:
-            doc.add_heading('教学方法', level=1)
-            doc.add_paragraph(escape(lesson_plan.teaching_methods or ''))
-
-        # 添加教学过程
-        if lesson_plan.teaching_process:
-            doc.add_heading('教学过程', level=1)
-            doc.add_paragraph(escape(lesson_plan.teaching_process or ''))
-
-        # 添加教学资源
-        if lesson_plan.teaching_resources:
-            doc.add_heading('教学资源', level=1)
-            doc.add_paragraph(escape(lesson_plan.teaching_resources or ''))
-
-        # 添加评价方式
-        if lesson_plan.assessment:
-            doc.add_heading('评价方式', level=1)
-            doc.add_paragraph(escape(lesson_plan.assessment or ''))
-
-        # 添加备注
-        if lesson_plan.notes:
-            doc.add_heading('备注', level=1)
-            doc.add_paragraph(escape(lesson_plan.notes or ''))
+        self._add_teaching_goals_to_doc(doc, lesson_plan)
+        self._add_optional_section_to_doc(doc, '教学内容', lesson_plan.teaching_content)
+        self._add_optional_section_to_doc(doc, '教学方法', lesson_plan.teaching_methods)
+        self._add_optional_section_to_doc(doc, '教学过程', lesson_plan.teaching_process)
+        self._add_optional_section_to_doc(doc, '教学资源', lesson_plan.teaching_resources)
+        self._add_optional_section_to_doc(doc, '评价方式', lesson_plan.assessment)
+        self._add_optional_section_to_doc(doc, '备注', lesson_plan.notes)
 
         # 保存为字节流
         stream = BytesIO()
@@ -385,7 +370,7 @@ class ExportService:
     portfolio.creativity_score,
     portfolio.cooperation_score,
      portfolio.attention_score]):
-                    html += f"""
+                    html += """
                     <div class="evaluation-scores">
                         <h3>多维度评价</h3>
                     """
@@ -523,7 +508,7 @@ class ExportService:
         content_object_ids: list[int] = []
 
         for page_lines in pages:
-            stream_lines = ["BT", f"/F1 12 Tf", f"1 0 0 1 {margin_left} {start_y} Tm"]
+            stream_lines = ["BT", "/F1 12 Tf", f"1 0 0 1 {margin_left} {start_y} Tm"]
             for index, line in enumerate(page_lines):
                 safe_line = (line or "").replace("\r", " ").replace("\n", " ")
                 hex_text = safe_line.encode("utf-16-be").hex().upper()

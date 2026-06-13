@@ -476,11 +476,12 @@ async def _create_course(db: AsyncSession, user_id: str, **kwargs):
     course = await CourseService.create(db, CourseCreate(**kwargs), user_id, teacher_name)
     await db.commit()
     return {
-    "id": course.id,
-    "name": course.name,
-    "subject": course.subject,
-    "grade": course.grade,
-     "status": course.status}
+        "id": course.id,
+        "name": course.name,
+        "subject": course.subject,
+        "grade": course.grade,
+        "status": course.status
+    }
 
 
 async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
@@ -536,11 +537,12 @@ async def _update_course(db: AsyncSession, user_id: str, **kwargs):
         return {"error": "课程不存在或无权限"}
     await db.commit()
     return {
-    "id": course.id,
-    "name": course.name,
-    "subject": course.subject,
-    "grade": course.grade,
-     "status": course.status}
+        "id": course.id,
+        "name": course.name,
+        "subject": course.subject,
+        "grade": course.grade,
+        "status": course.status
+    }
 
 
 async def _delete_course(db: AsyncSession, user_id: str, **kwargs):
@@ -559,10 +561,11 @@ async def _create_student(db: AsyncSession, user_id: str, **kwargs):
     student = await StudentService.create(db, StudentCreate(**kwargs), user_id)
     await db.commit()
     return {
-    "id": student.id,
-    "name": student.name,
-    "grade": student.grade,
-     "class_name": student.class_name}
+        "id": student.id,
+        "name": student.name,
+        "grade": student.grade,
+        "class_name": student.class_name
+    }
 
 
 async def _list_students(db: AsyncSession, user_id: str, **kwargs):
@@ -613,10 +616,11 @@ async def _update_student(db: AsyncSession, user_id: str, **kwargs):
         return {"error": "学生不存在或无权限"}
     await db.commit()
     return {
-    "id": student.id,
-    "name": student.name,
-    "grade": student.grade,
-     "class_name": student.class_name}
+        "id": student.id,
+        "name": student.name,
+        "grade": student.grade,
+        "class_name": student.class_name
+    }
 
 
 async def _delete_student(db: AsyncSession, user_id: str, **kwargs):
@@ -1142,18 +1146,86 @@ class AIService:
         return ""
 
     @staticmethod
+    def _update_tool_calls_from_delta(
+        tool_calls_list: list[dict[str, Any]],
+        tc: dict,
+    ) -> None:
+        """根据delta更新tool calls列表"""
+        idx = tc.get("index", 0)
+        while len(tool_calls_list) <= idx:
+            tool_calls_list.append(
+                {"id": "", "function": {"name": "", "arguments": ""}, "type": "function"})
+        if tc.get("id"):
+            tool_calls_list[idx]["id"] = tc["id"]
+        if tc.get("function", {}).get("name"):
+            tool_calls_list[idx]["function"]["name"] += tc["function"]["name"]
+        if tc.get("function", {}).get("arguments"):
+            tool_calls_list[idx]["function"]["arguments"] += tc["function"]["arguments"]
+
+    @staticmethod
+    async def _execute_single_tool(
+        db: AsyncSession,
+        user_id: str,
+        tc: dict,
+    ) -> tuple[str, Optional[str]]:
+        """执行单个工具调用，返回(结果字符串, 模块标签)"""
+        tool_name = tc["function"]["name"]
+        module_tag = AIService._get_module_tag(tool_name)
+
+        try:
+            args = json.loads(tc["function"]["arguments"])
+        except json.JSONDecodeError:
+            args = {}
+
+        executor = TOOL_EXECUTOR.get(tool_name)
+        if executor:
+            try:
+                result = await executor(db, user_id, **args)
+                result_str = json.dumps(result, ensure_ascii=False, default=str)
+            except Exception as e:
+                result_str = json.dumps({"error": str(e)}, ensure_ascii=False)
+        else:
+            result_str = json.dumps({"error": f"未知工具: {tool_name}"}, ensure_ascii=False)
+
+        return result_str, module_tag
+
+    @staticmethod
+    def _process_sse_line(
+        line: str,
+        conversation_id: str,
+        state: dict,
+    ) -> Optional[str]:
+        """处理单行SSE数据，返回需要yield的事件或None"""
+        if not line.startswith("data: "):
+            return None
+        data = line[6:]
+        if data == "[DONE]":
+            return "__done__"
+        try:
+            chunk = json.loads(data)
+            delta = chunk.get("choices", [{}])[0].get("delta", {})
+            if delta.get("content"):
+                state["response_content"] += delta["content"]
+                return f"data: {json.dumps({'type': 'content', 'content': delta['content'], 'conversation_id': conversation_id}, ensure_ascii=False)}\n\n"
+            if delta.get("tool_calls"):
+                for tc in delta["tool_calls"]:
+                    AIService._update_tool_calls_from_delta(state["tool_calls_list"], tc)
+        except json.JSONDecodeError:
+            pass
+        return None
+
+    @staticmethod
     async def _stream_chat(
-    db: AsyncSession,
-    user_id: str,
-    conversation: AIConversation,
-    messages: list,
-     effective_config: dict) -> AsyncGenerator:
+        db: AsyncSession,
+        user_id: str,
+        conversation: AIConversation,
+        messages: list,
+        effective_config: dict) -> AsyncGenerator:
         max_iterations = 5
         current_messages = messages.copy()
 
         for iteration in range(max_iterations):
-            response_content = ""
-            tool_calls_list: list[dict[str, Any]] = []
+            state: dict[str, Any] = {"response_content": "", "tool_calls_list": []}
 
             async with httpx.AsyncClient(timeout=60.0) as client:
                 async with client.stream(
@@ -1176,34 +1248,14 @@ class AIService:
                         return
 
                     async for line in response.aiter_lines():
-                        if not line.startswith("data: "):
-                            continue
-                        data = line[6:]
-                        if data == "[DONE]":
+                        event = AIService._process_sse_line(line, conversation.id, state)
+                        if event == "__done__":
                             break
-                        try:
-                            chunk = json.loads(data)
-                            delta = chunk.get("choices", [{}])[0].get("delta", {})
+                        if event:
+                            yield event
 
-                            if delta.get("content"):
-                                response_content += delta["content"]
-                                yield f"data: {json.dumps({'type': 'content', 'content': delta['content'], 'conversation_id': conversation.id}, ensure_ascii=False)}\n\n"
-
-                            if delta.get("tool_calls"):
-                                for tc in delta["tool_calls"]:
-                                    idx = tc.get("index", 0)
-                                    while len(tool_calls_list) <= idx:
-                                        tool_calls_list.append(
-                                            {"id": "", "function": {"name": "", "arguments": ""},
-                                             "type": "function"})
-                                    if tc.get("id"):
-                                        tool_calls_list[idx]["id"] = tc["id"]
-                                    if tc.get("function", {}).get("name"):
-                                        tool_calls_list[idx]["function"]["name"] += tc["function"]["name"]
-                                    if tc.get("function", {}).get("arguments"):
-                                        tool_calls_list[idx]["function"]["arguments"] += tc["function"]["arguments"]
-                        except json.JSONDecodeError:
-                            continue
+            response_content: str = state["response_content"]
+            tool_calls_list: list[dict[str, Any]] = state["tool_calls_list"]
 
             if response_content:
                 await AIService._save_message(
@@ -1222,22 +1274,7 @@ class AIService:
                 tool_name = tc["function"]["name"]
                 yield f"data: {json.dumps({'type': 'tool_call', 'tool_name': tool_name}, ensure_ascii=False)}\n\n"
 
-                module_tag = AIService._get_module_tag(tool_name)
-
-                try:
-                    args = json.loads(tc["function"]["arguments"])
-                except json.JSONDecodeError:
-                    args = {}
-
-                executor = TOOL_EXECUTOR.get(tool_name)
-                if executor:
-                    try:
-                        result = await executor(db, user_id, **args)
-                        result_str = json.dumps(result, ensure_ascii=False, default=str)
-                    except Exception as e:
-                        result_str = json.dumps({"error": str(e)}, ensure_ascii=False)
-                else:
-                    result_str = json.dumps({"error": f"未知工具: {tool_name}"}, ensure_ascii=False)
+                result_str, module_tag = await AIService._execute_single_tool(db, user_id, tc)
 
                 current_messages.append(
                     {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
@@ -1299,23 +1336,7 @@ class AIService:
      "tool_calls": [tc for tc in tool_calls]})
 
             for tc in tool_calls:
-                tool_name = tc["function"]["name"]
-                module_tag = AIService._get_module_tag(tool_name)
-
-                try:
-                    args = json.loads(tc["function"]["arguments"])
-                except json.JSONDecodeError:
-                    args = {}
-
-                executor = TOOL_EXECUTOR.get(tool_name)
-                if executor:
-                    try:
-                        result = await executor(db, user_id, **args)
-                        result_str = json.dumps(result, ensure_ascii=False, default=str)
-                    except Exception as e:
-                        result_str = json.dumps({"error": str(e)}, ensure_ascii=False)
-                else:
-                    result_str = json.dumps({"error": f"未知工具: {tool_name}"}, ensure_ascii=False)
+                result_str, module_tag = await AIService._execute_single_tool(db, user_id, tc)
 
                 current_messages.append(
                     {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})

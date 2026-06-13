@@ -158,14 +158,52 @@ class ReportService:
             )
         ).scalar() or 0
 
-        def format_growth(current: int, previous: int) -> str:
-            if previous > 0:
-                growth = ((current - previous) / previous) * 100
-                return f"{'+' if growth >= 0 else ''}{round(growth)}%"
-            if current > 0:
-                return "+100%"
-            return "+0%"
+        recent_activities = await ReportService._build_recent_activities(
+            db, course_filters, student_filters, now
+        )
 
+        return {
+            "totalCourses": total_courses,
+            "totalStudents": total_students,
+            "activeCourses": active_courses,
+            "averageProgress": completion_rate,
+            "courseTrend": ReportService._format_growth(last_month_courses, two_months_ago_courses),
+            "studentTrend": ReportService._format_growth(last_month_students, two_months_ago_students),
+            "recentActivities": recent_activities,
+            "monthlyCourses": monthly_courses,
+            "monthlyStudents": monthly_students,
+            "monthlyLessonPlans": monthly_lesson_plans,
+            "draftLessonPlans": draft_lesson_plans,
+            "completionRate": completion_rate,
+            "aiAssistants": 0,
+            "totalResources": total_resources,
+        }
+
+    @staticmethod
+    def _format_growth(current: int, previous: int) -> str:
+        if previous > 0:
+            growth = ((current - previous) / previous) * 100
+            return f"{'+' if growth >= 0 else ''}{round(growth)}%"
+        if current > 0:
+            return "+100%"
+        return "+0%"
+
+    @staticmethod
+    def _relative_time(now: datetime, dt: datetime) -> str:
+        delta = now - dt.replace(tzinfo=None) if dt.tzinfo else now - dt
+        if delta.days == 0:
+            if delta.seconds < 3600:
+                return f"{max(delta.seconds // 60, 1)}分钟前"
+            return f"{delta.seconds // 3600}小时前"
+        return f"{delta.days}天前"
+
+    @staticmethod
+    async def _build_recent_activities(
+        db: AsyncSession,
+        course_filters: list,
+        student_filters: list,
+        now: datetime,
+    ) -> List[Dict[str, Any]]:
         recent_activities: List[Dict[str, Any]] = []
         recent_courses = (
             await db.execute(
@@ -178,14 +216,6 @@ class ReportService:
             )
         ).scalars().all()
 
-        def relative_time(dt: datetime) -> str:
-            delta = now - dt.replace(tzinfo=None) if dt.tzinfo else now - dt
-            if delta.days == 0:
-                if delta.seconds < 3600:
-                    return f"{max(delta.seconds // 60, 1)}分钟前"
-                return f"{delta.seconds // 3600}小时前"
-            return f"{delta.days}天前"
-
         for course in recent_courses:
             recent_activities.append(
                 {
@@ -193,7 +223,7 @@ class ReportService:
                     "title": "新增课程",
                     "description": f"创建了课程《{course.name}》",
                     "icon": "BookOutlined",
-                    "time": relative_time(course.created_at),
+                    "time": ReportService._relative_time(now, course.created_at),
                     "desc": course.subject,
                     "color": "#c9a87c",
                     "sort_time": course.created_at,
@@ -207,7 +237,7 @@ class ReportService:
                     "title": "新增学生",
                     "description": f"添加了学生 {student.name}",
                     "icon": "UserOutlined",
-                    "time": relative_time(student.created_at),
+                    "time": ReportService._relative_time(now, student.created_at),
                     "desc": f"{student.grade} {student.class_name}",
                     "color": "#6b9b7a",
                     "sort_time": student.created_at,
@@ -222,22 +252,7 @@ class ReportService:
         for item in recent_activities:
             item.pop("sort_time", None)
 
-        return {
-            "totalCourses": total_courses,
-            "totalStudents": total_students,
-            "activeCourses": active_courses,
-            "averageProgress": completion_rate,
-            "courseTrend": format_growth(last_month_courses, two_months_ago_courses),
-            "studentTrend": format_growth(last_month_students, two_months_ago_students),
-            "recentActivities": recent_activities,
-            "monthlyCourses": monthly_courses,
-            "monthlyStudents": monthly_students,
-            "monthlyLessonPlans": monthly_lesson_plans,
-            "draftLessonPlans": draft_lesson_plans,
-            "completionRate": completion_rate,
-            "aiAssistants": 0,
-            "totalResources": total_resources,
-        }
+        return recent_activities
 
     @staticmethod
     async def get_course_statistics(

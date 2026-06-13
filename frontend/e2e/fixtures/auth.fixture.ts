@@ -49,7 +49,7 @@ export interface AuthFixtures {
 }
 
 export const test = base.extend<AuthFixtures>({
-  testUser: async ({}, use) => {
+  testUser: async (_, use) => {
     await use(DEFAULT_USER)
   },
 

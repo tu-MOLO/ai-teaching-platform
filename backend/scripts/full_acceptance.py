@@ -475,11 +475,11 @@ class AcceptanceRunner:
     async def write_report(self) -> Path:
         report_path = ROOT.parent / f"FULL_ACCEPTANCE_REPORT_{self.timestamp}.md"
         lines = [
-            f"# 全量功能验收报告",
+            "# 全量功能验收报告",
             "",
             f"- 验收时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            f"- 验收方式: FastAPI ASGI 直连自动化接口验收",
-            f"- 验收范围: 当前项目现存全部教师侧功能模块",
+            "- 验收方式: FastAPI ASGI 直连自动化接口验收",
+            "- 验收范围: 当前项目现存全部教师侧功能模块",
             "",
             "## 验收结果",
             "",

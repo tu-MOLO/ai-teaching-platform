@@ -218,6 +218,63 @@ class MinIOStorage:
             logger.error(f"Failed to ensure bucket exists: {e}")
             raise
 
+    def _prepare_upload_stream(
+        self,
+        file_data: Union[bytes, BinaryIO, str, Path],
+        content_type: Optional[str] = None,
+    ) -> tuple[BinaryIO, int, bool, str]:
+        """准备上传的文件流，返回(流, 大小, 是否需要关闭, 内容类型)"""
+        file_stream: BinaryIO
+        if isinstance(file_data, (str, Path)):
+            file_path = Path(file_data)
+            file_size = file_path.stat().st_size
+            file_stream = open(file_path, "rb")
+            should_close = True
+            if not content_type:
+                content_type, _ = mimetypes.guess_type(str(file_path))
+        elif isinstance(file_data, bytes):
+            file_size = len(file_data)
+            file_stream = io.BytesIO(file_data)
+            should_close = True
+        else:
+            file_stream = file_data
+            current_pos = file_stream.tell()
+            file_stream.seek(0, 2)
+            file_size = file_stream.tell() - current_pos
+            file_stream.seek(current_pos)
+            should_close = False
+
+        if not content_type:
+            content_type = "application/octet-stream"
+
+        return file_stream, file_size, should_close, content_type
+
+    def _do_minio_upload(
+        self,
+        file_stream: BinaryIO,
+        file_size: int,
+        object_name: str,
+        content_type: str,
+        metadata: Optional[dict],
+        should_close: bool,
+    ) -> ObjectWriteResult:
+        """执行MinIO上传并清理资源"""
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+        result = self.client.put_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+            data=file_stream,
+            length=file_size,
+            content_type=content_type,
+            metadata=metadata or {},
+        )
+        if should_close:
+            file_stream.close()
+        return result
+
     def upload_file(
         self,
         file_data: Union[bytes, BinaryIO, str, Path],
@@ -240,7 +297,6 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        # 检查连接，如果失败则降级到本地存储
         if not self._check_connection():
             logger.info(f"Using local storage fallback for upload: {object_name}")
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
@@ -251,57 +307,17 @@ class MinIOStorage:
             raise RuntimeError("Storage bucket is not set")
 
         try:
-            # 处理不同类型的输入
-            file_stream: BinaryIO
-            if isinstance(file_data, (str, Path)):
-                # 文件路径
-                file_path = Path(file_data)
-                file_size = file_path.stat().st_size
-                file_stream = open(file_path, "rb")
-                should_close = True
-
-                if not content_type:
-                    content_type, _ = mimetypes.guess_type(str(file_path))
-
-            elif isinstance(file_data, bytes):
-                # 字节数据
-                file_size = len(file_data)
-                file_stream = io.BytesIO(file_data)
-                should_close = True
-
-            else:
-                # 文件对象
-                file_stream = file_data
-                current_pos = file_stream.tell()
-                file_stream.seek(0, 2)
-                file_size = file_stream.tell() - current_pos
-                file_stream.seek(current_pos)
-                should_close = False
-
-            # 默认内容类型
-            if not content_type:
-                content_type = "application/octet-stream"
-
-            # 上传文件
-            result = self.client.put_object(
-                bucket_name=self.bucket_name,
-                object_name=object_name,
-                data=file_stream,
-                length=file_size,
-                content_type=content_type,
-                metadata=metadata or {}
+            file_stream, file_size, should_close, content_type = self._prepare_upload_stream(
+                file_data, content_type
             )
-
-            if should_close:
-                file_stream.close()
-
+            result = self._do_minio_upload(
+                file_stream, file_size, object_name, content_type, metadata, should_close
+            )
             logger.info(f"Uploaded file: {object_name}, etag: {result.etag}")
             return result
-
         except S3Error as e:
             logger.error(
                 f"Failed to upload file {object_name} to MinIO: {e}. Falling back to local storage.")
-            # MinIO失败时降级到本地存储
             return self._get_fallback_storage().upload_file(file_data, object_name, content_type, metadata)
         except Exception as e:
             logger.error(
@@ -428,6 +444,26 @@ class MinIOStorage:
                 f"Unexpected error deleting file {object_name}: {e}. Trying local storage.")
             self._get_fallback_storage().delete_file(object_name)
 
+    def _delete_from_minio(self, object_names: list[str]) -> None:
+        """从MinIO批量删除文件"""
+        if self.client is None:
+            raise RuntimeError("Storage client is not initialized")
+        if self.bucket_name is None:
+            raise RuntimeError("Storage bucket is not set")
+        delete_object_list = [DeleteObject(name) for name in object_names]
+        errors = self.client.remove_objects(
+            self.bucket_name,
+            delete_object_list,
+        )
+        for error in errors:
+            logger.error(f"Failed to delete {error.name}: {error.code}")
+        logger.info(f"Deleted {len(object_names)} files from MinIO")
+
+    def _delete_from_local(self, object_names: list[str]) -> None:
+        """从本地存储批量删除文件"""
+        for object_name in object_names:
+            self._get_fallback_storage().delete_file(object_name)
+
     def delete_files(self, object_names: list[str]) -> None:
         """
         批量删除文件
@@ -439,9 +475,8 @@ class MinIOStorage:
             S3Error: MinIO操作错误
         """
         if not self._check_connection():
-            logger.info(f"Using local storage fallback for batch delete")
-            for object_name in object_names:
-                self._get_fallback_storage().delete_file(object_name)
+            logger.info("Using local storage fallback for batch delete")
+            self._delete_from_local(object_names)
             return
 
         if self.client is None:
@@ -450,24 +485,13 @@ class MinIOStorage:
             raise RuntimeError("Storage bucket is not set")
 
         try:
-            delete_object_list = [DeleteObject(name) for name in object_names]
-            errors = self.client.remove_objects(
-                self.bucket_name,
-                delete_object_list,
-            )
-
-            for error in errors:
-                logger.error(f"Failed to delete {error.name}: {error.code}")
-
-            logger.info(f"Deleted {len(object_names)} files from MinIO")
+            self._delete_from_minio(object_names)
         except S3Error as e:
             logger.error(f"Failed to delete files from MinIO: {e}. Trying local storage.")
-            for object_name in object_names:
-                self._get_fallback_storage().delete_file(object_name)
+            self._delete_from_local(object_names)
         except Exception as e:
             logger.error(f"Unexpected error deleting files: {e}. Trying local storage.")
-            for object_name in object_names:
-                self._get_fallback_storage().delete_file(object_name)
+            self._delete_from_local(object_names)
 
     async def delete_file_async(self, object_name):
         """异步从MinIO或本地存储删除文件"""
