@@ -35,10 +35,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR $APP_HOME
 
-# 安装运行时依赖
+# 安装运行时依赖（含 weasyprint PDF 导出所需的系统库）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libffi8 \
+    shared-mime-info \
+    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 # 从构建阶段复制虚拟环境
@@ -64,5 +71,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # 暴露端口
 EXPOSE 8000
 
-# 启动命令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# 启动命令（WEB_CONCURRENCY 控制 workers 数量，默认 4）
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers ${WEB_CONCURRENCY:-4}"]

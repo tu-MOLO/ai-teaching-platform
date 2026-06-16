@@ -132,18 +132,22 @@ def register_middlewares(app: FastAPI) -> None:
         app: FastAPI应用实例
     """
     # CORS中间件
-    # 开发环境下仅允许本地开发服务器来源
     if settings.DEBUG:
+        # 开发环境：使用配置的 origins 或默认本地开发地址
+        debug_origins = (
+            [str(origin) for origin in settings.BACKEND_CORS_ORIGINS]
+            if settings.BACKEND_CORS_ORIGINS
+            else ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
+        )
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["http://localhost:5173",
-                "http://localhost:3000", "http://127.0.0.1:5173"],
+            allow_origins=debug_origins,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
             expose_headers=["X-Request-ID"]
         )
-        logger.info("CORS enabled for all origins (DEBUG mode)")
+        logger.info(f"CORS enabled for origins: {debug_origins}")
     elif settings.BACKEND_CORS_ORIGINS:
         app.add_middleware(
             CORSMiddleware,

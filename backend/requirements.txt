@@ -30,19 +30,8 @@ aiohttp==3.9.3
 # 工具库
 python-dotenv==1.0.1
 orjson==3.9.13
-cryptography>=42.0.0
+cryptography==43.0.3
 
 # 导出功能
 weasyprint==59.0
 python-docx==0.8.11
-
-# 开发依赖（可选）
-pytest==7.4.4
-pytest-asyncio==0.23.4
-pytest-cov==4.1.0
-pytest-html==4.1.1
-factory-boy==3.3.0
-black==24.1.1
-isort==5.13.2
-flake8==7.0.0
-mypy==1.8.0

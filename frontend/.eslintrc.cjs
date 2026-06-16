@@ -24,5 +24,11 @@ module.exports = {
         '@typescript-eslint/ban-ts-comment': 'off',
       },
     },
+    {
+      files: ['src/**/__tests__/**', 'src/test/**', 'vitest.d.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
   ],
 }

@@ -27,6 +27,9 @@ from app.models.audit_log import AuditLog
 from app.models.lesson_plan import LessonPlan
 from app.models.lesson_template import LessonTemplate
 from app.models.dropdown_option import DropdownOption
+from app.models.ai import AIConversation, AIMessage
+from app.models.ai_config import AIConfig
+from app.models.course import course_student
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

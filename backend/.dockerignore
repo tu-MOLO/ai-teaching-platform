@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+*.egg-info/
+.eggs/
+
+# 测试和覆盖率
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+reports/
+.tox/
+.nox/
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 环境变量（不应打包进镜像）
+.env
+.env.*
+!.env.example
+
+# 文档
+*.md
+docs/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# 日志
+*.log
+logs/
+log/
+
+# 本地存储
+storage/
+
+# Alembic 缓存
+alembic/__pycache__/

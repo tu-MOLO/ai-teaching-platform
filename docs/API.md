@@ -200,7 +200,7 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 
 | Method | Path | Summary | Auth |
 |--------|------|---------|------|
-| GET | `/tags` | 获取标签列表 | ✅ |
+| GET | `/tags` | 获取标签列表（公开接口） | ❌ |
 | GET | `/tags/{tag_id}` | 获取标签详情 | ✅ |
 | POST | `/tags` | 创建标签 | ✅ |
 | PUT | `/tags/{tag_id}` | 更新标签 | ✅ |

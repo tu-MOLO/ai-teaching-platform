@@ -2,6 +2,7 @@
 应用配置模块
 包含数据库、MinIO、JWT等配置
 """
+import json
 from typing import List, Optional, Union
 from pydantic import field_validator, AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -75,6 +76,17 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB
     ALLOWED_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx", ".txt",
         ".md", ".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mp3"]
+
+    @field_validator("ALLOWED_EXTENSIONS", mode="before")
+    @classmethod
+    def parse_allowed_extensions(cls, v: Union[str, List[str]]) -> List[str]:
+        """解析文件扩展名配置，支持 JSON 数组或逗号分隔字符串"""
+        if isinstance(v, str):
+            v = v.strip()
+            if v.startswith("["):
+                return json.loads(v)
+            return [ext.strip() for ext in v.split(",") if ext.strip()]
+        return v
 
     # Redis配置（可选，用于缓存和会话）
     REDIS_URL: Optional[str] = None

@@ -178,7 +178,7 @@ Store之间通过选择器（selector）实现细粒度订阅，避免不必要�
 前端存储Access Token (内存/Zustand)
 后续请求携带 Authorization: Bearer <access_token>
 
-Access Token过期 (15分钟)
+Access Token过期 (30分钟)
     │
     ▼
 前端检测到401 → 自动调用 POST /refresh
@@ -262,10 +262,10 @@ services:
 
 ### 7.1 认证与授权
 
-- **JWT双Token**: Access Token (15分钟) + Refresh Token (7天)
+- **JWT双Token**: Access Token (30分钟) + Refresh Token (7天)
 - **HttpOnly Cookie**: Refresh Token防XSS窃取
 - **密码安全**: bcrypt哈希 + 密保问题重置
-- **账户锁定**: 连续5次失败登录锁定15分钟
+- **账户锁定**: 连续5次失败登录锁定30分钟
 
 ### 7.2 请求安全
 

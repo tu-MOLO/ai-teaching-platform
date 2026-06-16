@@ -1,7 +1,7 @@
 # AI教学平台
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python" alt="Python 3.11+">
   <img src="https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react" alt="React 18">
   <img src="https://img.shields.io/badge/TypeScript-5.2-3178C6?logo=typescript" alt="TypeScript">
@@ -229,6 +229,11 @@ source venv/bin/activate
 
 # 安装依赖
 pip install -r requirements.txt
+
+# 安装系统依赖（PDF导出功能需要，WeasyPrint依赖）
+# Windows: 下载安装 GTK3 Runtime https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer
+# macOS: brew install cairo pango gdk-pixbuf libffi
+# Linux (Debian/Ubuntu): sudo apt-get install libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 # 配置环境变量
 cp .env.example .env

@@ -37,7 +37,7 @@ dependencies = [
     "aiohttp==3.9.3",
     "python-dotenv==1.0.1",
     "orjson==3.9.13",
-    "cryptography>=42.0.0",
+    "cryptography==43.0.3",
     "weasyprint==59.0",
     "python-docx==0.8.11",
 ]
