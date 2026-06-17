@@ -269,6 +269,13 @@ def init_rate_limiter():
     """
     global rate_limiter
 
+    from app.core.config import settings
+
+    if settings.TESTING:
+        from app.core.logging import get_logger
+        get_logger(__name__).info("TESTING mode: rate limiter disabled")
+        return
+
     configs = [
         ("login", 5, 60),
         ("register", 3, 3600),
@@ -279,7 +286,6 @@ def init_rate_limiter():
     ]
 
     try:
-        from app.core.config import settings
         if settings.REDIS_URL:
             import redis.asyncio as aioredis
             redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=False)

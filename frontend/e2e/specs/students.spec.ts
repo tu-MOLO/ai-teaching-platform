@@ -218,4 +218,54 @@ test.describe('学生管理', () => {
     const statusTag = studentRow.locator('.ant-tag')
     await expect(statusTag).toContainText('已停用')
   })
+
+  test('删除学生', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 通过 API 创建学生
+    const studentName = `E2E 待删除学生 ${Date.now().toString().slice(-6)}`
+    const createRes = await request.post('/api/v1/students', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: studentName,
+        gender: 'male',
+        grade: '一年级',
+        class_name: '一班',
+        birth_date: '2018-01-01',
+        is_active: true,
+      },
+    })
+    const createdStudent = await createRes.json()
+    const data = (createdStudent as any).data || (createdStudent as any)
+    const studentId = data?.id
+    expect(studentId).toBeTruthy()
+
+    // 1. 导航到学生列表
+    await page.goto('/students')
+    await page.waitForURL('**/students')
+
+    // 2. 等待表格加载并验证学生存在
+    await expect(page.getByText(studentName).first()).toBeVisible({ timeout: 5000 })
+
+    // 3. 在表格行中找到该学生的删除按钮并点击
+    // 学生列表使用 Ant Design Table，每行有操作列包含"删除"按钮
+    const studentRow = page.locator('.ant-table-tbody tr').filter({ hasText: studentName }).first()
+    const deleteButton = studentRow.getByRole('button', { name: '删除' })
+    await expect(deleteButton).toBeVisible({ timeout: 5000 })
+    await deleteButton.click()
+
+    // 4. 等待 Modal.confirm 确认弹窗出现
+    // Students 页面使用 Modal.confirm() 函数式调用
+    // 弹窗标题 "确认删除"，确认按钮文字 "确认删除"
+    const confirmButton = page.getByRole('button', { name: '确认删除' })
+    await expect(confirmButton).toBeVisible({ timeout: 5000 })
+    await confirmButton.click()
+
+    // 5. 验证学生从列表中移除（使用 first() 避免 Modal.confirm 弹窗中同名文本的 strict mode violation）
+    await expect(page.getByText(studentName).first()).not.toBeVisible({ timeout: 5000 })
+  })
 })

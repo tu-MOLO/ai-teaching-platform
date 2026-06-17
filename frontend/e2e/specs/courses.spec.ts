@@ -98,4 +98,48 @@ test.describe('课程管理', () => {
     // 4. 验证"新建课程"按钮存在
     await expect(page.getByRole('button', { name: /新建课程/ })).toBeVisible()
   })
+
+  test('删除课程', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 通过 API 创建课程
+    const courseName = `E2E 待删除课程 ${Date.now()}`
+    const courseData = await createCourse(request, token, {
+      name: courseName,
+      subject: '语文',
+      grade: '一年级',
+      schedule: '周五 14:00-14:40',
+      status: 'active',
+    })
+    const courseId = (courseData as any).id || (courseData as any).data?.id
+    expect(courseId).toBeTruthy()
+
+    // 1. 导航到课程列表
+    await page.goto('/courses')
+    await page.waitForURL('**/courses')
+
+    // 2. 等待表格加载并验证课程存在
+    await expect(page.getByText(courseName).first()).toBeVisible({ timeout: 5000 })
+
+    // 3. 在表格行中找到该课程的删除按钮并点击
+    // 课程列表使用 Ant Design Table，每行有操作列包含"删除"按钮
+    const courseRow = page.locator('.ant-table-tbody tr').filter({ hasText: courseName }).first()
+    const deleteButton = courseRow.getByRole('button', { name: '删除' })
+    await expect(deleteButton).toBeVisible({ timeout: 5000 })
+    await deleteButton.click()
+
+    // 4. 等待 Modal.confirm 确认弹窗出现
+    // Courses 页面使用 Modal.confirm() 函数式调用
+    // 弹窗标题 "确认删除"，确认按钮文字 "确认删除"
+    const confirmButton = page.getByRole('button', { name: '确认删除' })
+    await expect(confirmButton).toBeVisible({ timeout: 5000 })
+    await confirmButton.click()
+
+    // 5. 验证课程从列表中移除（使用 first() 避免 Modal.confirm 弹窗中同名文本的 strict mode violation）
+    await expect(page.getByText(courseName).first()).not.toBeVisible({ timeout: 5000 })
+  })
 })

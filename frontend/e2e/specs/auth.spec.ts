@@ -40,6 +40,72 @@ test.describe('注册', () => {
     // 10. 验证成功消息
     await expect(page.locator('.ant-message-success')).toBeVisible({ timeout: 5000 })
   })
+
+  test('注册失败 - 密码过短', async ({ page }) => {
+    // 1. 导航到注册页面
+    await page.goto('/register')
+    await page.waitForSelector('form[id="register"]')
+
+    // 2. 填写用户名
+    await page.fill('input[id="register_username"]', `e2e_shortpw_${Date.now()}`)
+
+    // 3. 填写邮箱
+    await page.fill('input[id="register_email"]', `e2e_shortpw_${Date.now()}@test.com`)
+
+    // 4. 填写过短的密码（少于8位）
+    await page.fill('input[id="register_password"]', 'Ab1')
+
+    // 5. 填写确认密码（与密码相同）
+    await page.fill('input[id="register_confirmPassword"]', 'Ab1')
+
+    // 6. 选择密保问题
+    await selectFirstOption(page, '密保问题')
+
+    // 7. 填写密保答案
+    await page.fill('input[id="register_security_answer"]', '测试答案')
+
+    // 8. 提交注册表单
+    await page.locator('.register-button').click()
+
+    // 9. 验证仍在注册页面（未跳转）
+    await expect(page).toHaveURL(/\/register/)
+
+    // 10. 验证出现表单校验错误提示
+    await expect(page.locator('.ant-form-item-explain-error').first()).toBeVisible({ timeout: 5000 })
+  })
+
+  test('注册失败 - 确认密码不一致', async ({ page }) => {
+    // 1. 导航到注册页面
+    await page.goto('/register')
+    await page.waitForSelector('form[id="register"]')
+
+    // 2. 填写用户名
+    await page.fill('input[id="register_username"]', `e2e_mismatch_${Date.now()}`)
+
+    // 3. 填写邮箱
+    await page.fill('input[id="register_email"]', `e2e_mismatch_${Date.now()}@test.com`)
+
+    // 4. 填写有效密码
+    await page.fill('input[id="register_password"]', 'TestPass1')
+
+    // 5. 填写不匹配的确认密码
+    await page.fill('input[id="register_confirmPassword"]', 'TestPass2')
+
+    // 6. 选择密保问题
+    await selectFirstOption(page, '密保问题')
+
+    // 7. 填写密保答案
+    await page.fill('input[id="register_security_answer"]', '测试答案')
+
+    // 8. 提交注册表单
+    await page.locator('.register-button').click()
+
+    // 9. 验证仍在注册页面（未跳转）
+    await expect(page).toHaveURL(/\/register/)
+
+    // 10. 验证出现表单校验错误提示
+    await expect(page.locator('.ant-form-item-explain-error').first()).toBeVisible({ timeout: 5000 })
+  })
 })
 
 test.describe('登录', () => {
@@ -160,5 +226,64 @@ test.describe('会话', () => {
     // 3. 尝试访问受保护页面 /，应被重定向到 /login
     await page.goto('/')
     await expect(page).toHaveURL(/\/login/)
+  })
+})
+
+test.describe('密码重置', () => {
+  test('通过 API 重置密码后使用新密码登录', async ({ page, request }) => {
+    // 1. 通过 API 注册一个带密保问题的测试用户
+    const testUsername = `e2e_reset_${Date.now()}`
+    const testEmail = `e2e_reset_${Date.now()}@test.com`
+    const oldPassword = 'OldPass1'
+    const newPassword = 'NewPass2'
+
+    await request.post('/api/v1/auth/register', {
+      data: {
+        username: testUsername,
+        email: testEmail,
+        password: oldPassword,
+        full_name: 'E2E Reset Test User',
+        security_question: '您的母校名称是什么？',
+        security_answer: '测试答案',
+      },
+    })
+
+    // 2. 通过 API 获取密保问题
+    const questionRes = await request.post('/api/v1/auth/password/reset/question', {
+      data: { username: testUsername },
+    })
+    expect(questionRes.ok()).toBeTruthy()
+    const questionData = await questionRes.json()
+    const securityQuestion = questionData?.data?.security_question || questionData?.security_question
+    expect(securityQuestion).toBeTruthy()
+
+    // 3. 通过 API 重置密码
+    const resetRes = await request.post('/api/v1/auth/password/reset', {
+      data: {
+        username: testUsername,
+        security_answer: '测试答案',
+        new_password: newPassword,
+      },
+    })
+    expect(resetRes.ok()).toBeTruthy()
+
+    // 4. 验证旧密码无法登录
+    const oldLoginRes = await request.post('/api/v1/auth/login', {
+      data: { username: testUsername, password: oldPassword },
+    })
+    expect(oldLoginRes.status()).toBe(401)
+
+    // 5. 导航到登录页面，使用新密码通过 UI 登录
+    await page.goto('/login')
+    await page.waitForSelector('form[id="login"]')
+
+    await page.fill('input[id="login_username"]', testUsername)
+    await page.fill('input[id="login_password"]', newPassword)
+    await page.click('button[type="submit"]')
+
+    // 6. 验证登录成功
+    await page.waitForURL('**/', { timeout: 15000, waitUntil: 'domcontentloaded' })
+    await expect(page).not.toHaveURL(/\/login/)
+    await expect(page.locator('.sidebar')).toBeVisible({ timeout: 5000 })
   })
 })

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Teaching Platform"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
+    TESTING: bool = False
 
     # API配置
     API_V1_STR: str = "/api/v1"

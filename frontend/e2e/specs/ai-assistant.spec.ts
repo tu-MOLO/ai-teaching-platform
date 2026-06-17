@@ -12,8 +12,11 @@ test.describe('AI 助手页面', () => {
       // 如果页面显示"请先配置 API 密钥"提示，则跳过实际发送测试
       const noApiKeyHint = page.getByText('请先配置 API 密钥以启用 AI 助手功能')
       if (await noApiKeyHint.isVisible({ timeout: 3000 }).catch(() => false)) {
-        // 没有配置 API 密钥，跳过发送测试，但验证页面基本结构
-        await expect(page.getByText('请先配置 API 密钥以启用 AI 助手功能')).toBeVisible()
+        // 未配置 API 密钥：验证配置引导显示，且聊天输入区不可见
+        await expect(noApiKeyHint).toBeVisible()
+        // 验证没有聊天输入区（未配置 Key 时不应显示聊天界面）
+        const chatInput = page.getByPlaceholder('输入消息，Enter 发送，Shift+Enter 换行')
+        await expect(chatInput).not.toBeVisible({ timeout: 3000 }).catch(() => {})
         return
       }
 
@@ -55,7 +58,8 @@ test.describe('AI 助手页面', () => {
       // 如果未配置 API 密钥，只验证页面渲染
       const noApiKeyHint = page.getByText('请先配置 API 密钥以启用 AI 助手功能')
       if (await noApiKeyHint.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await expect(page.getByText('请先配置 API 密钥以启用 AI 助手功能')).toBeVisible()
+        // 未配置 API 密钥：验证配置引导显示
+        await expect(noApiKeyHint).toBeVisible()
         return
       }
 

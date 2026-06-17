@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { Button, message } from 'antd'
-import { DownloadOutlined, LeftOutlined } from '@ant-design/icons'
+import { Button, message, Modal } from 'antd'
+import { DeleteOutlined, DownloadOutlined, LeftOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourcePreview } from '@/components'
-import { fetchResourceFileBlob, getResource, type Resource } from '../../services/resource'
+import { fetchResourceFileBlob, getResource, deleteResource, type Resource } from '../../services/resource'
 import './index.css'
 
 const escapeHtml = (unsafe: string): string =>
@@ -68,6 +68,26 @@ const ResourceDetail: React.FC = () => {
     }
   }
 
+  const handleDelete = () => {
+    if (!resource?.id) return
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除资源"${resource.name}"吗？此操作不可恢复。`,
+      okText: '确认删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await deleteResource(resource.id)
+          message.success('删除成功')
+          navigate('/resource-center')
+        } catch {
+          message.error('删除失败，请重试')
+        }
+      },
+    })
+  }
+
   if (loading) {
     return <div className="resource-center">加载中...</div>
   }
@@ -129,6 +149,9 @@ const ResourceDetail: React.FC = () => {
         <div className="resource-detail-actions">
           <Button type="primary" icon={<DownloadOutlined />} onClick={handleDownload}>
             下载文件
+          </Button>
+          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+            删除资源
           </Button>
         </div>
       </div>

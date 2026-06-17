@@ -200,4 +200,82 @@ test.describe('成长档案', () => {
     // 5. 验证作品类型的记录被过滤掉
     await expect(page.getByText('E2E 作品记录')).not.toBeVisible({ timeout: 3000 })
   })
+
+  test('编辑成长档案记录', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 通过 API 创建课程
+    const courseData = await createCourse(request, token, {
+      name: 'E2E 编辑档案测试课程',
+      subject: '语文',
+      grade: '一年级',
+      status: 'active',
+    })
+    const courseId = (courseData as any).id || (courseData as any).data?.id
+    expect(courseId).toBeTruthy()
+
+    // 通过 API 创建学生
+    const studentRes = await request.post('/api/v1/students', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: 'E2E 编辑档案测试学生',
+        gender: 'male',
+        birth_date: '2018-01-01',
+        grade: '一年级',
+        class_name: '一班',
+        is_active: true,
+      },
+    })
+    const studentData = await studentRes.json()
+    const studentId = (studentData as any).id || (studentData as any).data?.id
+    expect(studentId).toBeTruthy()
+
+    // 通过 API 创建一条档案记录
+    const originalTitle = `E2E 编辑前档案记录 ${Date.now()}`
+    const createRes = await request.post('/api/v1/portfolios', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        student_id: studentId,
+        type: 'work',
+        title: originalTitle,
+        content: '编辑前的原始档案内容',
+        cognitive_score: 80,
+        skill_score: 75,
+      },
+    })
+    const createdRecord = await createRes.json()
+    const recordData = (createdRecord as any).data || (createdRecord as any)
+    const recordId = recordData?.id
+    expect(recordId).toBeTruthy()
+
+    // 1. 导航到编辑档案记录页面
+    await page.goto(`/portfolio/${studentId}/edit-record/${recordId}`)
+    await page.waitForURL(`**/portfolio/${studentId}/edit-record/${recordId}`)
+
+    // 2. 等待表单加载完成
+    await page.waitForSelector('input[id="title"]', { state: 'visible', timeout: 10000 })
+    await page.waitForTimeout(1000)
+
+    // 3. 修改标题
+    const updatedTitle = `E2E 编辑后档案记录 ${Date.now()}`
+    await page.locator('input[id="title"]').clear()
+    await page.locator('input[id="title"]').fill(updatedTitle)
+
+    // 4. 修改内容描述
+    await page.locator('#content').clear()
+    await page.locator('#content').fill('这是编辑后的档案内容。')
+
+    // 5. 保存修改
+    await page.locator('button').filter({ hasText: /保\s*存/ }).click()
+
+    // 6. 验证跳转回学生详情页
+    await page.waitForURL(`**/portfolio/${studentId}`, { timeout: 10000 })
+
+    // 7. 验证更新后的记录标题在时间轴中可见
+    await expect(page.getByText(updatedTitle).first()).toBeVisible({ timeout: 5000 })
+  })
 })

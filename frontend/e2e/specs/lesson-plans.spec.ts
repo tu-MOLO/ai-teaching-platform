@@ -153,4 +153,61 @@ test.describe('教案管理', () => {
     // 7. 验证"标记完成"按钮重新出现
     await expect(page.locator('button').filter({ hasText: /标记完成/ })).toBeVisible({ timeout: 5000 })
   })
+
+  test('编辑教案', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token，通过 API 创建一条草稿教案
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 通过 API 创建一条草稿教案
+    const originalTitle = `E2E 编辑前教案 ${Date.now()}`
+    const createRes = await request.post('/api/v1/lesson-plans', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        title: originalTitle,
+        subject: '语文',
+        grade: '一年级',
+        duration: 40,
+        teaching_content: '编辑前的原始内容',
+        status: 'draft',
+      },
+    })
+    expect(createRes.ok()).toBeTruthy()
+    const createdPlan = await createRes.json()
+    const planId = (createdPlan as any).id || (createdPlan as any).data?.id
+    expect(planId).toBeTruthy()
+
+    // 1. 导航到教案编辑页面
+    await page.goto(`/lesson-planner/${planId}/edit`)
+    await page.waitForURL(`**/lesson-planner/${planId}/edit`)
+
+    // 2. 等待表单加载完成
+    await page.waitForSelector('input[id="title"]', { state: 'visible', timeout: 10000 })
+    await page.waitForTimeout(1000)
+
+    // 3. 修改教案标题
+    const updatedTitle = `E2E 编辑后教案 ${Date.now()}`
+    await page.locator('input[id="title"]').clear()
+    await page.locator('input[id="title"]').fill(updatedTitle)
+
+    // 4. 修改教学内容
+    await page.locator('#teaching_content').clear()
+    await page.locator('#teaching_content').fill('这是编辑后的教学内容。')
+
+    // 5. 保存修改（编辑页面的提交按钮可能是"保存修改"或"更新教案"等）
+    const saveButton = page.locator('button').filter({ hasText: /保\s*存|更\s*新|修\s*改/ })
+    await saveButton.click()
+
+    // 6. 验证导航到教案列表页
+    await page.waitForURL('**/lesson-planner', { timeout: 10000 }).catch(() => {
+      // 可能导航到详情页
+    })
+
+    // 7. 导航到教案列表验证更新后的标题可见
+    await page.goto('/lesson-planner/list/draft')
+    await page.waitForURL('**/lesson-planner/list/draft')
+    await expect(page.getByText(updatedTitle).first()).toBeVisible({ timeout: 5000 })
+  })
 })

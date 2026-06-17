@@ -33,7 +33,7 @@ async function globalSetup(): Promise<void> {
 async function seedDropdownOptions(): Promise<void> {
   const baseUrl = "http://localhost:8000";
   const defaults: Record<string, Array<[string, string]>> = {
-    student_gender: [["男", "男"], ["女", "女"]],
+    student_gender: [["男", "male"], ["女", "female"]],
     student_grade: [
       ["培智一年级", "培智一年级"],
       ["培智二年级", "培智二年级"],
@@ -143,8 +143,32 @@ async function seedDropdownOptions(): Promise<void> {
     if (!listRes.ok) continue;
     const listBody = await listRes.json();
     const existingItems = listBody?.data || listBody?.items || [];
+
+    // 清除与目标值不匹配的旧选项（确保 seed 值始终正确）
+    const targetValues = new Set(items.map(([, value]) => value));
+    for (const item of existingItems) {
+      const value = item.value || item.data?.value;
+      if (value && !targetValues.has(value)) {
+        const id = item.id || item.data?.id;
+        if (id) {
+          await fetch(`${baseUrl}/api/v1/dropdown-options/${id}`, {
+            method: "DELETE",
+            headers: authHeaders,
+          }).catch(() => {});
+          console.log(`[global-setup] 删除旧选项 ${groupKey}: ${item.label} (value=${value})`);
+        }
+      }
+    }
+
+    // 重新计算现有选项（删除后）
+    const refreshRes = await fetch(
+      `${baseUrl}/api/v1/dropdown-options?group_key=${groupKey}&active_only=false`,
+      { headers: authHeaders }
+    );
+    const refreshBody = refreshRes.ok ? await refreshRes.json() : listBody;
+    const refreshedItems = refreshBody?.data || refreshBody?.items || [];
     const existingValues = new Set(
-      existingItems.map((item: any) => item.value)
+      refreshedItems.map((item: any) => item.value)
     );
 
     for (const [label, value] of items) {
@@ -157,13 +181,13 @@ async function seedDropdownOptions(): Promise<void> {
           group_key: groupKey,
           label,
           value,
-          sort_order: existingItems.length,
+          sort_order: refreshedItems.length,
           is_active: true,
         }),
       });
 
       if (createRes.ok) {
-        console.log(`[global-setup] 创建选项 ${groupKey}: ${label}`);
+        console.log(`[global-setup] 创建选项 ${groupKey}: ${label}=${value}`);
       }
     }
   }
