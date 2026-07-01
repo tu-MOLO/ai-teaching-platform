@@ -142,4 +142,140 @@ test.describe('课程管理', () => {
     // 5. 验证课程从列表中移除（使用 first() 避免 Modal.confirm 弹窗中同名文本的 strict mode violation）
     await expect(page.getByText(courseName).first()).not.toBeVisible({ timeout: 5000 })
   })
+
+  test('课程列表分页深度测试', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 1. 通过 API 批量创建 15 个课程（超过默认分页大小 10）
+    const createdCourseIds: string[] = []
+    const timestamp = Date.now()
+    for (let i = 1; i <= 15; i++) {
+      const courseData = await createCourse(request, token, {
+        name: `E2E 分页测试课程 ${i} - ${timestamp}`,
+        subject: '语文',
+        grade: '一年级',
+        schedule: '周一 9:00-9:40',
+        status: 'active',
+      })
+      const courseId = (courseData as any).id || (courseData as any).data?.id
+      if (courseId) {
+        createdCourseIds.push(courseId)
+      }
+    }
+    expect(createdCourseIds.length).toBe(15)
+
+    try {
+      // 2. 导航到课程列表
+      await page.goto('/courses')
+      await page.waitForURL('**/courses')
+
+      // 3. 等待表格加载完成
+      await page.waitForSelector('.ant-table-tbody tr', { timeout: 10000 })
+
+      // 4. 验证分页器存在
+      const pagination = page.locator('.ant-pagination')
+      await expect(pagination).toBeVisible({ timeout: 5000 })
+
+      // 5. 验证当前在第一页（页码 1 高亮）
+      const activePage = page.locator('.ant-pagination-item-active')
+      await expect(activePage).toBeVisible({ timeout: 5000 })
+      await expect(activePage).toHaveText('1')
+
+      // 6. 点击"下一页"按钮
+      const nextButton = page.locator('.ant-pagination-next')
+      await expect(nextButton).toBeVisible({ timeout: 5000 })
+      await nextButton.click()
+
+      // 7. 等待表格内容更新
+      await page.waitForSelector('.ant-table-tbody tr', { timeout: 10000 })
+
+      // 8. 验证分页器状态更新（当前页码变为 2）
+      await expect(activePage).toHaveText('2', { timeout: 5000 })
+    } finally {
+      // 9. 清理创建的课程数据
+      for (const courseId of createdCourseIds) {
+        try {
+          await request.delete(`/api/v1/courses/${courseId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+        } catch {
+          // 忽略清理失败
+        }
+      }
+    }
+  })
+
+  test('课程列表搜索测试', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 1. 通过 API 创建一个已知名称的课程
+    const searchTestCourseName = 'E2E搜索测试课程ABC'
+    const courseData = await createCourse(request, token, {
+      name: searchTestCourseName,
+      subject: '数学',
+      grade: '二年级',
+      schedule: '周三 10:00-10:40',
+      status: 'active',
+    })
+    const courseId = (courseData as any).id || (courseData as any).data?.id
+    expect(courseId).toBeTruthy()
+
+    try {
+      // 2. 导航到课程列表
+      await page.goto('/courses')
+      await page.waitForURL('**/courses')
+
+      // 3. 等待表格加载完成
+      await page.waitForSelector('.ant-table-tbody tr', { timeout: 10000 })
+
+      // 4. 在搜索框输入关键词"ABC"
+      const searchInput = page.locator('input[placeholder="搜索课程名称或教师"]')
+      await expect(searchInput).toBeVisible({ timeout: 5000 })
+      await searchInput.fill('ABC')
+
+      // 5. 等待搜索结果加载
+      await page.waitForSelector('.ant-table-tbody tr', { timeout: 10000 })
+
+      // 6. 验证表格仅显示匹配的课程（包含"ABC"文本）
+      const matchingRows = page.locator('.ant-table-tbody tr').filter({ hasText: 'ABC' })
+      await expect(matchingRows.first()).toBeVisible({ timeout: 5000 })
+
+      // 7. 验证搜索到的课程包含我们创建的课程名称
+      await expect(page.getByText(searchTestCourseName).first()).toBeVisible({ timeout: 5000 })
+
+      // 8. 清空搜索框（点击清除按钮）
+      const clearButton = page.locator('.ant-input-clear-icon')
+      if (await clearButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await clearButton.click()
+      } else {
+        // 手动清空
+        await searchInput.clear()
+      }
+
+      // 9. 等待表格恢复显示所有课程
+      await page.waitForSelector('.ant-table-tbody tr', { timeout: 10000 })
+
+      // 10. 验证表格恢复显示（应该有多行数据）
+      const tableRows = page.locator('.ant-table-tbody tr')
+      const rowCount = await tableRows.count()
+      expect(rowCount).toBeGreaterThan(0)
+    } finally {
+      // 11. 清理创建的课程数据
+      try {
+        await request.delete(`/api/v1/courses/${courseId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      } catch {
+        // 忽略清理失败
+      }
+    }
+  })
 })

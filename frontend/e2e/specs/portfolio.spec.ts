@@ -276,4 +276,81 @@ test.describe('成长档案', () => {
     // 7. 验证更新后的记录标题在时间轴中可见
     await expect(page.getByText(updatedTitle).first()).toBeVisible({ timeout: 5000 })
   })
+
+  test('删除档案记录', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 通过 API 创建学生
+    const studentRes = await request.post('/api/v1/students', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        name: 'E2E档案删除测试学生',
+        gender: 'male',
+        grade: '一年级',
+        class_name: '一班',
+        birth_date: '2018-01-01',
+        is_active: true,
+      },
+    })
+    const studentData = await studentRes.json()
+    const studentId = (studentData as any).id || (studentData as any).data?.id
+    expect(studentId).toBeTruthy()
+
+    // 通过 API 为该学生创建一条成长档案记录
+    const recordTitle = 'E2E待删除档案记录'
+    const portfolioRes = await request.post('/api/v1/portfolios', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        student_id: studentId,
+        type: 'work',
+        title: recordTitle,
+        content: '这是待删除的测试记录',
+      },
+    })
+    const portfolioData = await portfolioRes.json()
+    const recordId = (portfolioData as any).id || (portfolioData as any).data?.id
+    expect(recordId).toBeTruthy()
+
+    // 1. 导航到该学生的档案详情页
+    await page.goto(`/portfolio/${studentId}`)
+    await page.waitForURL(`**/portfolio/${studentId}`)
+
+    // 2. 验证记录在时间轴中存在（显示记录标题）
+    await expect(page.getByText(recordTitle)).toBeVisible({ timeout: 5000 })
+
+    // 3. 找到该记录并点击"删除"按钮
+    // 定位包含该标题的记录卡片，然后找到其中的删除按钮
+    const recordCard = page.locator('.timeline-item-card').filter({ hasText: recordTitle })
+    const deleteButton = recordCard.locator('button').filter({ hasText: '删除' })
+    await deleteButton.click()
+
+    // 4. 验证确认弹窗出现（Popconfirm）
+    const popconfirm = page.locator('.ant-popconfirm')
+    await expect(popconfirm).toBeVisible({ timeout: 5000 })
+
+    // 5. 点击"确定"按钮确认删除
+    // Popconfirm 内的确认按钮文本为"删除"（okText="删除"）
+    const confirmButton = popconfirm.locator('button').filter({ hasText: '删除' })
+    await confirmButton.click()
+
+    // 6. 验证记录从时间轴中移除（记录标题不再可见）
+    await expect(page.getByText(recordTitle)).not.toBeVisible({ timeout: 5000 })
+
+    // 7. 验证成功消息出现
+    await expect(page.locator('.ant-message').getByText('记录删除成功')).toBeVisible({ timeout: 5000 })
+
+    // 8. 清理创建的数据（学生和相关档案记录）
+    // 删除学生时，相关档案记录应级联删除
+    try {
+      await request.delete(`/api/v1/students/${studentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    } catch {
+      // 忽略清理失败
+    }
+  })
 })

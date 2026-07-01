@@ -96,7 +96,7 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             v = v.strip()
             if v.startswith("["):
-                return json.loads(v)
+                return json.loads(v)  # type: ignore[no-any-return]
             return [ext.strip() for ext in v.split(",") if ext.strip()]
         return v
 

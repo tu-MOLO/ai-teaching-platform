@@ -52,7 +52,7 @@ class RateLimiter:
     ) -> str:
         config = self._configs.get(config_name)
         if config and config.key_func:
-            return config.key_func(request)
+            return config.key_func(request)  # type: ignore[no-any-return]
         if credentials:
             return f"{config_name}:{credentials.credentials}"
         client_ip = self._get_client_ip(request)

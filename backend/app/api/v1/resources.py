@@ -51,7 +51,7 @@ def serialize_resource(resource, file_url: str | None = None) -> dict:
     )
     if file_url is not None:
         resource_dict["file_url"] = file_url
-    return resource_dict
+    return resource_dict  # type: ignore[no-any-return]
 
 
 def handle_resource_errors(func):

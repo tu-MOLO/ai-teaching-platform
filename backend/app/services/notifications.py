@@ -228,7 +228,7 @@ class NotificationService:
         )
         result = await db.execute(stmt)
         await db.commit()
-        return result.rowcount  # type: ignore[attr-defined]
+        return result.rowcount  # type: ignore[attr-defined, no-any-return]
 
     @staticmethod
     async def mark_multiple_as_read(
@@ -258,7 +258,7 @@ class NotificationService:
         )
         result = await db.execute(stmt)
         await db.commit()
-        return result.rowcount  # type: ignore[attr-defined]
+        return result.rowcount  # type: ignore[attr-defined, no-any-return]
 
     @staticmethod
     async def update(

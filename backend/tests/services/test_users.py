@@ -1,10 +1,13 @@
 """
 用户服务测试
 """
-import pytest
+
 from unittest.mock import AsyncMock, MagicMock
-from app.services.users import UserService
+
+import pytest
+
 from app.schemas.user import UserUpdate
+from app.services.users import UserService
 
 
 class TestUserService:

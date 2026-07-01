@@ -65,7 +65,9 @@ class ExportService:
             }
         """)
 
-        pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
+        pdf_bytes: bytes = HTML(string=html_content).write_pdf(  # type: ignore[no-any-return]
+            stylesheets=[css]
+        )
         return pdf_bytes
 
     def _add_teaching_goals_to_doc(self, doc, lesson_plan) -> None:
@@ -299,7 +301,9 @@ class ExportService:
             }
         """)
 
-        pdf_bytes = HTML(string=html_content).write_pdf(stylesheets=[css])
+        pdf_bytes: bytes = HTML(string=html_content).write_pdf(  # type: ignore[no-any-return]
+            stylesheets=[css]
+        )
         return pdf_bytes
 
     def _generate_portfolio_html(self, student, portfolios) -> str:

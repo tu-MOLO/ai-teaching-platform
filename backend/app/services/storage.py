@@ -9,7 +9,7 @@ import mimetypes
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Optional, Union
 
 from minio import Minio
 from minio.commonconfig import CopySource
@@ -35,7 +35,13 @@ class LocalFileStorage:
         self.base_path.mkdir(exist_ok=True, parents=True)
         logger.info(f"Local storage initialized at: {self.base_path}")
 
-    def upload_file(self, file_data, object_name, content_type=None, metadata=None):
+    def upload_file(
+        self,
+        file_data: Union[bytes, BinaryIO, str, Path],
+        object_name: str,
+        content_type: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> None:
         """上传文件到本地存储"""
         file_path = self.base_path / object_name
         if ".." in object_name:
@@ -49,24 +55,34 @@ class LocalFileStorage:
             with open(file_path, "wb") as f:
                 f.write(file_data)
         else:
-            file_data.seek(0)
+            file_data.seek(0)  # type: ignore[union-attr]
             with open(file_path, "wb") as f:
-                f.write(file_data.read())
+                f.write(file_data.read())  # type: ignore[union-attr]
 
         logger.info(f"Uploaded file: {object_name}")
         return None
 
-    async def upload_file_async(self, file_data, object_name, content_type=None, metadata=None):
+    async def upload_file_async(
+        self,
+        file_data: Union[bytes, BinaryIO, str, Path],
+        object_name: str,
+        content_type: Optional[str] = None,
+        metadata: Optional[dict] = None,
+    ) -> None:
         """异步上传文件到本地存储"""
         return await asyncio.to_thread(
             self.upload_file, file_data, object_name, content_type, metadata
         )
 
-    async def download_file_async(self, object_name, file_path=None):
+    async def download_file_async(
+        self, object_name: str, file_path: Optional[Union[str, Path]] = None
+    ) -> Union[bytes, Path]:
         """异步从本地存储下载文件"""
         return await asyncio.to_thread(self.download_file, object_name, file_path)
 
-    def download_file(self, object_name, file_path=None):
+    def download_file(
+        self, object_name: str, file_path: Optional[Union[str, Path]] = None
+    ) -> Union[bytes, Path]:
         """从本地存储下载文件"""
         source_path = self.base_path / object_name
         if not source_path.exists():
@@ -81,18 +97,18 @@ class LocalFileStorage:
             with open(source_path, "rb") as f:
                 return f.read()
 
-    def delete_file(self, object_name):
+    def delete_file(self, object_name: str) -> None:
         """从本地存储删除文件"""
         file_path = self.base_path / object_name
         if file_path.exists():
             file_path.unlink()
             logger.info(f"Deleted file: {object_name}")
 
-    def get_file_url(self, object_name, expires=None):
+    def get_file_url(self, object_name: str, expires: Any = None) -> str:
         """获取文件的URL"""
         return f"/api/v1/resources/file/{object_name}"
 
-    def file_exists(self, object_name):
+    def file_exists(self, object_name: str) -> bool:
         """检查文件是否存在"""
         return (self.base_path / object_name).exists()
 
@@ -163,7 +179,7 @@ class MinIOStorage:
             self._minio_available = False
             return False
 
-    def _get_fallback_storage(self):
+    def _get_fallback_storage(self) -> LocalFileStorage:
         """
         获取降级存储实例
 
@@ -299,7 +315,7 @@ class MinIOStorage:
         """
         if not self._check_connection():
             logger.info(f"Using local storage fallback for upload: {object_name}")
-            return self._get_fallback_storage().upload_file(
+            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
                 file_data, object_name, content_type, metadata
             )
 
@@ -321,7 +337,7 @@ class MinIOStorage:
             logger.error(
                 f"Failed to upload file {object_name} to MinIO: {e}. Falling back to local storage."
             )
-            return self._get_fallback_storage().upload_file(
+            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
                 file_data, object_name, content_type, metadata
             )
         except Exception as e:
@@ -329,7 +345,7 @@ class MinIOStorage:
                 f"Unexpected error uploading file {object_name}: {e}. "
                 "Falling back to local storage."
             )
-            return self._get_fallback_storage().upload_file(
+            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
                 file_data, object_name, content_type, metadata
             )
 

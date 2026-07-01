@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixture'
+import { loginViaApi, createCourse } from '../utils/api-helper'
 
 test.describe('仪表盘与报告页面', () => {
   test.describe('仪表盘数据展示', () => {
@@ -36,6 +37,59 @@ test.describe('仪表盘与报告页面', () => {
 
       // 验证系统通知区域存在
       await expect(page.getByText('系统通知')).toBeVisible({ timeout: 5000 })
+    })
+
+    test('创建课程后仪表盘统计更新', async ({ authenticatedPage, testUser, request }) => {
+      const page = authenticatedPage
+
+      // 获取 API token
+      const token = await loginViaApi(request, testUser.username, testUser.password)
+      expect(token).toBeTruthy()
+
+      // 1. 导航到仪表盘
+      await page.goto('/')
+      await page.waitForLoadState('networkidle')
+
+      // 2. 等待统计卡片加载完成
+      await expect(page.locator('.stat-item-value').first()).toBeVisible({ timeout: 10000 })
+
+      // 3. 记录当前"总课程数"的值
+      // 找到包含"总课程数"文本的 stat-item，然后获取其 stat-item-value
+      const totalCoursesItem = page.locator('.stat-item').filter({ hasText: '总课程数' })
+      const totalCoursesValue = await totalCoursesItem.locator('.stat-item-value').textContent()
+      const initialCourseCount = parseInt(totalCoursesValue?.replace(/,/g, '') || '0', 10)
+
+      // 4. 通过 API 创建一个新课程
+      const courseData = await createCourse(request, token, {
+        name: `E2E 仪表盘测试课程 ${Date.now()}`,
+        subject: '数学',
+        grade: '三年级',
+        schedule: '周一 9:00-9:40',
+        status: 'active',
+      })
+      const courseId = (courseData as any).id || (courseData as any).data?.id
+      expect(courseId).toBeTruthy()
+
+      try {
+        // 5. 刷新仪表盘页面
+        await page.reload()
+        await page.waitForLoadState('networkidle')
+
+        // 6. 等待数据加载完成
+        await expect(page.locator('.stat-item-value').first()).toBeVisible({ timeout: 10000 })
+
+        // 7. 验证"总课程数"比之前增加 1
+        const updatedTotalCoursesItem = page.locator('.stat-item').filter({ hasText: '总课程数' })
+        const updatedTotalCoursesValue = await updatedTotalCoursesItem.locator('.stat-item-value').textContent()
+        const updatedCourseCount = parseInt(updatedTotalCoursesValue?.replace(/,/g, '') || '0', 10)
+
+        expect(updatedCourseCount).toBe(initialCourseCount + 1)
+      } finally {
+        // 8. 清理：删除创建的课程
+        await request.delete(`/api/v1/courses/${courseId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {})
+      }
     })
   })
 

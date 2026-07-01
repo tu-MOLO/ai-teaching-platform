@@ -1,11 +1,11 @@
 """
 分页工具测试
 """
-import pytest
+
 from app.utils.pagination import (
     calculate_offset,
-    calculate_total_pages,
     calculate_pagination_info,
+    calculate_total_pages,
 )
 
 

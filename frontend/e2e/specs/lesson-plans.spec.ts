@@ -210,4 +210,52 @@ test.describe('教案管理', () => {
     await page.waitForURL('**/lesson-planner/list/draft')
     await expect(page.getByText(updatedTitle).first()).toBeVisible({ timeout: 5000 })
   })
+
+  test('查看教案详情', async ({ authenticatedPage, testUser, request }) => {
+    const page = authenticatedPage
+
+    // 获取 API token
+    const token = await loginViaApi(request, testUser.username, testUser.password)
+    expect(token).toBeTruthy()
+
+    // 1. 通过 API 创建一个教案
+    const lessonTitle = 'E2E教案详情测试'
+    const createRes = await request.post('/api/v1/lesson-plans', {
+      headers: { Authorization: `Bearer ${token}` },
+      data: {
+        title: lessonTitle,
+        subject: '语文',
+        grade: '一年级',
+        teaching_content: '测试教学内容',
+        status: 'draft',
+      },
+    })
+    expect(createRes.ok()).toBeTruthy()
+    const createdPlan = await createRes.json()
+    const planId = (createdPlan as any).id || (createdPlan as any).data?.id
+    expect(planId).toBeTruthy()
+
+    try {
+      // 2. 导航到教案详情页
+      await page.goto(`/lesson-planner/${planId}`)
+      await page.waitForURL(`**/lesson-planner/${planId}`)
+
+      // 3. 验证页面显示教案标题
+      await expect(page.getByText(lessonTitle).first()).toBeVisible({ timeout: 5000 })
+
+      // 4. 验证显示状态标签（"草稿"）
+      await expect(page.getByText('草稿').first()).toBeVisible({ timeout: 5000 })
+
+      // 5. 验证显示教学内容区域（文本"教学内容"可见）
+      await expect(page.getByText('教学内容').first()).toBeVisible({ timeout: 5000 })
+
+      // 6. 验证"编辑"按钮存在
+      await expect(page.locator('button').filter({ hasText: /编辑/ })).toBeVisible({ timeout: 5000 })
+    } finally {
+      // 测试后清理创建的教案数据
+      await request.delete(`/api/v1/lesson-plans/${planId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {})
+    }
+  })
 })
