@@ -1,10 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.exceptions import AlreadyExistsException
+import pytest
 
-from app.services.dropdown_options import DropdownOptionService
+from app.core.exceptions import AlreadyExistsException
 from app.schemas.dropdown_option import DropdownOptionCreate, DropdownOptionUpdate
+from app.services.dropdown_options import DropdownOptionService
 
 
 class TestListGroupedOptions:
@@ -19,7 +19,9 @@ class TestListGroupedOptions:
         opt3 = MagicMock()
         opt3.group_key = "subject"
 
-        with patch.object(DropdownOptionService, "list_options", new_callable=AsyncMock) as mock_list:
+        with patch.object(
+            DropdownOptionService, "list_options", new_callable=AsyncMock
+        ) as mock_list:
             mock_list.return_value = [opt1, opt2, opt3]
             result = await DropdownOptionService.list_grouped_options(mock_db, active_only=False)
 
@@ -32,7 +34,9 @@ class TestListGroupedOptions:
     async def test_empty_options(self):
         mock_db = AsyncMock()
 
-        with patch.object(DropdownOptionService, "list_options", new_callable=AsyncMock) as mock_list:
+        with patch.object(
+            DropdownOptionService, "list_options", new_callable=AsyncMock
+        ) as mock_list:
             mock_list.return_value = []
             result = await DropdownOptionService.list_grouped_options(mock_db, active_only=True)
 
@@ -72,7 +76,9 @@ class TestUpdateOption:
 
         with patch.object(DropdownOptionService, "get_option", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = None
-            result = await DropdownOptionService.update_option(mock_db, "nonexistent", mock_option_in)
+            result = await DropdownOptionService.update_option(
+                mock_db, "nonexistent", mock_option_in
+            )
 
         assert result is None
 
@@ -169,12 +175,22 @@ class TestDropdownOptionServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_update_option_duplicate_value_raises_error(self, db_session):
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="grade", label="五年级", value="grade_5",
-        ))
-        created = await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="grade", label="六年级", value="grade_6",
-        ))
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="grade",
+                label="五年级",
+                value="grade_5",
+            ),
+        )
+        created = await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="grade",
+                label="六年级",
+                value="grade_6",
+            ),
+        )
 
         update_data = DropdownOptionUpdate(value="grade_5")
         with pytest.raises(AlreadyExistsException):
@@ -183,7 +199,9 @@ class TestDropdownOptionServiceIntegration:
     @pytest.mark.asyncio
     async def test_update_option_returns_none_for_nonexistent(self, db_session):
         update_data = DropdownOptionUpdate(label="不存在")
-        result = await DropdownOptionService.update_option(db_session, "nonexistent-id", update_data)
+        result = await DropdownOptionService.update_option(
+            db_session, "nonexistent-id", update_data
+        )
         assert result is None
 
     @pytest.mark.asyncio
@@ -208,15 +226,30 @@ class TestDropdownOptionServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_list_grouped_options_with_real_db(self, db_session):
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="grouped_grade", label="一年级", value="g1",
-        ))
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="grouped_grade", label="二年级", value="g2",
-        ))
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="grouped_subject", label="语文", value="chinese",
-        ))
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="grouped_grade",
+                label="一年级",
+                value="g1",
+            ),
+        )
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="grouped_grade",
+                label="二年级",
+                value="g2",
+            ),
+        )
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="grouped_subject",
+                label="语文",
+                value="chinese",
+            ),
+        )
 
         grouped = await DropdownOptionService.list_grouped_options(db_session, active_only=True)
         assert "grouped_grade" in grouped
@@ -226,20 +259,32 @@ class TestDropdownOptionServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_count_options_with_real_db(self, db_session):
-        initial_count = await DropdownOptionService.count_options(db_session, group_key="count_grade")
+        initial_count = await DropdownOptionService.count_options(
+            db_session, group_key="count_grade"
+        )
 
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="count_grade", label="一年级", value="cg1",
-        ))
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="count_grade",
+                label="一年级",
+                value="cg1",
+            ),
+        )
 
         new_count = await DropdownOptionService.count_options(db_session, group_key="count_grade")
         assert new_count == initial_count + 1
 
     @pytest.mark.asyncio
     async def test_count_options_all_groups(self, db_session):
-        await DropdownOptionService.create_option(db_session, DropdownOptionCreate(
-            group_key="count_all", label="选项", value="ca1",
-        ))
+        await DropdownOptionService.create_option(
+            db_session,
+            DropdownOptionCreate(
+                group_key="count_all",
+                label="选项",
+                value="ca1",
+            ),
+        )
 
         count = await DropdownOptionService.count_options(db_session)
         assert count >= 1

@@ -1,16 +1,17 @@
 """
 学生服务
 """
+
 from typing import List, Optional, cast
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.student import Student
-from app.models.portfolio import Portfolio
 from app.models.notification import NotificationType
-from app.schemas.student import StudentCreate, StudentUpdate
+from app.models.portfolio import Portfolio
+from app.models.student import Student
 from app.schemas.notification import NotificationCreate
+from app.schemas.student import StudentCreate, StudentUpdate
 from app.services.notifications import NotificationService
 
 
@@ -44,7 +45,7 @@ class StudentService:
                 user_id=user_id,
                 target_id=db_student.id,
                 target_type="student",
-            )
+            ),
         )
 
         return db_student
@@ -66,12 +67,14 @@ class StudentService:
             select(Student).where(
                 Student.id == student_id,
                 Student.user_id == user_id,
-                Student.is_deleted == False  # noqa: E712
+                Student.is_deleted == False,  # noqa: E712
             )
         )
         student = result.scalar_one_or_none()
         if student:
-            student.progress = await StudentService.calculate_progress(db, student_id)  # type: ignore[attr-defined]
+            # Calculate and update progress
+            progress = await StudentService.calculate_progress(db, student_id)
+            student.progress = progress  # type: ignore
         return student
 
     @staticmethod
@@ -82,7 +85,7 @@ class StudentService:
         limit: int = 100,
         keyword: Optional[str] = None,
         grade: Optional[str] = None,
-        class_name: Optional[str] = None
+        class_name: Optional[str] = None,
     ) -> List[Student]:
         """
         获取学生列表（带用户隔离）
@@ -99,8 +102,7 @@ class StudentService:
             学生列表，每个学生对象包含 progress 计算字段
         """
         query = select(Student).where(
-            Student.user_id == user_id,
-            Student.is_deleted == False  # noqa: E712
+            Student.user_id == user_id, Student.is_deleted == False  # noqa: E712
         )
 
         if keyword:
@@ -126,7 +128,7 @@ class StudentService:
             result = await db.execute(
                 select(Portfolio).where(
                     Portfolio.student_id.in_(student_ids),
-                    Portfolio.is_deleted == False  # noqa: E712
+                    Portfolio.is_deleted == False,  # noqa: E712
                 )
             )
             all_portfolios: list[Portfolio] = cast(list[Portfolio], result.scalars().all())
@@ -148,10 +150,7 @@ class StudentService:
 
     @staticmethod
     async def update(
-        db: AsyncSession,
-        student_id: str,
-        student_in: StudentUpdate,
-        user_id: str
+        db: AsyncSession, student_id: str, student_in: StudentUpdate, user_id: str
     ) -> Optional[Student]:
         """
         更新学生（带所有权验证）
@@ -203,7 +202,7 @@ class StudentService:
         user_id: str,
         keyword: Optional[str] = None,
         grade: Optional[str] = None,
-        class_name: Optional[str] = None
+        class_name: Optional[str] = None,
     ) -> int:
         """
         统计学生数量（带用户隔离）
@@ -217,9 +216,10 @@ class StudentService:
         Returns:
             学生数量
         """
-        query = select(func.count()).select_from(Student).where(
-            Student.user_id == user_id,
-            Student.is_deleted == False  # noqa: E712
+        query = (
+            select(func.count())
+            .select_from(Student)
+            .where(Student.user_id == user_id, Student.is_deleted == False)  # noqa: E712
         )
 
         if keyword:
@@ -270,8 +270,7 @@ class StudentService:
         """
         result = await db.execute(
             select(Portfolio).where(
-                Portfolio.student_id == student_id,
-                Portfolio.is_deleted == False  # noqa: E712
+                Portfolio.student_id == student_id, Portfolio.is_deleted == False  # noqa: E712
             )
         )
         portfolios = result.scalars().all()
@@ -282,11 +281,7 @@ class StudentService:
         return StudentService._compute_progress_from_portfolios(list(portfolios))
 
     @staticmethod
-    async def verify_ownership(
-        db: AsyncSession,
-        student_id: str,
-        user_id: str
-    ) -> bool:
+    async def verify_ownership(db: AsyncSession, student_id: str, user_id: str) -> bool:
         """
         验证学生是否属于指定用户
 
@@ -302,7 +297,7 @@ class StudentService:
             select(Student).where(
                 Student.id == student_id,
                 Student.user_id == user_id,
-                Student.is_deleted == False  # noqa: E712
+                Student.is_deleted == False,  # noqa: E712
             )
         )
         return result.scalar_one_or_none() is not None

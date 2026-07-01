@@ -1,8 +1,8 @@
 import pytest
 from fastapi import FastAPI
 
-from app.main import create_application, register_exception_handlers
 from app.core.exceptions import BusinessException
+from app.main import create_application, register_exception_handlers
 
 
 class TestCreateApplication:

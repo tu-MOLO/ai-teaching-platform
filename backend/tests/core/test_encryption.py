@@ -1,4 +1,4 @@
-from app.core.security import encrypt_api_key, decrypt_api_key, mask_api_key
+from app.core.security import decrypt_api_key, encrypt_api_key, mask_api_key
 
 
 class TestEncryptApiKey:

@@ -21,7 +21,9 @@ class TestAIAPI:
 
     @pytest.mark.asyncio
     async def test_delete_nonexistent_conversation(self, client, test_user, auth_headers):
-        response = await client.delete("/api/v1/ai/conversations/nonexistent-id", headers=auth_headers)
+        response = await client.delete(
+            "/api/v1/ai/conversations/nonexistent-id", headers=auth_headers
+        )
         assert response.status_code == 404
 
     @pytest.mark.asyncio

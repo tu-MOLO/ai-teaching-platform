@@ -1,15 +1,15 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.core.performance import (
-    QueryOptimizer,
-    PerformanceMonitor,
-    SimpleMemoryCache,
-    get_cache,
-    cached,
-    invalidate_cache,
     PaginationHelper,
+    PerformanceMonitor,
+    QueryOptimizer,
+    SimpleMemoryCache,
+    cached,
+    get_cache,
+    invalidate_cache,
 )
 
 
@@ -21,6 +21,7 @@ def cache():
 @pytest.fixture(autouse=True)
 def reset_global_cache():
     import app.core.performance as perf_module
+
     original = perf_module._cache_instance
     perf_module._cache_instance = None
     yield

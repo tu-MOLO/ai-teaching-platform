@@ -1,10 +1,10 @@
 import pytest
 
 from app.services.storage import (
-    is_allowed_file,
     _verify_magic_bytes,
     _verify_mime_type,
     generate_object_name,
+    is_allowed_file,
 )
 
 

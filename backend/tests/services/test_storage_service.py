@@ -1,16 +1,16 @@
-import io
 import asyncio
-from pathlib import Path
+import io
 from datetime import timedelta
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.services.storage import (
     LocalFileStorage,
     MinIOStorage,
-    get_storage,
     generate_object_name,
+    get_storage,
 )
 
 
@@ -266,7 +266,8 @@ class TestMinIOStorageUploadFile:
         s.upload_file(b"data", "test.txt")
 
         mock_local.upload_file.assert_called_once_with(
-            b"data", "test.txt", "application/octet-stream", None)
+            b"data", "test.txt", "application/octet-stream", None
+        )
 
 
 class TestMinIOStorageDownloadFile:
@@ -332,9 +333,7 @@ class TestMinIOStorageDeleteFile:
 
         s.delete_file("test.txt")
 
-        s.client.remove_object.assert_called_once_with(
-            bucket_name="bucket", object_name="test.txt"
-        )
+        s.client.remove_object.assert_called_once_with(bucket_name="bucket", object_name="test.txt")
 
 
 class TestMinIOStorageDeleteFiles:
@@ -443,9 +442,7 @@ class TestMinIOStorageFileExists:
         s = MinIOStorage()
         s.client = MagicMock()
         s.bucket_name = "bucket"
-        s.client.stat_object.side_effect = S3Error(
-            "NoSuchKey", "msg", "res", "req_id", None, None
-        )
+        s.client.stat_object.side_effect = S3Error("NoSuchKey", "msg", "res", "req_id", None, None)
 
         assert s.file_exists("test.txt") is False
         mock_local.file_exists.assert_called_once_with("test.txt")

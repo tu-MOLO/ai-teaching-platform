@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.resources import ResourceService
+import pytest
+
 from app.core.exceptions import AuthorizationException
+from app.services.resources import ResourceService
 
 
 class TestCreateResource:
@@ -60,7 +61,9 @@ class TestCreateResource:
         mock_file.seek = MagicMock()
         mock_file.tell = MagicMock(return_value=512)
 
-        with patch.object(ResourceService, "_get_tags_by_ids", new_callable=AsyncMock) as mock_get_tags:
+        with patch.object(
+            ResourceService, "_get_tags_by_ids", new_callable=AsyncMock
+        ) as mock_get_tags:
             mock_get_tags.return_value = [MagicMock(), MagicMock()]
             await ResourceService.create_resource(
                 mock_db, mock_resource_data, mock_file, "tagged.pdf", "user-1"
@@ -100,6 +103,7 @@ class TestGetResourceFileUrl:
     @patch("app.services.resources.get_storage")
     async def test_minio_mode_returns_presigned_url(self, mock_get_storage):
         from app.services.storage import MinIOStorage
+
         mock_storage = MagicMock(spec=MinIOStorage)
         mock_storage.get_file_url.return_value = "https://minio.example.com/presigned-url"
         mock_get_storage.return_value = mock_storage
@@ -115,6 +119,7 @@ class TestGetResourceFileUrl:
     @patch("app.services.resources.get_storage")
     async def test_local_storage_mode_returns_api_path(self, mock_get_storage):
         from app.services.storage import LocalFileStorage
+
         mock_storage = MagicMock(spec=LocalFileStorage)
         mock_get_storage.return_value = mock_storage
 
@@ -140,7 +145,9 @@ class TestDownloadResource:
         mock_resource = MagicMock()
         mock_resource.file_path = "resources/user1/abc.pdf"
 
-        with patch.object(ResourceService, "get_resource_by_id", new_callable=AsyncMock) as mock_get:
+        with patch.object(
+            ResourceService, "get_resource_by_id", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = mock_resource
             result = await ResourceService.download_resource(mock_db, "res-1", "/tmp/abc.pdf")
         assert result == "/tmp/abc.pdf"
@@ -149,7 +156,9 @@ class TestDownloadResource:
     async def test_not_found_raises_value_error(self):
         mock_db = AsyncMock()
 
-        with patch.object(ResourceService, "get_resource_by_id", new_callable=AsyncMock) as mock_get:
+        with patch.object(
+            ResourceService, "get_resource_by_id", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = None
             with pytest.raises(ValueError, match="Resource not found"):
                 await ResourceService.download_resource(mock_db, "nonexistent", "/tmp/x.pdf")
@@ -165,7 +174,9 @@ class TestGetResourceFileContent:
     @pytest.mark.asyncio
     async def test_not_found_raises_value_error(self):
         mock_db = AsyncMock()
-        with patch.object(ResourceService, "get_resource_by_id", new_callable=AsyncMock) as mock_get:
+        with patch.object(
+            ResourceService, "get_resource_by_id", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = None
             with pytest.raises(ValueError, match="Resource not found"):
                 await ResourceService.get_resource_file_content(mock_db, "nonexistent", "user-1")
@@ -182,7 +193,9 @@ class TestGetResourceFileContent:
         mock_resource.file_path = "resources/user1/doc.pdf"
         mock_resource.file_name = "doc.pdf"
 
-        with patch.object(ResourceService, "get_resource_by_id", new_callable=AsyncMock) as mock_get:
+        with patch.object(
+            ResourceService, "get_resource_by_id", new_callable=AsyncMock
+        ) as mock_get:
             mock_get.return_value = mock_resource
             result = await ResourceService.get_resource_file_content(mock_db, "res-1", "user-1")
 
@@ -196,9 +209,10 @@ class TestGetResourceFileContent:
 class TestBuildResourceFilters:
     @pytest.mark.asyncio
     async def test_keyword_escaping(self):
-        from app.schemas.resource import ResourceSearchParams
         from sqlalchemy import select
+
         from app.models.resource import Resource
+        from app.schemas.resource import ResourceSearchParams
 
         params = ResourceSearchParams(keyword="test%value_test")
         query = select(Resource).where(Resource.is_deleted == False)  # noqa: E712
@@ -211,6 +225,7 @@ class TestBuildResourceFilters:
     @pytest.mark.asyncio
     async def test_tag_ids_filter(self):
         from app.schemas.resource import ResourceSearchParams
+
         mock_query = MagicMock()
         mock_query.where.return_value = mock_query
         mock_query.join.return_value = mock_query
@@ -223,6 +238,7 @@ class TestBuildResourceFilters:
     @pytest.mark.asyncio
     async def test_file_type_filter(self):
         from app.schemas.resource import ResourceSearchParams
+
         mock_query = MagicMock()
         mock_query.where.return_value = mock_query
 
@@ -233,6 +249,7 @@ class TestBuildResourceFilters:
     @pytest.mark.asyncio
     async def test_user_id_filter(self):
         from app.schemas.resource import ResourceSearchParams
+
         mock_query = MagicMock()
         mock_query.where.return_value = mock_query
 

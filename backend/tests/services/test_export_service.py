@@ -65,8 +65,9 @@ class TestExportToWord:
         assert result[:2] == b"PK"
 
     def test_docx_contains_title(self):
-        from docx import Document
         from io import BytesIO
+
+        from docx import Document
 
         service = ExportService()
         lp = _make_lesson_plan(title="特殊教案标题")

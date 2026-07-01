@@ -56,7 +56,7 @@ vi.mock('antd', () => ({
   ),
   InputNumber: (props: any) => React.createElement('input', { type: 'number', ...props, 'data-testid': 'input-number' }),
   Radio: Object.assign(
-    ({ children, ...props }: any) => React.createElement('input', { type: 'radio', ...props }),
+    ({ children, ...props }: any) => React.createElement('div', { 'data-testid': 'radio', ...props }, children),
     { Group: ({ children }: any) => React.createElement('div', { 'data-testid': 'radio-group' }, children) }
   ),
   Space: ({ children }: any) => React.createElement('div', { 'data-testid': 'space' }, children),

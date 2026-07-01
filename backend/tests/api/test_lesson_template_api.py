@@ -41,7 +41,9 @@ class TestLessonTemplateAPI:
 
     @pytest.mark.asyncio
     async def test_list_templates_pagination(self, client, test_user, auth_headers, seed_templates):
-        response = await client.get("/api/v1/lesson-templates?page=1&page_size=2", headers=auth_headers)
+        response = await client.get(
+            "/api/v1/lesson-templates?page=1&page_size=2", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data["data"]) == 2
@@ -66,7 +68,8 @@ class TestLessonTemplateAPI:
 
     @pytest.mark.asyncio
     async def test_template_has_structure_field(
-    self, client, test_user, auth_headers, seed_templates):
+        self, client, test_user, auth_headers, seed_templates
+    ):
         template_id = seed_templates[1].id
         response = await client.get(f"/api/v1/lesson-templates/{template_id}", headers=auth_headers)
         assert response.status_code == 200

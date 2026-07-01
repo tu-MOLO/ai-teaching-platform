@@ -18,7 +18,6 @@ from app.core.database import AsyncSessionLocal
 from app.schemas.tag import TagCreate
 from app.services.tags import TagService
 
-
 DEFAULT_TAGS = [
     {"name": "课件", "description": "教学课件", "color": "#4CAF50"},
     {"name": "视频", "description": "教学视频", "color": "#2196F3"},

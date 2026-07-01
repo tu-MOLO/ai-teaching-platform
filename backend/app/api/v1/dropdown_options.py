@@ -1,6 +1,7 @@
 """
 Dropdown option APIs.
 """
+
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Query, status
@@ -23,9 +24,9 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.get("",
-    response_model=ListResponse[DropdownOptionResponse],
-     summary="List dropdown options")
+@router.get(
+    "", response_model=ListResponse[DropdownOptionResponse], summary="List dropdown options"
+)
 async def list_dropdown_options(
     db: DBSession,
     user_id: CurrentUser,
@@ -51,9 +52,9 @@ async def list_dropdown_options(
     )
 
 
-@router.post("",
-    response_model=DataResponse[DropdownOptionResponse],
-     status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=DataResponse[DropdownOptionResponse], status_code=status.HTTP_201_CREATED
+)
 async def create_dropdown_option(
     option_in: DropdownOptionCreate,
     db: DBSession,

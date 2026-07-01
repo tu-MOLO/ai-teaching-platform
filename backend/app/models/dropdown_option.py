@@ -1,7 +1,8 @@
 """
 Dropdown option model.
 """
-from sqlalchemy import Boolean, Integer, String, Text, UniqueConstraint, Index
+
+from sqlalchemy import Boolean, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel

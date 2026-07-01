@@ -2,13 +2,15 @@
 标签服务模块
 提供标签的CRUD操作
 """
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select
 
+from typing import List, Optional
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.logging import get_logger
 from app.models.tag import Tag
 from app.schemas.tag import TagCreate, TagUpdate
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -56,7 +58,9 @@ class TagService:
             标签列表
         """
         try:
-            query = select(Tag).where(Tag.is_deleted == False).offset(skip).limit(limit)  # noqa: E712
+            query = (
+                select(Tag).where(Tag.is_deleted == False).offset(skip).limit(limit)
+            )  # noqa: E712
             result = await db.execute(query)
             tags = result.scalars().all()
             return list(tags)

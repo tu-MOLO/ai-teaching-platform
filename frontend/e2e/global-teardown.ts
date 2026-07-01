@@ -163,8 +163,4 @@ async function globalTeardown(): Promise<void> {
   console.log("[global-teardown] E2E 测试环境清理完成。");
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export default globalTeardown;

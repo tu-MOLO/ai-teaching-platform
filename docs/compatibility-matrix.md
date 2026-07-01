@@ -123,8 +123,8 @@
 | 库 | 锁定版本 | 说明 |
 |-----|----------|------|
 | `PyJWT` | 2.8.0 | JWT令牌签发与验证 |
-| `bcrypt` | 4.1.2 | 密码哈希（≥4.0.0 支持 PEP 517） |
-| `cryptography` | ≥42.0 | Fernet加密，API密钥保护 |
+| `bcrypt` | 4.2.1 | 密码哈希（≥4.0.0 支持 PEP 517） |
+| `cryptography` | 44.0.0 | Fernet加密，API密钥保护 |
 
 ### 5.3 外部客户端
 
@@ -206,12 +206,12 @@
 | 组件 | CI 版本 | 说明 |
 |------|---------|------|
 | GitHub Actions Runner | `ubuntu-latest` | Linux x64 |
-| Python | 3.11, 3.12 (matrix) | backend-test job |
+| Python | 3.11, 3.12, 3.13 (matrix) | backend-test job |
 | Node.js | 18 | frontend 各 job |
 | PostgreSQL | 15 Alpine | E2E 测试环境 |
 | Redis | 7 Alpine | E2E 测试环境 |
 | MinIO | latest | E2E 测试环境 |
-| Playwright | Chromium latest | E2E 浏览器 |
+| Playwright | Chromium/Firefox/WebKit | E2E 多浏览器测试 |
 
 ---
 

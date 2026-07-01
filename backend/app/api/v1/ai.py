@@ -6,7 +6,12 @@ from app.core.database import get_async_session as get_db
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.rate_limiter import rate_limit_dep
 from app.core.security import get_current_user_id_with_version_check
-from app.schemas.ai import ChatRequest, ConversationListSchema, MessageListSchema, ConversationRenameRequest
+from app.schemas.ai import (
+    ChatRequest,
+    ConversationListSchema,
+    ConversationRenameRequest,
+    MessageListSchema,
+)
 from app.services.ai import AIService
 
 router = APIRouter()
@@ -52,7 +57,9 @@ async def list_conversations(
     )
 
 
-@router.get("/conversations/{conversation_id}", response_model=MessageListSchema, summary="对话消息")
+@router.get(
+    "/conversations/{conversation_id}", response_model=MessageListSchema, summary="对话消息"
+)
 async def get_conversation_messages(
     conversation_id: str,
     user_id: str = Depends(get_current_user_id_with_version_check),

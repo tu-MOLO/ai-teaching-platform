@@ -2,11 +2,12 @@
 用户模型模块
 定义用户相关的数据模型
 """
+
 from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from typing import Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, Index, text
+from sqlalchemy import Boolean, DateTime, Enum, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import BaseModel
@@ -14,13 +15,15 @@ from app.models.base import BaseModel
 
 class UserRole(str, PyEnum):
     """用户角色枚举"""
-    TEACHER = "teacher"      # 教师
+
+    TEACHER = "teacher"  # 教师
 
 
 class UserStatus(str, PyEnum):
     """用户状态枚举"""
-    ACTIVE = "active"        # 活跃
-    INACTIVE = "inactive"    # 未激活
+
+    ACTIVE = "active"  # 活跃
+    INACTIVE = "inactive"  # 未激活
     SUSPENDED = "suspended"  # 已暂停
 
 
@@ -29,155 +32,104 @@ class User(BaseModel):
     用户模型
     存储用户基本信息
     """
+
     __tablename__ = "users"
 
     # 基本信息
-    email: Mapped[str] = mapped_column(
-        String(255),
-        index=True,
-        nullable=False,
-        comment="邮箱地址"
-    )
+    email: Mapped[str] = mapped_column(String(255), index=True, nullable=False, comment="邮箱地址")
 
-    username: Mapped[str] = mapped_column(
-        String(50),
-        index=True,
-        nullable=False,
-        comment="用户名"
-    )
+    username: Mapped[str] = mapped_column(String(50), index=True, nullable=False, comment="用户名")
 
     hashed_password: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="哈希后的密码"
+        String(255), nullable=False, comment="哈希后的密码"
     )
 
-    full_name: Mapped[Optional[str]] = mapped_column(
-        String(100),
-        nullable=True,
-        comment="真实姓名"
-    )
+    full_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, comment="真实姓名")
 
-    avatar_url: Mapped[Optional[str]] = mapped_column(
-        String(500),
-        nullable=True,
-        comment="头像URL"
-    )
+    avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, comment="头像URL")
 
-    phone: Mapped[Optional[str]] = mapped_column(
-        String(20),
-        nullable=True,
-        comment="手机号码"
-    )
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, comment="手机号码")
 
-    bio: Mapped[Optional[str]] = mapped_column(
-        Text,
-        nullable=True,
-        comment="个人简介"
-    )
+    bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True, comment="个人简介")
 
     # 角色和状态
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False),
         default=UserRole.TEACHER,
         nullable=False,
-        comment="用户角色"
+        comment="用户角色",
     )
 
     status: Mapped[UserStatus] = mapped_column(
         Enum(UserStatus, native_enum=False),
         default=UserStatus.ACTIVE,
         nullable=False,
-        comment="用户状态"
+        comment="用户状态",
     )
 
     # 账户安全
     is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        default=True,
-        nullable=False,
-        comment="账户是否激活"
+        Boolean, default=True, nullable=False, comment="账户是否激活"
     )
 
     # 登录相关
     last_login_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="最后登录时间"
+        DateTime(timezone=True), nullable=True, comment="最后登录时间"
     )
 
     last_login_ip: Mapped[Optional[str]] = mapped_column(
-        String(45),
-        nullable=True,
-        comment="最后登录IP"
+        String(45), nullable=True, comment="最后登录IP"
     )
 
-    login_count: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="登录次数"
-    )
+    login_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False, comment="登录次数")
 
     failed_login_attempts: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="连续登录失败次数"
+        Integer, default=0, nullable=False, comment="连续登录失败次数"
     )
 
     locked_until: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="账户锁定截止时间"
+        DateTime(timezone=True), nullable=True, comment="账户锁定截止时间"
     )
 
-    security_question: Mapped[str] = mapped_column(
-        String(200),
-        nullable=False,
-        comment="密保问题"
-    )
+    security_question: Mapped[str] = mapped_column(String(200), nullable=False, comment="密保问题")
 
     hashed_security_answer: Mapped[str] = mapped_column(
-        String(255),
-        nullable=False,
-        comment="哈希后的密保答案"
+        String(255), nullable=False, comment="哈希后的密保答案"
     )
 
     failed_reset_attempts: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="密码重置连续失败次数"
+        Integer, default=0, nullable=False, comment="密码重置连续失败次数"
     )
 
     reset_locked_until: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="密码重置锁定截止时间"
+        DateTime(timezone=True), nullable=True, comment="密码重置锁定截止时间"
     )
 
     # 令牌相关（用于实现单点登录或令牌黑名单）
     token_version: Mapped[int] = mapped_column(
-        Integer,
-        default=1,
-        nullable=False,
-        comment="令牌版本号"
+        Integer, default=1, nullable=False, comment="令牌版本号"
     )
 
     __table_args__ = (
-        Index('ix_users_email_unique', 'email', unique=True,
-              postgresql_where=text('is_deleted = false')),
-        Index('ix_users_username_unique', 'username', unique=True,
-              postgresql_where=text('is_deleted = false')),
+        Index(
+            "ix_users_email_unique",
+            "email",
+            unique=True,
+            postgresql_where=text("is_deleted = false"),
+        ),
+        Index(
+            "ix_users_username_unique",
+            "username",
+            unique=True,
+            postgresql_where=text("is_deleted = false"),
+        ),
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={
-    self.id}, username={
-        self.username}, email={
-            self.email}, role={
-                self.role})>"
+        return (
+            f"<User(id={self.id}, username={self.username},"
+            f" email={self.email}, role={self.role})>"
+        )
 
     def is_locked(self) -> bool:
         """检查账户是否被锁定"""
@@ -205,6 +157,7 @@ class User(BaseModel):
         # 连续失败5次锁定30分钟
         if self.failed_login_attempts >= 5:
             from datetime import timedelta
+
             self.locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
 
     def increment_token_version(self) -> None:
@@ -213,6 +166,7 @@ class User(BaseModel):
 
     def verify_security_answer(self, answer: str) -> bool:
         from app.core.security import verify_password
+
         return verify_password(answer, self.hashed_security_answer)
 
     def is_reset_locked(self) -> bool:
@@ -229,6 +183,7 @@ class User(BaseModel):
         self.failed_reset_attempts += 1
         if self.failed_reset_attempts >= 5:
             from datetime import timedelta
+
             self.reset_locked_until = datetime.now(timezone.utc) + timedelta(minutes=30)
 
     def reset_reset_lock(self) -> None:

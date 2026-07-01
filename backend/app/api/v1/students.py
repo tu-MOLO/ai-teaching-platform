@@ -2,22 +2,24 @@
 学生API模块
 实现学生的CRUD操作
 """
+
 import asyncio
-from typing import Annotated, Optional
 from datetime import date
+from typing import Annotated, Optional
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user_id_with_version_check
-from app.models.student import Student
 from app.models.course import Course, course_student
+from app.models.student import Student
 from app.schemas.base import DataResponse, ListResponse
-from app.schemas.student import Student as StudentSchema, StudentCreate, StudentUpdate
+from app.schemas.student import Student as StudentSchema
+from app.schemas.student import StudentCreate, StudentUpdate
 from app.services.students import StudentService
 
 
@@ -30,6 +32,7 @@ def calculate_age(birth_date: Optional[date]) -> Optional[int]:
         age -= 1
     return age
 
+
 router = APIRouter(tags=["学生管理"])
 
 
@@ -38,12 +41,14 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.post("", response_model=DataResponse[StudentSchema],
-             status_code=status.HTTP_201_CREATED, summary="创建学生")
+@router.post(
+    "",
+    response_model=DataResponse[StudentSchema],
+    status_code=status.HTTP_201_CREATED,
+    summary="创建学生",
+)
 async def create_student(
-    student_in: StudentCreate,
-    db: DBSession,
-    user_id: CurrentUser
+    student_in: StudentCreate, db: DBSession, user_id: CurrentUser
 ) -> DataResponse[StudentSchema]:
     """
     创建新学生
@@ -55,7 +60,9 @@ async def create_student(
     db_student = await StudentService.create(db, student_in, user_id)
 
     # 计算并设置进度和年龄
-    db_student.progress = await StudentService.calculate_progress(db, db_student.id)  # type: ignore[attr-defined]
+    db_student.progress = await StudentService.calculate_progress(  # type: ignore[attr-defined]
+        db, db_student.id
+    )
     db_student.age = calculate_age(db_student.birth_date)  # type: ignore[attr-defined]
 
     return DataResponse(data=StudentSchema.model_validate(db_student))
@@ -63,9 +70,7 @@ async def create_student(
 
 @router.get("/{student_id}", response_model=DataResponse[StudentSchema], summary="获取学生详情")
 async def get_student(
-    student_id: str,
-    db: DBSession,
-    user_id: CurrentUser
+    student_id: str, db: DBSession, user_id: CurrentUser
 ) -> DataResponse[StudentSchema]:
     """
     根据ID获取学生详情
@@ -88,7 +93,7 @@ async def get_students(
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     keyword: Optional[str] = Query(None, description="关键词搜索"),
     grade: Optional[str] = Query(None, description="年级筛选"),
-    class_name: Optional[str] = Query(None, description="班级筛选")
+    class_name: Optional[str] = Query(None, description="班级筛选"),
 ) -> ListResponse[StudentSchema]:
     """
     获取学生列表，支持分页和筛选
@@ -128,16 +133,13 @@ async def get_students(
         total=total,
         page=page,
         page_size=page_size,
-        pages=pages
+        pages=pages,
     )
 
 
 @router.put("/{student_id}", response_model=DataResponse[StudentSchema], summary="更新学生")
 async def update_student(
-    student_id: str,
-    student_in: StudentUpdate,
-    db: DBSession,
-    user_id: CurrentUser
+    student_id: str, student_in: StudentUpdate, db: DBSession, user_id: CurrentUser
 ) -> DataResponse[StudentSchema]:
     """
     更新学生信息
@@ -150,11 +152,7 @@ async def update_student(
 
 
 @router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT, summary="删除学生")
-async def delete_student(
-    student_id: str,
-    db: DBSession,
-    user_id: CurrentUser
-) -> None:
+async def delete_student(student_id: str, db: DBSession, user_id: CurrentUser) -> None:
     """
     删除学生（软删除）
     """
@@ -164,11 +162,7 @@ async def delete_student(
 
 
 @router.get("/{student_id}/export", summary="导出学生成长报告")
-async def export_student_portfolio(
-    student_id: str,
-    db: DBSession,
-    user_id: CurrentUser
-):
+async def export_student_portfolio(student_id: str, db: DBSession, user_id: CurrentUser):
     """
     导出学生成长报告为PDF
     """
@@ -182,14 +176,14 @@ async def export_student_portfolio(
 
     portfolios_result = await db.execute(
         select(Portfolio).where(
-            Portfolio.student_id == student_id,
-            Portfolio.is_deleted == False  # noqa: E712
+            Portfolio.student_id == student_id, Portfolio.is_deleted == False  # noqa: E712
         )
     )
     portfolios = portfolios_result.scalars().all()
 
     # 导出PDF（放到线程池执行，避免阻塞事件循环）
     from app.services.export import ExportService
+
     export_service = ExportService()
     loop = asyncio.get_event_loop()
     pdf_bytes = await loop.run_in_executor(
@@ -198,33 +192,28 @@ async def export_student_portfolio(
 
     # 返回PDF文件
     from fastapi.responses import Response
+
     filename = f"{student.name}_成长报告.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"
-        }
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
     )
 
 
-@router.get(
-    "/{student_id}/courses",
-    response_model=ListResponse,
-    summary="获取学生的课程列表"
-)
+@router.get("/{student_id}/courses", response_model=ListResponse, summary="获取学生的课程列表")
 async def get_student_courses(
     student_id: str,
     db: DBSession,
     user_id: CurrentUser,
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量")
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
 ):
     student_result = await db.execute(
         select(Student).where(
             Student.id == student_id,
             Student.user_id == user_id,
-            Student.is_deleted == False  # noqa: E712
+            Student.is_deleted == False,  # noqa: E712
         )
     )
     student = student_result.scalar_one_or_none()
@@ -236,10 +225,7 @@ async def get_student_courses(
     count_query = (
         select(Course)
         .join(course_student, Course.id == course_student.c.course_id)
-        .where(
-            course_student.c.student_id == student_id,
-            Course.is_deleted == False  # noqa: E712
-        )
+        .where(course_student.c.student_id == student_id, Course.is_deleted == False)  # noqa: E712
     )
     total_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
     total = total_result.scalar() or 0
@@ -248,10 +234,7 @@ async def get_student_courses(
     courses_result = await db.execute(
         select(Course)
         .join(course_student, Course.id == course_student.c.course_id)
-        .where(
-            course_student.c.student_id == student_id,
-            Course.is_deleted == False  # noqa: E712
-        )
+        .where(course_student.c.student_id == student_id, Course.is_deleted == False)  # noqa: E712
         .offset(offset)
         .limit(page_size)
     )
@@ -264,5 +247,5 @@ async def get_student_courses(
         total=total,
         page=page,
         page_size=page_size,
-        pages=pages
+        pages=pages,
     )

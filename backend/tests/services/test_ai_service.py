@@ -4,44 +4,48 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services.ai import AIService, TOOL_EXECUTOR, SYSTEM_PROMPT, MODULE_GUIDES
+from app.services.ai import MODULE_GUIDES, SYSTEM_PROMPT, TOOL_EXECUTOR, AIService
 
 
 class TestGetModuleTag:
     def test_course_tools(self):
         for tool in (
-    "create_course",
-    "list_courses",
-    "get_course",
-    "update_course",
-     "delete_course"):
+            "create_course",
+            "list_courses",
+            "get_course",
+            "update_course",
+            "delete_course",
+        ):
             assert AIService._get_module_tag(tool) == "course"
 
     def test_student_tools(self):
         for tool in (
-    "create_student",
-    "list_students",
-    "get_student",
-    "update_student",
-     "delete_student"):
+            "create_student",
+            "list_students",
+            "get_student",
+            "update_student",
+            "delete_student",
+        ):
             assert AIService._get_module_tag(tool) == "student"
 
     def test_data_tools(self):
         for tool in (
-    "get_dashboard_stats",
-    "get_course_statistics",
-    "get_student_statistics",
-     "get_monthly_trends"):
+            "get_dashboard_stats",
+            "get_course_statistics",
+            "get_student_statistics",
+            "get_monthly_trends",
+        ):
             assert AIService._get_module_tag(tool) == "data"
 
     def test_lesson_plan_tools(self):
         for tool in (
-    "create_lesson_plan",
-    "list_lesson_plans",
-    "get_lesson_plan",
-    "update_lesson_plan",
-    "publish_lesson_plan",
-     "delete_lesson_plan"):
+            "create_lesson_plan",
+            "list_lesson_plans",
+            "get_lesson_plan",
+            "update_lesson_plan",
+            "publish_lesson_plan",
+            "delete_lesson_plan",
+        ):
             assert AIService._get_module_tag(tool) == "lesson_plan"
 
     def test_resource_tools(self):
@@ -50,11 +54,12 @@ class TestGetModuleTag:
 
     def test_notification_tools(self):
         for tool in (
-    "list_notifications",
-    "get_notification",
-    "mark_notification_read",
-    "mark_all_notifications_read",
-     "delete_notification"):
+            "list_notifications",
+            "get_notification",
+            "mark_notification_read",
+            "mark_all_notifications_read",
+            "delete_notification",
+        ):
             assert AIService._get_module_tag(tool) == "notification"
 
     def test_unknown_tool_returns_empty(self):
@@ -108,7 +113,14 @@ class TestBuildMessages:
     async def test_tool_calls_json_parsed(self):
         db = AsyncMock()
         tool_calls_json = json.dumps(
-            [{"id": "tc1", "function": {"name": "create_course", "arguments": "{}"}, "type": "function"}])
+            [
+                {
+                    "id": "tc1",
+                    "function": {"name": "create_course", "arguments": "{}"},
+                    "type": "function",
+                }
+            ]
+        )
 
         mock_user_msg = MagicMock()
         mock_user_msg.role = "user"
@@ -233,15 +245,20 @@ class TestSaveMessage:
         db.flush = AsyncMock()
         db.refresh = AsyncMock()
         msg = MagicMock()
+
         async def mock_refresh(obj):
             pass
+
         db.flush = AsyncMock()
         db.refresh = AsyncMock(side_effect=mock_refresh)
 
         with patch("app.services.ai.AIMessage") as MockAIMessage:
             MockAIMessage.return_value = msg
             await AIService._save_message(
-                db, "conv-1", "assistant", "response",
+                db,
+                "conv-1",
+                "assistant",
+                "response",
                 tool_calls='[{"id": "tc1"}]',
                 tool_call_id="call_1",
                 module_tag="course",
@@ -294,7 +311,9 @@ class TestGetOrCreateConversation:
 
         db.refresh = AsyncMock(side_effect=mock_refresh)
 
-        with patch.object(AIService, "_get_next_session_number", new_callable=AsyncMock, return_value=1) as _:
+        with patch.object(
+            AIService, "_get_next_session_number", new_callable=AsyncMock, return_value=1
+        ) as _:
             with patch("app.services.ai.AIConversation") as MockConvClass:
                 MockConvClass.return_value = new_conv
                 result = await AIService._get_or_create_conversation(db, "user-1", None, "hello")
@@ -320,7 +339,9 @@ class TestGetOrCreateConversation:
         db.commit = AsyncMock()
         db.refresh = AsyncMock()
 
-        with patch.object(AIService, "_get_next_session_number", new_callable=AsyncMock, return_value=1):
+        with patch.object(
+            AIService, "_get_next_session_number", new_callable=AsyncMock, return_value=1
+        ):
             with patch("app.services.ai.AIConversation") as MockConvClass:
                 MockConvClass.return_value = new_conv
                 result = await AIService._get_or_create_conversation(db, "user-1", None, "hello")
@@ -500,7 +521,11 @@ class TestChat:
         request.module = None
         request.stream = False
 
-        with patch("app.services.ai_config.AIConfigService.get_effective_config", new_callable=AsyncMock, return_value=None):
+        with patch(
+            "app.services.ai_config.AIConfigService.get_effective_config",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
             with pytest.raises(ValueError, match="NO_API_KEY"):
                 await AIService.chat(db, "user-1", request, stream=False)
 
@@ -522,12 +547,14 @@ class TestNonStreamChat:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "Hi there!",
-                    "tool_calls": None,
+            "choices": [
+                {
+                    "message": {
+                        "content": "Hi there!",
+                        "tool_calls": None,
+                    }
                 }
-            }]
+            ]
         }
 
         with patch("app.services.ai.httpx.AsyncClient") as MockClient:
@@ -538,7 +565,9 @@ class TestNonStreamChat:
             MockClient.return_value = mock_client_instance
 
             with patch.object(AIService, "_save_message", new_callable=AsyncMock) as _:
-                result = await AIService._non_stream_chat(db, "user-1", conversation, messages, effective_config)
+                result = await AIService._non_stream_chat(
+                    db, "user-1", conversation, messages, effective_config
+                )
 
                 assert result.message == "Hi there!"
                 assert result.conversation_id == "conv-1"
@@ -567,7 +596,9 @@ class TestNonStreamChat:
             MockClient.return_value = mock_client_instance
 
             with pytest.raises(ValueError, match="AI服务调用失败"):
-                await AIService._non_stream_chat(db, "user-1", conversation, messages, effective_config)
+                await AIService._non_stream_chat(
+                    db, "user-1", conversation, messages, effective_config
+                )
 
     @pytest.mark.asyncio
     async def test_tool_calls_execution(self):
@@ -575,8 +606,10 @@ class TestNonStreamChat:
         conversation = MagicMock()
         conversation.id = "conv-1"
 
-        messages = [{"role": "system", "content": "prompt"},
-            {"role": "user", "content": "list courses"}]
+        messages = [
+            {"role": "system", "content": "prompt"},
+            {"role": "user", "content": "list courses"},
+        ]
         effective_config = {
             "api_key": "test-key",
             "api_base": "https://api.test.com/v1",
@@ -595,23 +628,27 @@ class TestNonStreamChat:
         first_response = MagicMock()
         first_response.status_code = 200
         first_response.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "",
-                    "tool_calls": [tool_call_obj],
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "tool_calls": [tool_call_obj],
+                    }
                 }
-            }]
+            ]
         }
 
         second_response = MagicMock()
         second_response.status_code = 200
         second_response.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": "Here are your courses",
-                    "tool_calls": None,
+            "choices": [
+                {
+                    "message": {
+                        "content": "Here are your courses",
+                        "tool_calls": None,
+                    }
                 }
-            }]
+            ]
         }
 
         with patch("app.services.ai.httpx.AsyncClient") as MockClient:
@@ -622,8 +659,13 @@ class TestNonStreamChat:
             MockClient.return_value = mock_client_instance
 
             with patch.object(AIService, "_save_message", new_callable=AsyncMock) as _:
-                with patch("app.services.ai.TOOL_EXECUTOR", {"list_courses": AsyncMock(return_value={"items": [], "total": 0})}) as _:
-                    result = await AIService._non_stream_chat(db, "user-1", conversation, messages, effective_config)
+                with patch(
+                    "app.services.ai.TOOL_EXECUTOR",
+                    {"list_courses": AsyncMock(return_value={"items": [], "total": 0})},
+                ) as _:
+                    result = await AIService._non_stream_chat(
+                        db, "user-1", conversation, messages, effective_config
+                    )
 
                     assert result.message == "Here are your courses"
                     assert result.module_tag == "course"
@@ -632,36 +674,36 @@ class TestNonStreamChat:
 class TestToolExecutor:
     def test_all_expected_tool_names_present(self):
         expected_tools = [
-    "create_course",
-    "list_courses",
-    "get_course",
-    "update_course",
-    "delete_course",
-    "create_student",
-    "list_students",
-    "get_student",
-    "update_student",
-    "delete_student",
-    "get_dashboard_stats",
-    "get_course_statistics",
-    "get_student_statistics",
-    "get_monthly_trends",
-    "create_lesson_plan",
-    "list_lesson_plans",
-    "get_lesson_plan",
-    "update_lesson_plan",
-    "publish_lesson_plan",
-    "delete_lesson_plan",
-    "list_resources",
-    "get_resource",
-    "update_resource",
-    "delete_resource",
-    "list_notifications",
-    "get_notification",
-    "mark_notification_read",
-    "mark_all_notifications_read",
-    "delete_notification",
-     ]
+            "create_course",
+            "list_courses",
+            "get_course",
+            "update_course",
+            "delete_course",
+            "create_student",
+            "list_students",
+            "get_student",
+            "update_student",
+            "delete_student",
+            "get_dashboard_stats",
+            "get_course_statistics",
+            "get_student_statistics",
+            "get_monthly_trends",
+            "create_lesson_plan",
+            "list_lesson_plans",
+            "get_lesson_plan",
+            "update_lesson_plan",
+            "publish_lesson_plan",
+            "delete_lesson_plan",
+            "list_resources",
+            "get_resource",
+            "update_resource",
+            "delete_resource",
+            "list_notifications",
+            "get_notification",
+            "mark_notification_read",
+            "mark_all_notifications_read",
+            "delete_notification",
+        ]
         for tool_name in expected_tools:
             assert tool_name in TOOL_EXECUTOR, f"Missing tool: {tool_name}"
 
@@ -670,5 +712,6 @@ class TestToolExecutor:
 
     def test_all_executors_are_async(self):
         import asyncio
+
         for name, func in TOOL_EXECUTOR.items():
             assert asyncio.iscoroutinefunction(func), f"{name} is not async"

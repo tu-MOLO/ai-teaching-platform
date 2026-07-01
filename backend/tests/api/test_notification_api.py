@@ -36,8 +36,11 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_list_notifications_pagination(
-    self, client, test_user, auth_headers, seed_notifications):
-        response = await client.get("/api/v1/notifications?page=1&page_size=2", headers=auth_headers)
+        self, client, test_user, auth_headers, seed_notifications
+    ):
+        response = await client.get(
+            "/api/v1/notifications?page=1&page_size=2", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert len(data["data"]) == 2
@@ -46,7 +49,8 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_list_notifications_filter_by_type(
-    self, client, test_user, auth_headers, seed_notifications):
+        self, client, test_user, auth_headers, seed_notifications
+    ):
         response = await client.get("/api/v1/notifications?type=system", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
@@ -55,7 +59,8 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_list_notifications_filter_by_read(
-    self, client, test_user, auth_headers, seed_notifications):
+        self, client, test_user, auth_headers, seed_notifications
+    ):
         response = await client.get("/api/v1/notifications?read=false", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
@@ -64,11 +69,8 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_get_notification_stats(
-    self,
-    client,
-    test_user,
-    auth_headers,
-     seed_notifications):
+        self, client, test_user, auth_headers, seed_notifications
+    ):
         response = await client.get("/api/v1/notifications/stats", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
@@ -86,13 +88,12 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_get_notification_detail(
-    self,
-    client,
-    test_user,
-    auth_headers,
-     seed_notifications):
+        self, client, test_user, auth_headers, seed_notifications
+    ):
         notification_id = seed_notifications[0].id
-        response = await client.get(f"/api/v1/notifications/{notification_id}", headers=auth_headers)
+        response = await client.get(
+            f"/api/v1/notifications/{notification_id}", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == notification_id
@@ -105,17 +106,22 @@ class TestNotificationAPI:
 
     @pytest.mark.asyncio
     async def test_mark_notification_as_read(
-    self, client, test_user, auth_headers, seed_notifications):
+        self, client, test_user, auth_headers, seed_notifications
+    ):
         unread = [n for n in seed_notifications if not n.read]
         notification_id = unread[0].id
-        response = await client.put(f"/api/v1/notifications/{notification_id}/read", headers=auth_headers)
+        response = await client.put(
+            f"/api/v1/notifications/{notification_id}/read", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["read"] is True
 
     @pytest.mark.asyncio
     async def test_mark_notification_as_read_not_found(self, client, test_user, auth_headers):
-        response = await client.put("/api/v1/notifications/nonexistent-id/read", headers=auth_headers)
+        response = await client.put(
+            "/api/v1/notifications/nonexistent-id/read", headers=auth_headers
+        )
         assert response.status_code == 404
 
     @pytest.mark.asyncio
@@ -132,15 +138,20 @@ class TestNotificationAPI:
     async def test_mark_batch_as_read(self, client, test_user, auth_headers, seed_notifications):
         unread = [n for n in seed_notifications if not n.read]
         ids = [n.id for n in unread[:2]]
-        response = await client.put("/api/v1/notifications/read-batch", json={"ids": ids}, headers=auth_headers)
+        response = await client.put(
+            "/api/v1/notifications/read-batch", json={"ids": ids}, headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["code"] == "success"
 
     @pytest.mark.asyncio
     async def test_mark_batch_as_read_without_ids(
-    self, client, test_user, auth_headers, seed_notifications):
-        response = await client.put("/api/v1/notifications/read-batch", json={}, headers=auth_headers)
+        self, client, test_user, auth_headers, seed_notifications
+    ):
+        response = await client.put(
+            "/api/v1/notifications/read-batch", json={}, headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["code"] == "success"
@@ -170,10 +181,14 @@ class TestNotificationAPI:
     @pytest.mark.asyncio
     async def test_delete_notification(self, client, test_user, auth_headers, seed_notifications):
         notification_id = seed_notifications[0].id
-        response = await client.delete(f"/api/v1/notifications/{notification_id}", headers=auth_headers)
+        response = await client.delete(
+            f"/api/v1/notifications/{notification_id}", headers=auth_headers
+        )
         assert response.status_code == 204
 
-        get_resp = await client.get(f"/api/v1/notifications/{notification_id}", headers=auth_headers)
+        get_resp = await client.get(
+            f"/api/v1/notifications/{notification_id}", headers=auth_headers
+        )
         assert get_resp.status_code == 404
 
     @pytest.mark.asyncio

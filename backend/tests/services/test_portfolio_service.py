@@ -1,9 +1,10 @@
-import pytest
 from datetime import date
 
-from app.services.portfolios import PortfolioService
+import pytest
+
 from app.schemas.portfolio import PortfolioCreate, PortfolioUpdate
 from app.schemas.student import StudentCreate
+from app.services.portfolios import PortfolioService
 from app.services.students import StudentService
 
 
@@ -119,7 +120,9 @@ class TestPortfolioServiceIntegration:
         )
         await PortfolioService.create(db_session, portfolio_in, test_user.id)
 
-        portfolios = await PortfolioService.get_list(db_session, test_user.id, student_id=student.id)
+        portfolios = await PortfolioService.get_list(
+            db_session, test_user.id, student_id=student.id
+        )
         assert len(portfolios) >= 1
         assert all(p.student_id == student.id for p in portfolios)
 

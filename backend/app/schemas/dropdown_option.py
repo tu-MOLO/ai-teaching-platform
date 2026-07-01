@@ -1,6 +1,7 @@
 """
 Schemas for configurable dropdown options.
 """
+
 from typing import Optional
 
 from pydantic import Field

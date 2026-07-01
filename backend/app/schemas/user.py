@@ -2,6 +2,7 @@
 用户相关Schemas模块
 定义用户数据的Pydantic模型
 """
+
 from datetime import datetime
 from typing import Optional
 
@@ -10,11 +11,12 @@ from pydantic import ConfigDict, EmailStr, Field, field_validator
 from app.models.user import UserRole, UserStatus
 from app.schemas.base import AuditSchema, BaseSchema
 
-
 # ============== 基础字段 ==============
+
 
 class UserBase(BaseSchema):
     """用户基础信息"""
+
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., min_length=3, max_length=50, description="用户名")
     full_name: Optional[str] = Field(default=None, max_length=100, description="真实姓名")
@@ -25,8 +27,10 @@ class UserBase(BaseSchema):
 
 # ============== 创建请求 ==============
 
+
 class UserCreate(UserBase):
     """用户创建请求"""
+
     password: str = Field(..., min_length=8, max_length=100, description="密码")
 
     @field_validator("password")
@@ -42,10 +46,14 @@ class UserCreate(UserBase):
         if not any(c.isdigit() for c in v):
             raise ValueError("密码必须包含至少一个数字")
         return v
+
+
 # ============== 更新请求 ==============
+
 
 class UserUpdate(BaseSchema):
     """用户更新请求"""
+
     email: Optional[EmailStr] = Field(default=None, description="邮箱地址")
     username: Optional[str] = Field(default=None, min_length=3, max_length=50, description="用户名")
     full_name: Optional[str] = Field(default=None, max_length=100, description="真实姓名")
@@ -53,8 +61,10 @@ class UserUpdate(BaseSchema):
     bio: Optional[str] = Field(default=None, max_length=500, description="个人简介")
     avatar_url: Optional[str] = Field(default=None, max_length=500, description="头像URL")
 
+
 class UserPasswordUpdate(BaseSchema):
     """用户密码更新请求"""
+
     current_password: str = Field(..., description="当前密码")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
 
@@ -75,8 +85,10 @@ class UserPasswordUpdate(BaseSchema):
 
 # ============== 响应模型 ==============
 
+
 class UserInDB(AuditSchema):
     """数据库中的用户（包含敏感信息）"""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str = Field(..., description="用户ID")
@@ -98,6 +110,7 @@ class UserInDB(AuditSchema):
 
 class UserResponse(AuditSchema):
     """用户响应模型（公开信息）"""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: str = Field(..., description="用户ID")
@@ -115,11 +128,13 @@ class UserResponse(AuditSchema):
 
 class UserProfileResponse(UserResponse):
     """用户个人资料响应（包含更多个人信息）"""
+
     login_count: int = Field(default=0, description="登录次数")
 
 
 class UserListResponse(BaseSchema):
     """用户列表响应"""
+
     data: list[UserResponse] = Field(default=[], description="用户列表")
     total: int = Field(default=0, description="总数量")
     page: int = Field(default=1, description="当前页码")
@@ -129,13 +144,16 @@ class UserListResponse(BaseSchema):
 
 # ============== 其他 ==============
 
+
 class UserAvatarUpdate(BaseSchema):
     """用户头像更新"""
+
     avatar_url: str = Field(..., description="头像URL")
 
 
 class UserPasswordReset(BaseSchema):
     """用户密码重置请求"""
+
     username: str = Field(..., description="用户名或邮箱")
     new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
 

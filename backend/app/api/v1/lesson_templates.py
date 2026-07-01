@@ -1,18 +1,19 @@
 """
 教案模板相关的API接口
 """
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, select
+
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import NotFoundException
 from app.core.security import get_current_user_id_with_version_check
 from app.models.lesson_template import LessonTemplate
+from app.schemas.base import DataResponse, ListResponse
 from app.schemas.lesson_template import LessonTemplateResponse
-from app.schemas.base import ListResponse, DataResponse
-
 
 router = APIRouter(tags=["教案模板"])
 
@@ -26,7 +27,7 @@ async def get_lesson_templates(
     db: DBSession,
     user_id: CurrentUser,
     page: int = Query(1, ge=1, description="页码"),
-    page_size: int = Query(20, ge=1, le=100, description="每页数量")
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
 ):
     """
     获取教案模板列表
@@ -50,25 +51,19 @@ async def get_lesson_templates(
     templates = result.scalars().all()
     total = (
         await db.execute(
-            select(func.count(LessonTemplate.id)).where(LessonTemplate.is_deleted == False)  # noqa: E712
+            select(func.count(LessonTemplate.id)).where(
+                LessonTemplate.is_deleted == False
+            )  # noqa: E712
         )
     ).scalar() or 0
     pages = (total + page_size - 1) // page_size
     return ListResponse(
-        data=list(templates),
-        total=total,
-        page=page,
-        page_size=page_size,
-        pages=pages
+        data=list(templates), total=total, page=page, page_size=page_size, pages=pages
     )
 
 
 @router.get("/{template_id}", response_model=DataResponse[LessonTemplateResponse])
-async def get_lesson_template(
-    template_id: str,
-    db: DBSession,
-    user_id: CurrentUser
-):
+async def get_lesson_template(template_id: str, db: DBSession, user_id: CurrentUser):
     """
     获取单个教案模板详情
 

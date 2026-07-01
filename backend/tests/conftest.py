@@ -17,16 +17,20 @@ warnings.filterwarnings(
     module="asyncio",
 )
 
+import bcrypt  # noqa: E402
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
-from httpx import AsyncClient, ASGITransport  # noqa: E402
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker  # noqa: E402
+from sqlalchemy.ext.asyncio import (  # noqa: E402
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
-import bcrypt  # noqa: E402
-from app.main import create_application  # noqa: E402
 from app.core.database import Base, get_async_session  # noqa: E402
+from app.main import create_application  # noqa: E402
 from app.models.user import User, UserRole, UserStatus  # noqa: E402
 
 TEST_DB_URL = "sqlite+aiosqlite://"
@@ -65,14 +69,18 @@ async def db_session():
     async with test_engine.begin() as conn:
         result = await conn.run_sync(
             lambda sync_conn: sync_conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                )
             ).fetchall()
         )
         for (table_name,) in result:
             await conn.execute(text(f'DROP TABLE IF EXISTS "{table_name}"'))
         result = await conn.run_sync(
             lambda sync_conn: sync_conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'")
+                text(
+                    "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'"
+                )
             ).fetchall()
         )
         for (index_name,) in result:
@@ -111,16 +119,16 @@ async def test_user(db_session: AsyncSession):
         email="test@example.com",
         username="testuser",
         full_name="Test User",
-        hashed_password=bcrypt.hashpw(
-            "TestPass123!".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_password=bcrypt.hashpw("TestPass123!".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
         role=UserRole.TEACHER,
         is_active=True,
         token_version=1,
         security_question="What is your pet name?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Fluffy".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_security_answer=bcrypt.hashpw("Fluffy".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
     )
     db_session.add(user)
     await db_session.commit()
@@ -134,17 +142,17 @@ async def inactive_user(db_session: AsyncSession):
         email="inactive@example.com",
         username="inactiveuser",
         full_name="Inactive User",
-        hashed_password=bcrypt.hashpw(
-            "InactivePass123!".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_password=bcrypt.hashpw("InactivePass123!".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
         role=UserRole.TEACHER,
         is_active=False,
         status=UserStatus.INACTIVE,
         token_version=1,
         security_question="What city were you born in?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Beijing".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_security_answer=bcrypt.hashpw("Beijing".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
     )
     db_session.add(user)
     await db_session.commit()
@@ -160,18 +168,18 @@ async def locked_user(db_session: AsyncSession):
         email="locked@example.com",
         username="lockeduser",
         full_name="Locked User",
-        hashed_password=bcrypt.hashpw(
-            "LockedPass123!".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_password=bcrypt.hashpw("LockedPass123!".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
         role=UserRole.TEACHER,
         is_active=True,
         failed_login_attempts=5,
         locked_until=datetime.now(timezone.utc) + timedelta(minutes=30),
         token_version=1,
         security_question="What is your mother's maiden name?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Smith".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_security_answer=bcrypt.hashpw("Smith".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
     )
     db_session.add(user)
     await db_session.commit()
@@ -181,9 +189,12 @@ async def locked_user(db_session: AsyncSession):
 
 @pytest_asyncio.fixture(scope="function")
 async def auth_headers(client, test_user) -> dict:
-    login_resp = await client.post("/api/v1/auth/login", json={
-        "username": "testuser",
-        "password": "TestPass123!",
-    })
+    login_resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "username": "testuser",
+            "password": "TestPass123!",
+        },
+    )
     token = login_resp.json()["token"]["access_token"]
     return {"Authorization": f"Bearer {token}"}

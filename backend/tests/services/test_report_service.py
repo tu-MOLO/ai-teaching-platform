@@ -1,12 +1,12 @@
 from datetime import date, datetime, timezone
 
-import pytest
 import bcrypt
+import pytest
 
-from app.models.user import User, UserRole
 from app.models.course import Course, CourseStatus, course_student
-from app.models.student import Student, Gender
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
+from app.models.student import Gender, Student
+from app.models.user import User, UserRole
 from app.services.reports import ReportService
 
 
@@ -71,15 +71,11 @@ async def _create_report_user(db_session):
     user = User(
         email="report_user@example.com",
         username="report_user",
-        hashed_password=bcrypt.hashpw(
-            "Pass123!".encode(), bcrypt.gensalt()
-        ).decode(),
+        hashed_password=bcrypt.hashpw("Pass123!".encode(), bcrypt.gensalt()).decode(),
         role=UserRole.TEACHER,
         is_active=True,
         security_question="q?",
-        hashed_security_answer=bcrypt.hashpw(
-            "a".encode(), bcrypt.gensalt()
-        ).decode(),
+        hashed_security_answer=bcrypt.hashpw("a".encode(), bcrypt.gensalt()).decode(),
     )
     db_session.add(user)
     await db_session.commit()
@@ -206,14 +202,10 @@ class TestGetDashboardStats:
         db_session.add(c1)
         await db_session.commit()
 
-        stats_filtered = await ReportService.get_dashboard_stats(
-            db_session, user_id=user.id
-        )
+        stats_filtered = await ReportService.get_dashboard_stats(db_session, user_id=user.id)
         assert stats_filtered["totalCourses"] >= 1
 
-        stats_other = await ReportService.get_dashboard_stats(
-            db_session, user_id="nonexistent-id"
-        )
+        stats_other = await ReportService.get_dashboard_stats(db_session, user_id="nonexistent-id")
         assert stats_other["totalCourses"] == 0
 
     @pytest.mark.asyncio
@@ -336,11 +328,7 @@ class TestGetCourseStatistics:
         await db_session.commit()
         await db_session.refresh(s)
 
-        await db_session.execute(
-            course_student.insert().values(
-                course_id=c.id, student_id=s.id
-            )
-        )
+        await db_session.execute(course_student.insert().values(course_id=c.id, student_id=s.id))
         await db_session.commit()
 
         result = await ReportService.get_course_statistics(db_session)
@@ -487,15 +475,11 @@ class TestGetMonthlyTrends:
             db_session, months=3, user_id=user.id
         )
         current_month = now.strftime("%Y-%m")
-        filtered_current = next(
-            t for t in trends_filtered if t["month"] == current_month
-        )
+        filtered_current = next(t for t in trends_filtered if t["month"] == current_month)
         assert filtered_current["newCourses"] >= 1
 
         trends_other = await ReportService.get_monthly_trends(
             db_session, months=3, user_id="nonexistent-id"
         )
-        other_current = next(
-            t for t in trends_other if t["month"] == current_month
-        )
+        other_current = next(t for t in trends_other if t["month"] == current_month)
         assert other_current["newCourses"] == 0

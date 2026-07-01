@@ -111,7 +111,7 @@ test.describe('注册', () => {
 test.describe('登录', () => {
   test('登录成功', async ({ page, testUser, request }) => {
     // 先通过 API 注册用户
-    const regResponse = await request.post('/api/v1/auth/register', {
+    await request.post('/api/v1/auth/register', {
       data: {
         username: testUser.username,
         email: testUser.email,

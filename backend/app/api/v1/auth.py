@@ -16,6 +16,7 @@ from app.core.exceptions import (
     ErrorCode,
     NotFoundException,
 )
+from app.core.rate_limiter import rate_limit_dep
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -39,7 +40,7 @@ from app.schemas.auth import (
     UserAuthInfo,
 )
 from app.schemas.base import MessageResponse
-from app.core.rate_limiter import rate_limit_dep
+from app.services.users import UserService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -255,11 +256,7 @@ async def get_current_user(
     user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
     db: DBSession,
 ) -> CurrentUserResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("用户")
+    user = await UserService.get_by_id_or_raise(db, user_id)
 
     return CurrentUserResponse(
         id=user.id,
@@ -282,9 +279,7 @@ async def logout(
     db: DBSession,
     response: Response,
 ) -> MessageResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
+    user = await UserService.get(db, user_id)
     if user:
         user.increment_token_version()
         await db.commit()
@@ -304,11 +299,7 @@ async def change_password(
     user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
     db: DBSession,
 ) -> MessageResponse:
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("用户")
+    user = await UserService.get_by_id_or_raise(db, user_id)
 
     if not verify_password(password_data.current_password, user.hashed_password):
         raise BadRequestException("当前密码错误")
@@ -320,7 +311,9 @@ async def change_password(
     return MessageResponse(message="密码修改成功，请重新登录", code="success")
 
 
-@router.post("/password/reset/question", response_model=SecurityQuestionResponse, summary="获取密保问题")
+@router.post(
+    "/password/reset/question", response_model=SecurityQuestionResponse, summary="获取密保问题"
+)
 async def get_security_question(
     request: Request,
     question_data: SecurityQuestionRequest,

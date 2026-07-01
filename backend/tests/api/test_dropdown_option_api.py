@@ -83,7 +83,9 @@ class TestDropdownOptionAPI:
             json={"group_key": "semester", "label": "上学期", "value": "first"},
             headers=auth_headers,
         )
-        response = await client.get("/api/v1/dropdown-options?group_key=grade", headers=auth_headers)
+        response = await client.get(
+            "/api/v1/dropdown-options?group_key=grade", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         for item in data["data"]:
@@ -93,17 +95,27 @@ class TestDropdownOptionAPI:
     async def test_list_dropdown_options_active_only(self, client, test_user, auth_headers):
         await client.post(
             "/api/v1/dropdown-options",
-            json={"group_key": "status_test", "label": "活跃选项",
-                "value": "active_opt", "is_active": True},
+            json={
+                "group_key": "status_test",
+                "label": "活跃选项",
+                "value": "active_opt",
+                "is_active": True,
+            },
             headers=auth_headers,
         )
         await client.post(
             "/api/v1/dropdown-options",
-            json={"group_key": "status_test", "label": "停用选项",
-                "value": "inactive_opt", "is_active": False},
+            json={
+                "group_key": "status_test",
+                "label": "停用选项",
+                "value": "inactive_opt",
+                "is_active": False,
+            },
             headers=auth_headers,
         )
-        response = await client.get("/api/v1/dropdown-options?group_key=status_test&active_only=true", headers=auth_headers)
+        response = await client.get(
+            "/api/v1/dropdown-options?group_key=status_test&active_only=true", headers=auth_headers
+        )
         assert response.status_code == 200
         data = response.json()
         for item in data["data"]:
@@ -146,10 +158,14 @@ class TestDropdownOptionAPI:
         )
         option_id = create_resp.json()["data"]["id"]
 
-        response = await client.delete(f"/api/v1/dropdown-options/{option_id}", headers=auth_headers)
+        response = await client.delete(
+            f"/api/v1/dropdown-options/{option_id}", headers=auth_headers
+        )
         assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_delete_dropdown_option_not_found(self, client, test_user, auth_headers):
-        response = await client.delete("/api/v1/dropdown-options/nonexistent-id", headers=auth_headers)
+        response = await client.delete(
+            "/api/v1/dropdown-options/nonexistent-id", headers=auth_headers
+        )
         assert response.status_code == 404

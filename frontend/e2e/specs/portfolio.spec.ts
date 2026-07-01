@@ -52,7 +52,6 @@ test.describe('成长档案', () => {
     await page.locator('#type').click()
     const typeOption = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').first()
     await typeOption.waitFor({ state: 'visible', timeout: 5000 })
-    const selectedTypeLabel = await typeOption.textContent()
     await typeOption.click()
 
     // 4. 填写标题
@@ -178,7 +177,6 @@ test.describe('成长档案', () => {
 
     // 3. 使用类型筛选下拉框筛选"评价"类型
     // StudentDetail 页面中的筛选 Select，placeholder 为"筛选类型"
-    const filterSelect = page.locator('.timeline-filter-bar .ant-select').filter({ has: page.locator('[placeholder="筛选类型"]') })
     // 或者直接定位 placeholder 为"筛选类型"的 Select
     const filterByPlaceholder = page.locator('.ant-select-selector').filter({ hasText: /筛选类型/ })
     const filterExists1 = await filterByPlaceholder.count()

@@ -23,8 +23,12 @@ class TestGetUserConfig:
         mock_result.scalar_one_or_none.return_value = config
         db.execute.return_value = mock_result
 
-        with patch("app.services.ai_config.decrypt_api_key", return_value="sk-real-key") as mock_decrypt, \
-             patch("app.services.ai_config.mask_api_key", return_value="sk-r****-key") as mock_mask:
+        with (
+            patch(
+                "app.services.ai_config.decrypt_api_key", return_value="sk-real-key"
+            ) as mock_decrypt,
+            patch("app.services.ai_config.mask_api_key", return_value="sk-r****-key") as mock_mask,
+        ):
             result = await AIConfigService.get_user_config(db, "user-1")
 
             mock_decrypt.assert_called_once_with("encrypted_key_data")
@@ -95,8 +99,12 @@ class TestSaveConfig:
         config_update.model = "gpt-4o"
         config_update.api_key = "sk-new-key"
 
-        with patch("app.services.ai_config.encrypt_api_key", return_value="encrypted_new_key") as mock_encrypt, \
-             patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get:
+        with (
+            patch(
+                "app.services.ai_config.encrypt_api_key", return_value="encrypted_new_key"
+            ) as mock_encrypt,
+            patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get,
+        ):
             mock_get.return_value = MagicMock(provider="openai", is_user_configured=True)
             await AIConfigService.save_config(db, "user-1", config_update)
 
@@ -128,8 +136,10 @@ class TestSaveConfig:
         config_update.model = "deepseek-chat"
         config_update.api_key = "ds-new-key"
 
-        with patch("app.services.ai_config.encrypt_api_key", return_value="encrypted_ds_key"), \
-             patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get:
+        with (
+            patch("app.services.ai_config.encrypt_api_key", return_value="encrypted_ds_key"),
+            patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get,
+        ):
             mock_get.return_value = MagicMock(provider="deepseek")
             await AIConfigService.save_config(db, "user-1", config_update)
 
@@ -192,8 +202,12 @@ class TestSaveConfig:
         config_update.model = None
         config_update.api_key = "my-secret-key"
 
-        with patch("app.services.ai_config.encrypt_api_key", return_value="encrypted_secret") as mock_encrypt, \
-             patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get:
+        with (
+            patch(
+                "app.services.ai_config.encrypt_api_key", return_value="encrypted_secret"
+            ) as mock_encrypt,
+            patch.object(AIConfigService, "get_user_config", new_callable=AsyncMock) as mock_get,
+        ):
             mock_get.return_value = MagicMock(provider="zhipu")
             await AIConfigService.save_config(db, "user-1", config_update)
 
@@ -375,7 +389,9 @@ class TestTestConnection:
     async def test_no_test_request_uses_effective_config(self):
         db = AsyncMock()
 
-        with patch.object(AIConfigService, "get_effective_config", new_callable=AsyncMock) as mock_effective:
+        with patch.object(
+            AIConfigService, "get_effective_config", new_callable=AsyncMock
+        ) as mock_effective:
             mock_effective.return_value = {
                 "api_key": "effective-key",
                 "api_base": "https://effective.api/v1",
@@ -401,7 +417,9 @@ class TestTestConnection:
     async def test_no_api_key_returns_failure(self):
         db = AsyncMock()
 
-        with patch.object(AIConfigService, "get_effective_config", new_callable=AsyncMock) as mock_effective:
+        with patch.object(
+            AIConfigService, "get_effective_config", new_callable=AsyncMock
+        ) as mock_effective:
             mock_effective.return_value = None
 
             result = await AIConfigService.test_connection(db, "user-1", None)
@@ -424,7 +442,9 @@ class TestGetEffectiveConfig:
         mock_result.scalar_one_or_none.return_value = config
         db.execute.return_value = mock_result
 
-        with patch("app.services.ai_config.decrypt_api_key", return_value="sk-real-key") as mock_decrypt:
+        with patch(
+            "app.services.ai_config.decrypt_api_key", return_value="sk-real-key"
+        ) as mock_decrypt:
             result = await AIConfigService.get_effective_config(db, "user-1")
 
             mock_decrypt.assert_called_once_with("encrypted_data")

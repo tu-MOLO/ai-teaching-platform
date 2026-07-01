@@ -14,25 +14,20 @@ SQLite → PostgreSQL 数据迁移脚本
     SQLITE_DATABASE_URL: SQLite 源数据库 URL（默认 sqlite+aiosqlite:///./ai_teaching.db）
     PG_DATABASE_URL:    PostgreSQL 目标数据库 URL
 """
+
 import asyncio
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 # 确保 backend 目录在 sys.path 中
 backend_dir = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from app.core.config import settings
 from app.core.database import Base
 from app.core.logging import get_logger
 
@@ -100,12 +95,12 @@ async def import_table(engine, table_name: str, rows: list[dict]):
     table = Base.metadata.tables[table_name]
     async with engine.begin() as conn:
         for i in range(0, len(rows), BATCH_SIZE):
-            batch = rows[i:i + BATCH_SIZE]
+            batch = rows[i : i + BATCH_SIZE]
             await conn.execute(table.insert(), batch)
     return len(rows)
 
 
-async def migrate(source_url: str, target_url: str, force: bool = False):
+async def migrate(source_url: str, target_url: str, force: bool = False):  # noqa: C901
     """执行完整迁移"""
     logger.info("=" * 60)
     logger.info("SQLite → PostgreSQL 数据迁移开始")
@@ -156,28 +151,33 @@ async def migrate(source_url: str, target_url: str, force: bool = False):
         # 5. 执行迁移（带事务回滚保护）
         migrated_total = 0
         try:
-            for table_name in get_table_names():
-                count = table_counts.get(table_name, 0)
-                if count == 0:
-                    logger.info(f"  跳过 {table_name}（无数据）")
-                    continue
+            # 使用事务包装所有导入操作
+            async with target_engine.begin() as conn:
+                for table_name in get_table_names():
+                    count = table_counts.get(table_name, 0)
+                    if count == 0:
+                        logger.info(f"  跳过 {table_name}（无数据）")
+                        continue
 
-                logger.info(f"  迁移 {table_name} ({count} 行)...")
-                rows = await export_table(source_engine, table_name)
-                try:
-                    imported = await import_table(target_engine, table_name, rows)
-                    migrated_total += imported
-                    logger.info(f"  ✓ {table_name}: {imported}/{count} 行")
-                except Exception as e:
-                    logger.error(f"  ✗ {table_name} 导入失败: {e}")
-                    logger.error(f"已迁移 {migrated_total} 行数据。请清空目标数据库后重试。")
-                    raise
+                    logger.info(f"  迁移 {table_name} ({count} 行)...")
+                    rows = await export_table(source_engine, table_name)
+                    try:
+                        table = Base.metadata.tables[table_name]
+                        for i in range(0, len(rows), BATCH_SIZE):
+                            batch = rows[i : i + BATCH_SIZE]
+                            await conn.execute(table.insert(), batch)
+                        migrated_total += count
+                        logger.info(f"  ✓ {table_name}: {count}/{count} 行")
+                    except Exception as e:
+                        logger.error(f"  ✗ {table_name} 导入失败: {e}")
+                        logger.error("事务将自动回滚，目标数据库保持原状态")
+                        raise
 
             logger.info("=" * 60)
             logger.info(f"迁移完成! 共迁移 {migrated_total} 行数据")
             logger.info("=" * 60)
         except Exception:
-            logger.error("迁移失败，目标数据库数据可能不完整。建议清空后重新执行。")
+            logger.error("迁移失败，事务已自动回滚。目标数据库未受影响。")
             raise
 
         # 6. 验证迁移结果
@@ -201,7 +201,9 @@ def main():
         description="SQLite → PostgreSQL 数据迁移工具",
     )
     parser.add_argument(
-        "--force", "--yes", "-y",
+        "--force",
+        "--yes",
+        "-y",
         dest="force",
         action="store_true",
         default=False,

@@ -54,6 +54,11 @@ jobs:
       - name: mypy (type check)
         run: mypy app/ --ignore-missing-imports
 
+      - name: pip-audit (dependency security scan)
+        run: |
+          pip install pip-audit
+          pip-audit --ignore-vuln GHSA-*
+
   # ============================================================
   # Job 2: 后端测试
   # ============================================================
@@ -137,6 +142,9 @@ jobs:
 
       - name: ESLint
         run: npm run lint
+
+      - name: npm audit (dependency security scan)
+        run: npm audit --audit-level=high
 
       - name: TypeScript type check
         run: npx tsc --project tsconfig.build.json --noEmit

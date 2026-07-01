@@ -8,7 +8,7 @@ import { selectFirstOption } from '../utils/select-helper'
  * 覆盖教案的创建、发布、取消发布等核心流程
  */
 test.describe('教案管理', () => {
-  test('创建教案为草稿状态', async ({ authenticatedPage, testUser, request }) => {
+  test('创建教案为草稿状态', async ({ authenticatedPage }) => {
     const page = authenticatedPage
 
     // 1. 导航到教案创建页面

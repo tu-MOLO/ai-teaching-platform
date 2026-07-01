@@ -32,11 +32,7 @@ def calculate_total_pages(total: int, page_size: int) -> int:
     return (total + page_size - 1) // page_size
 
 
-def calculate_pagination_info(
-    page: int,
-    page_size: int,
-    total: int
-) -> tuple[int, int]:
+def calculate_pagination_info(page: int, page_size: int, total: int) -> tuple[int, int]:
     """
     计算分页信息（偏移量和总页数）
 

@@ -2,9 +2,10 @@
 查询过滤器模块
 提供全局查询过滤功能，如软删除过滤
 """
+
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import Optional, Type, TypeVar, Any
+from typing import Any, Optional, Type, TypeVar
 
 from sqlalchemy import event
 from sqlalchemy.orm import Query, Session
@@ -17,7 +18,7 @@ T = TypeVar("T", bound=Base)
 class SoftDeleteFilter:
     """软删除查询过滤器"""
 
-    _enabled_var: ContextVar[bool] = ContextVar('soft_delete_filter_enabled', default=True)
+    _enabled_var: ContextVar[bool] = ContextVar("soft_delete_filter_enabled", default=True)
 
     @classmethod
     def enable(cls):
@@ -68,8 +69,8 @@ def apply_soft_delete_filter(query: Query, model_class: Optional[Type[T]] = None
 
     # 检查查询的实体是否有 is_deleted 字段
     for entity in query.column_descriptions:
-        model = entity.get('entity')
-        if model and hasattr(model, 'is_deleted'):
+        model = entity.get("entity")
+        if model and hasattr(model, "is_deleted"):
             query = query.filter(model.is_deleted == False)  # type: ignore[union-attr] # noqa: E712
 
     return query
@@ -81,6 +82,7 @@ def setup_soft_delete_filter():
     在应用启动时调用
     """
     from sqlalchemy.orm import with_loader_criteria
+
     from app.models.base import BaseModel
 
     @event.listens_for(Session, "do_orm_execute")
@@ -96,7 +98,7 @@ def setup_soft_delete_filter():
                 with_loader_criteria(
                     BaseModel,
                     lambda cls: cls.is_deleted == False,  # noqa: E712
-                    include_aliases=True
+                    include_aliases=True,
                 )
             )
 
@@ -105,10 +107,11 @@ class OptimisticLockError(Exception):
     """乐观锁冲突异常"""
 
     def __init__(
-    self,
-    message: str = "数据已被其他用户修改，请刷新后重试",
-    expected_version: int = None,
-     actual_version: int = None):
+        self,
+        message: str = "数据已被其他用户修改，请刷新后重试",
+        expected_version: Optional[int] = None,
+        actual_version: Optional[int] = None,
+    ):
         self.message = message
         self.expected_version = expected_version
         self.actual_version = actual_version
@@ -132,8 +135,7 @@ def check_version_and_update(model_instance: Any, expected_version: int, update_
     """
     if model_instance.version != expected_version:
         raise OptimisticLockError(
-            expected_version=expected_version,
-            actual_version=model_instance.version
+            expected_version=expected_version, actual_version=model_instance.version
         )
 
     # 更新数据

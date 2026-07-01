@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.core.database import Base, get_async_session, get_sync_session, init_db, close_db
+import pytest
+
+from app.core.database import Base, close_db, get_async_session, get_sync_session, init_db
 
 
 class TestBase:
@@ -118,21 +119,24 @@ class TestInitDb:
             mock_engine.begin.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
             mock_engine.begin.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            with patch.dict("sys.modules", {
-                "app.models.user": MagicMock(),
-                "app.models.permission": MagicMock(),
-                "app.models.course": MagicMock(),
-                "app.models.student": MagicMock(),
-                "app.models.portfolio": MagicMock(),
-                "app.models.resource": MagicMock(),
-                "app.models.tag": MagicMock(),
-                "app.models.notification": MagicMock(),
-                "app.models.audit_log": MagicMock(),
-                "app.models.lesson_plan": MagicMock(),
-                "app.models.dropdown_option": MagicMock(),
-                "app.models.ai": MagicMock(),
-                "app.models.ai_config": MagicMock(),
-            }):
+            with patch.dict(
+                "sys.modules",
+                {
+                    "app.models.user": MagicMock(),
+                    "app.models.permission": MagicMock(),
+                    "app.models.course": MagicMock(),
+                    "app.models.student": MagicMock(),
+                    "app.models.portfolio": MagicMock(),
+                    "app.models.resource": MagicMock(),
+                    "app.models.tag": MagicMock(),
+                    "app.models.notification": MagicMock(),
+                    "app.models.audit_log": MagicMock(),
+                    "app.models.lesson_plan": MagicMock(),
+                    "app.models.dropdown_option": MagicMock(),
+                    "app.models.ai": MagicMock(),
+                    "app.models.ai_config": MagicMock(),
+                },
+            ):
                 await init_db()
                 mock_conn.run_sync.assert_called_once()
 

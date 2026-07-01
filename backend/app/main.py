@@ -2,12 +2,13 @@
 FastAPI应用入口
 AI教学平台后端主应用
 """
+
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -16,10 +17,10 @@ from app.api.v1 import api_router
 from app.core.config import settings
 from app.core.config_validator import validate_config_on_startup
 from app.core.database import close_db, init_db
-from app.core.logging import get_logger, setup_logging
-from app.core.rate_limiter import init_rate_limiter
-from app.core.query_filters import setup_soft_delete_filter
 from app.core.exceptions import BusinessException, ErrorCode
+from app.core.logging import get_logger, setup_logging
+from app.core.query_filters import setup_soft_delete_filter
+from app.core.rate_limiter import init_rate_limiter
 
 # 设置日志
 setup_logging()
@@ -109,7 +110,7 @@ def create_application() -> FastAPI:
         redoc_url="/redoc" if settings.DEBUG else None,
         openapi_url="/openapi.json" if settings.DEBUG else None,
         openapi_tags=openapi_tags,
-        lifespan=lifespan
+        lifespan=lifespan,
     )
 
     # 注册中间件
@@ -145,7 +146,7 @@ def register_middlewares(app: FastAPI) -> None:
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
-            expose_headers=["X-Request-ID"]
+            expose_headers=["X-Request-ID"],
         )
         logger.info(f"CORS enabled for origins: {debug_origins}")
     elif settings.BACKEND_CORS_ORIGINS:
@@ -155,7 +156,7 @@ def register_middlewares(app: FastAPI) -> None:
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
-            expose_headers=["X-Request-ID"]
+            expose_headers=["X-Request-ID"],
         )
         logger.info(f"CORS enabled for origins: {settings.BACKEND_CORS_ORIGINS}")
 
@@ -172,8 +173,8 @@ def register_middlewares(app: FastAPI) -> None:
                     "error": "FILE_TOO_LARGE",
                     "code": "FILE_TOO_LARGE",
                     "message": f"文件超过大小限制（最大{settings.MAX_UPLOAD_SIZE // 1024 // 1024}MB）",
-                    "request_id": str(uuid.uuid4())[:8]
-                }
+                    "request_id": str(uuid.uuid4())[:8],
+                },
             )
         return await call_next(request)
 
@@ -183,7 +184,10 @@ def register_middlewares(app: FastAPI) -> None:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; font-src 'self' data:; connect-src 'self'"
+        )
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
@@ -213,18 +217,14 @@ def register_middlewares(app: FastAPI) -> None:
             # 记录响应信息
             status_code = response.status_code
             logger.info(
-                f"Request completed: {method} {url} - {status_code} "
-                f"({process_time:.3f}s)"
+                f"Request completed: {method} {url} - {status_code} " f"({process_time:.3f}s)"
             )
 
             return response
 
         except Exception as e:
             process_time = time.time() - start_time
-            logger.error(
-                f"Request failed: {method} {url} - {e} "
-                f"({process_time:.3f}s)"
-            )
+            logger.error(f"Request failed: {method} {url} - {e} " f"({process_time:.3f}s)")
             raise
 
 
@@ -232,14 +232,29 @@ async def require_internal_ip(request: Request):
     if settings.DEBUG:
         return
     client_ip = request.client.host if request.client else ""
-    allowed = client_ip.startswith((
-        "127.", "10.",
-        "172.16.", "172.17.", "172.18.", "172.19.",
-        "172.20.", "172.21.", "172.22.", "172.23.",
-        "172.24.", "172.25.", "172.26.", "172.27.",
-        "172.28.", "172.29.", "172.30.", "172.31.",
-        "192.168."
-    ))
+    allowed = client_ip.startswith(
+        (
+            "127.",
+            "10.",
+            "172.16.",
+            "172.17.",
+            "172.18.",
+            "172.19.",
+            "172.20.",
+            "172.21.",
+            "172.22.",
+            "172.23.",
+            "172.24.",
+            "172.25.",
+            "172.26.",
+            "172.27.",
+            "172.28.",
+            "172.29.",
+            "172.30.",
+            "172.31.",
+            "192.168.",
+        )
+    )
     if not allowed:
         raise HTTPException(status_code=403, detail="Forbidden")
 
@@ -266,38 +281,36 @@ def register_routers(app: FastAPI) -> None:
             "app": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "checks": {}
+            "checks": {},
         }
 
         # 检查数据库连接
         try:
             from sqlalchemy import text
+
             async with async_engine.connect() as conn:
                 result = await conn.execute(text("SELECT 1"))
                 result.scalar()
             health_status["checks"]["database"] = {
                 "status": "healthy",
-                "message": "Database connection OK"
+                "message": "Database connection OK",
             }
         except Exception as _e:  # noqa: F841
             health_status["status"] = "unhealthy"
             health_status["checks"]["database"] = {
                 "status": "unhealthy",
-                "message": "Database connection failed"
+                "message": "Database connection failed",
             }
 
         # 检查缓存状态
         try:
             cache = get_cache()
             cache.cleanup_expired()
-            health_status["checks"]["cache"] = {
-                "status": "healthy",
-                "message": "Cache OK"
-            }
+            health_status["checks"]["cache"] = {"status": "healthy", "message": "Cache OK"}
         except Exception as e:
             health_status["checks"]["cache"] = {
                 "status": "warning",
-                "message": f"Cache check failed: {str(e)}"
+                "message": f"Cache check failed: {str(e)}",
             }
 
         return health_status
@@ -322,14 +335,14 @@ def register_routers(app: FastAPI) -> None:
             "environment": {
                 "python_version": sys.version,
                 "platform": platform.platform(),
-                "debug_mode": settings.DEBUG
+                "debug_mode": settings.DEBUG,
             },
             "configuration": {
                 "database_pool_size": settings.DATABASE_POOL_SIZE,
                 "max_upload_size": settings.MAX_UPLOAD_SIZE,
                 "allowed_extensions": settings.ALLOWED_EXTENSIONS,
-                "cors_origins_count": len(settings.BACKEND_CORS_ORIGINS)
-            }
+                "cors_origins_count": len(settings.BACKEND_CORS_ORIGINS),
+            },
         }
 
     # API根端点
@@ -341,14 +354,11 @@ def register_routers(app: FastAPI) -> None:
             "version": settings.APP_VERSION,
             "docs_url": "/docs",
             "api_prefix": settings.API_V1_STR,
-            "health_check": "/health"
+            "health_check": "/health",
         }
 
     # 注册V1 API路由
-    app.include_router(
-        api_router,
-        prefix=settings.API_V1_STR
-    )
+    app.include_router(api_router, prefix=settings.API_V1_STR)
 
     logger.info(f"Registered API router with prefix: {settings.API_V1_STR}")
 
@@ -360,6 +370,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     Args:
         app: FastAPI应用实例
     """
+
     # 业务异常处理器
     @app.exception_handler(BusinessException)
     async def business_exception_handler(request: Request, exc: BusinessException):
@@ -368,7 +379,11 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         response_data: dict[str, Any] = {
             "error": exc.error_code,
-            "code": exc.error_code.value if isinstance(exc.error_code, ErrorCode) else str(exc.error_code),
+            "code": (
+                exc.error_code.value
+                if isinstance(exc.error_code, ErrorCode)
+                else str(exc.error_code)
+            ),
             "message": exc.detail,
         }
 
@@ -378,27 +393,23 @@ def register_exception_handlers(app: FastAPI) -> None:
         # 添加请求追踪ID
         response_data["request_id"] = str(uuid.uuid4())[:8]
 
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=response_data
-        )
+        return JSONResponse(status_code=exc.status_code, content=response_data)
 
     # 验证错误处理器
     from fastapi.exceptions import RequestValidationError
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        request: Request,
-        exc: RequestValidationError
-    ):
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
         """处理请求验证错误"""
         errors = []
         for error in exc.errors():
-            errors.append({
-                "field": ".".join(str(loc) for loc in error["loc"]),
-                "message": error["msg"],
-                "type": error["type"]
-            })
+            errors.append(
+                {
+                    "field": ".".join(str(loc) for loc in error["loc"]),
+                    "message": error["msg"],
+                    "type": error["type"],
+                }
+            )
 
         logger.warning(f"Validation error: {errors}")
         return JSONResponse(
@@ -408,8 +419,8 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "code": ErrorCode.DATA_VALIDATION_ERROR.value,
                 "message": "请求参数验证失败",
                 "errors": errors,
-                "request_id": str(uuid.uuid4())[:8]
-            }
+                "request_id": str(uuid.uuid4())[:8],
+            },
         )
 
     # HTTP 异常处理器
@@ -434,9 +445,9 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error": str(exc.status_code),
                 "code": str(exc.status_code),
                 "message": message,
-                "request_id": str(uuid.uuid4())[:8]
+                "request_id": str(uuid.uuid4())[:8],
             },
-            headers=exc.headers
+            headers=exc.headers,
         )
 
     # 通用异常处理器（最后捕获）
@@ -452,8 +463,8 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "error": ErrorCode.UNKNOWN_ERROR.value,
                 "code": ErrorCode.UNKNOWN_ERROR.value,
                 "message": "服务器内部错误，请稍后重试" if not settings.DEBUG else str(exc),
-                "request_id": request_id
-            }
+                "request_id": request_id,
+            },
         )
 
 
@@ -470,5 +481,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=settings.DEBUG,
-        log_level=settings.LOG_LEVEL.lower()
+        log_level=settings.LOG_LEVEL.lower(),
     )

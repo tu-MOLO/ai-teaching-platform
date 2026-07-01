@@ -1,11 +1,13 @@
 """
 用户服务
 """
+
 from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import NotFoundException
 from app.models.user import User
 from app.schemas.user import UserUpdate
 
@@ -68,3 +70,36 @@ class UserService:
             是否有权限操作
         """
         return user_id == target_user_id
+
+    @staticmethod
+    async def get_by_id_or_raise(db: AsyncSession, user_id: str) -> User:
+        """
+        根据ID获取用户，如果不存在则抛出异常
+
+        Args:
+            db: 数据库会话
+            user_id: 用户ID
+
+        Returns:
+            用户对象
+
+        Raises:
+            NotFoundException: 用户不存在时抛出
+        """
+        user = await UserService.get(db, user_id)
+        if not user:
+            raise NotFoundException("用户")
+        return user
+
+    @staticmethod
+    def get_teacher_name(user: User) -> str:
+        """
+        获取教师显示名称
+
+        Args:
+            user: 用户对象
+
+        Returns:
+            教师名称，优先使用全名，否则使用用户名
+        """
+        return user.full_name or user.username

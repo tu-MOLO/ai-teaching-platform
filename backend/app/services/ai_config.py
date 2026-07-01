@@ -1,21 +1,31 @@
 import ipaddress
+from typing import Optional
+from urllib.parse import urlparse
+
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from urllib.parse import urlparse
 
-from app.models.ai_config import AIConfig
-from app.schemas.ai_config import AIConfigResponse, AIConfigUpdate, AIConfigTestRequest, AIConfigTestResponse
 from app.core.config import settings
-from app.core.security import encrypt_api_key, decrypt_api_key, mask_api_key
-from app.core.logging import get_logger
 from app.core.exceptions import BadRequestException
+from app.core.logging import get_logger
+from app.core.security import decrypt_api_key, encrypt_api_key, mask_api_key
+from app.models.ai_config import AIConfig
+from app.schemas.ai_config import (
+    AIConfigResponse,
+    AIConfigTestRequest,
+    AIConfigTestResponse,
+    AIConfigUpdate,
+)
 
 logger = get_logger(__name__)
 
 ALLOWED_API_DOMAINS = {
-    "open.bigmodel.cn", "api.openai.com", "api.deepseek.com",
-    "api.moonshot.cn", "dashscope.aliyuncs.com",
+    "open.bigmodel.cn",
+    "api.openai.com",
+    "api.deepseek.com",
+    "api.moonshot.cn",
+    "dashscope.aliyuncs.com",
 }
 
 
@@ -28,12 +38,18 @@ def _validate_api_base_url(api_base: str) -> None:
         return
     try:
         resolved = ipaddress.ip_address(hostname)
-        if resolved.is_private or resolved.is_loopback or resolved.is_link_local or resolved.is_reserved:
+        if (
+            resolved.is_private
+            or resolved.is_loopback
+            or resolved.is_link_local
+            or resolved.is_reserved
+        ):
             raise BadRequestException("API地址不允许指向内部网络")
     except ValueError:
         pass
     if hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
         raise BadRequestException("API地址不允许指向本地主机")
+
 
 PROVIDER_DEFAULTS = {
     "zhipu": {
@@ -77,8 +93,9 @@ class AIConfigService:
         config = result.scalar_one_or_none()
 
         if config:
-            decrypted_key = decrypt_api_key(
-                config.api_key_encrypted) if config.api_key_encrypted else None
+            decrypted_key = (
+                decrypt_api_key(config.api_key_encrypted) if config.api_key_encrypted else None
+            )
             return AIConfigResponse(
                 provider=config.provider,
                 provider_name=config.provider_name,
@@ -101,9 +118,8 @@ class AIConfigService:
 
     @staticmethod
     async def save_config(
-    db: AsyncSession,
-    user_id: str,
-     config_update: AIConfigUpdate) -> AIConfigResponse:
+        db: AsyncSession, user_id: str, config_update: AIConfigUpdate
+    ) -> AIConfigResponse:
         result = await db.execute(select(AIConfig).where(AIConfig.user_id == user_id))
         config = result.scalar_one_or_none()
 
@@ -147,9 +163,8 @@ class AIConfigService:
 
     @staticmethod
     async def test_connection(
-    db: AsyncSession,
-    user_id: str,
-     test_request: AIConfigTestRequest = None) -> AIConfigTestResponse:
+        db: AsyncSession, user_id: str, test_request: Optional[AIConfigTestRequest] = None
+    ) -> AIConfigTestResponse:
         if test_request and test_request.api_key:
             api_key = test_request.api_key
             api_base = test_request.api_base or settings.BIGMODEL_API_BASE
@@ -157,7 +172,9 @@ class AIConfigService:
         else:
             effective = await AIConfigService.get_effective_config(db, user_id)
             if not effective:
-                return AIConfigTestResponse(success=False, message="未配置API密钥，请先在设置中配置API密钥")
+                return AIConfigTestResponse(
+                    success=False, message="未配置API密钥，请先在设置中配置API密钥"
+                )
             api_key = effective["api_key"]
             api_base = effective["api_base"]
             model = effective["model"]
@@ -181,14 +198,22 @@ class AIConfigService:
                 if response.status_code == 200:
                     return AIConfigTestResponse(success=True, message="连接成功，API密钥有效")
                 elif response.status_code == 429:
-                    return AIConfigTestResponse(success=True, message="连接成功（API返回速率限制，密钥有效，请稍后再试）")
+                    return AIConfigTestResponse(
+                        success=True, message="连接成功（API返回速率限制，密钥有效，请稍后再试）"
+                    )
                 elif response.status_code == 401:
-                    return AIConfigTestResponse(success=False, message="认证失败，请检查API密钥是否正确")
+                    return AIConfigTestResponse(
+                        success=False, message="认证失败，请检查API密钥是否正确"
+                    )
                 else:
-                    error_data = response.json() if response.headers.get(
-                        "content-type", "").startswith("application/json") else {}
+                    error_data = (
+                        response.json()
+                        if response.headers.get("content-type", "").startswith("application/json")
+                        else {}
+                    )
                     error_msg = error_data.get("error", {}).get(
-                        "message", f"HTTP {response.status_code}")
+                        "message", f"HTTP {response.status_code}"
+                    )
                     return AIConfigTestResponse(success=False, message=f"连接失败: {error_msg}")
         except httpx.TimeoutException:
             return AIConfigTestResponse(success=False, message="连接超时，请检查网络或API地址")

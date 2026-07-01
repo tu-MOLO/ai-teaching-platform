@@ -1,11 +1,11 @@
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
-from app.main import create_application
 from app.core.exceptions import BusinessException, ErrorCode
+from app.main import create_application
 
 
 class TestCreateApplication:
@@ -76,7 +76,7 @@ class TestCORSMiddleware:
         response = await client.options(
             "/health",
             headers={
-                "Origin": "http://localhost:5173",
+                "Origin": "http://localhost:5173/",
                 "Access-Control-Request-Method": "GET",
             },
         )
@@ -231,6 +231,7 @@ class TestExceptionHandlers:
         assert response.status_code == 500
         data = response.body.decode()
         import json
+
         parsed = json.loads(data)
         assert "error" in parsed
         assert "request_id" in parsed
@@ -301,9 +302,11 @@ class TestLifespan:
 class TestRequireInternalIp:
     @pytest.mark.asyncio
     async def test_allows_in_debug_mode(self):
-        from app.main import require_internal_ip
         from unittest.mock import MagicMock
+
         from fastapi import Request
+
+        from app.main import require_internal_ip
 
         with patch("app.main.settings") as mock_settings:
             mock_settings.DEBUG = True
@@ -313,9 +316,11 @@ class TestRequireInternalIp:
 
     @pytest.mark.asyncio
     async def test_allows_internal_ip(self):
-        from app.main import require_internal_ip
         from unittest.mock import MagicMock
+
         from fastapi import Request
+
+        from app.main import require_internal_ip
 
         with patch("app.main.settings") as mock_settings:
             mock_settings.DEBUG = False
@@ -327,9 +332,11 @@ class TestRequireInternalIp:
 
     @pytest.mark.asyncio
     async def test_rejects_external_ip(self):
-        from app.main import require_internal_ip
         from unittest.mock import MagicMock
+
         from fastapi import Request
+
+        from app.main import require_internal_ip
 
         with patch("app.main.settings") as mock_settings:
             mock_settings.DEBUG = False

@@ -1,10 +1,10 @@
 import pytest
 
 from app.core.query_filters import (
-    SoftDeleteFilter,
-    include_deleted,
     OptimisticLockError,
+    SoftDeleteFilter,
     check_version_and_update,
+    include_deleted,
 )
 
 

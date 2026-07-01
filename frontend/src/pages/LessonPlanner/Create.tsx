@@ -56,7 +56,7 @@ const CreateLessonPlan: React.FC = () => {
     setSaving(true)
     try {
       if (isEdit && id) {
-        const { status: _status, ...restValues } = values
+        const { ...restValues } = values
         await updateLessonPlan(id, restValues)
         message.success('教案更新成功')
       } else {

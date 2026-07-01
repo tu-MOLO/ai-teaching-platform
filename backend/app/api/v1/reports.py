@@ -2,6 +2,7 @@
 报告API模块
 实现教学数据分析报告的查询接口
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -19,15 +20,8 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 
-@router.get(
-    "/dashboard",
-    response_model=DataResponse[dict],
-    summary="获取仪表盘报告"
-)
-async def get_dashboard_report(
-    db: DBSession,
-    user_id: CurrentUser
-) -> DataResponse[dict]:
+@router.get("/dashboard", response_model=DataResponse[dict], summary="获取仪表盘报告")
+async def get_dashboard_report(db: DBSession, user_id: CurrentUser) -> DataResponse[dict]:
     """
     获取仪表盘统计数据报告
 
@@ -43,15 +37,8 @@ async def get_dashboard_report(
     return DataResponse(data=stats)
 
 
-@router.get(
-    "/courses",
-    response_model=DataResponse[dict],
-    summary="获取课程统计报告"
-)
-async def get_course_report(
-    db: DBSession,
-    user_id: CurrentUser
-) -> DataResponse[dict]:
+@router.get("/courses", response_model=DataResponse[dict], summary="获取课程统计报告")
+async def get_course_report(db: DBSession, user_id: CurrentUser) -> DataResponse[dict]:
     """
     获取课程统计分析报告
 
@@ -64,15 +51,8 @@ async def get_course_report(
     return DataResponse(data=stats)
 
 
-@router.get(
-    "/students",
-    response_model=DataResponse[dict],
-    summary="获取学生统计报告"
-)
-async def get_student_report(
-    db: DBSession,
-    user_id: CurrentUser
-) -> DataResponse[dict]:
+@router.get("/students", response_model=DataResponse[dict], summary="获取学生统计报告")
+async def get_student_report(db: DBSession, user_id: CurrentUser) -> DataResponse[dict]:
     """
     获取学生统计分析报告
 
@@ -85,15 +65,9 @@ async def get_student_report(
     return DataResponse(data=stats)
 
 
-@router.get(
-    "/trends",
-    response_model=DataResponse[list],
-    summary="获取月度趋势数据"
-)
+@router.get("/trends", response_model=DataResponse[list], summary="获取月度趋势数据")
 async def get_monthly_trends(
-    db: DBSession,
-    user_id: CurrentUser,
-    months: int = Query(6, ge=1, le=12, description="查询月数")
+    db: DBSession, user_id: CurrentUser, months: int = Query(6, ge=1, le=12, description="查询月数")
 ) -> DataResponse[list]:
     """
     获取月度教学趋势数据

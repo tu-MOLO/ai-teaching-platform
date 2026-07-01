@@ -1,8 +1,8 @@
 import pytest
 
-from app.services.courses import CourseService
-from app.schemas.course import CourseCreate, CourseUpdate
 from app.models.notification import NotificationType
+from app.schemas.course import CourseCreate, CourseUpdate
+from app.services.courses import CourseService
 
 
 class TestCourseServiceIntegration:
@@ -25,6 +25,7 @@ class TestCourseServiceIntegration:
     @pytest.mark.asyncio
     async def test_create_generates_notification(self, db_session, test_user):
         from sqlalchemy import select
+
         from app.models.notification import Notification
 
         course_in = CourseCreate(
@@ -153,7 +154,9 @@ class TestCourseServiceIntegration:
         created = await CourseService.create(db_session, course_in, test_user.id, "冯老师")
 
         update_data = CourseUpdate(name="更新后课程", grade="高三")
-        updated = await CourseService.update(db_session, created.id, update_data, test_user.id, "冯老师")
+        updated = await CourseService.update(
+            db_session, created.id, update_data, test_user.id, "冯老师"
+        )
         assert updated is not None
         assert updated.name == "更新后课程"
         assert updated.grade == "高三"
@@ -169,7 +172,9 @@ class TestCourseServiceIntegration:
         created = await CourseService.create(db_session, course_in, test_user.id, "陈老师")
 
         update_data = CourseUpdate(name="不应更新")
-        result = await CourseService.update(db_session, created.id, update_data, "wrong-user-id", "陈老师")
+        result = await CourseService.update(
+            db_session, created.id, update_data, "wrong-user-id", "陈老师"
+        )
         assert result is None
 
     @pytest.mark.asyncio

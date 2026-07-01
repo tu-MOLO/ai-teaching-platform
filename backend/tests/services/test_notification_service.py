@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.services.notifications import NotificationService
+import pytest
+
 from app.models.notification import NotificationType
 from app.schemas.notification import NotificationCreate, NotificationCreateBulk
+from app.services.notifications import NotificationService
 
 
 class TestCreate:
@@ -236,7 +237,8 @@ class TestNotificationServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_mark_as_read_returns_none_for_wrong_user(
-        self, db_session, test_user, inactive_user):
+        self, db_session, test_user, inactive_user
+    ):
         notification_in = NotificationCreate(
             title="他人通知",
             content="内容",

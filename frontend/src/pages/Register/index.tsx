@@ -33,7 +33,7 @@ const Register: React.FC = () => {
   const onFinish = async (values: RegisterFormData) => {
     try {
       setLoading(true)
-      const { confirmPassword, ...registerData } = values
+      const { ...registerData } = values
       await authService.register(registerData)
       message.success('注册成功，请登录后完善个人资料')
       navigate('/login')

@@ -11,7 +11,6 @@ from pathlib import Path
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
@@ -21,7 +20,6 @@ from app.models.base import Base
 from app.models.lesson_template import LessonTemplate
 from app.models.tag import Tag
 from app.models.user import User, UserRole, UserStatus
-
 
 DEFAULT_TEACHER = {
     "username": os.getenv("DEFAULT_TEACHER_USERNAME", "teacher"),
@@ -172,7 +170,9 @@ def main() -> None:
     print(f"Teacher username: {teacher_username}")
     print(f"Teacher email: {teacher_email}")
     print(f"Teacher default password: {DEFAULT_TEACHER['password']}")
-    print("Please change the teacher password after first login if this environment will be shared.")
+    print(
+        "Please change the teacher password after first login if this environment will be shared."
+    )
 
 
 if __name__ == "__main__":

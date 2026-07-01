@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from app.services.tags import TagService
+import pytest
+
 from app.schemas.tag import TagCreate, TagUpdate
+from app.services.tags import TagService
 
 
 class TestGetTagByName:

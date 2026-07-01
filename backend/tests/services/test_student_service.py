@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import date
+from unittest.mock import AsyncMock, MagicMock
 
-from app.services.students import StudentService
-from app.schemas.student import StudentCreate, StudentUpdate
+import pytest
+
 from app.models.notification import NotificationType
+from app.schemas.student import StudentCreate, StudentUpdate
+from app.services.students import StudentService
 
 
 def _make_portfolio(cognitive=None, skill=None, creativity=None, cooperation=None, attention=None):
@@ -23,8 +24,9 @@ class TestComputeProgressFromPortfolios:
         assert result == 0
 
     def test_single_portfolio(self):
-        portfolio = _make_portfolio(cognitive=80, skill=70, creativity=90,
-                                    cooperation=60, attention=50)
+        portfolio = _make_portfolio(
+            cognitive=80, skill=70, creativity=90, cooperation=60, attention=50
+        )
         result = StudentService._compute_progress_from_portfolios([portfolio])
         assert result == 70
 
@@ -35,18 +37,25 @@ class TestComputeProgressFromPortfolios:
         assert result == 75
 
     def test_partial_scores_some_none(self):
-        p1 = _make_portfolio(cognitive=80, skill=None, creativity=90,
-                             cooperation=None, attention=50)
-        p2 = _make_portfolio(cognitive=60, skill=80, creativity=None,
-                             cooperation=90, attention=None)
+        p1 = _make_portfolio(
+            cognitive=80, skill=None, creativity=90, cooperation=None, attention=50
+        )
+        p2 = _make_portfolio(
+            cognitive=60, skill=80, creativity=None, cooperation=90, attention=None
+        )
         result = StudentService._compute_progress_from_portfolios([p1, p2])
         expected_cognitive = (80 + 60) / 2
         expected_skill = 80 / 1
         expected_creativity = 90 / 1
         expected_cooperation = 90 / 1
         expected_attention = 50 / 1
-        expected_avg = (expected_cognitive + expected_skill + expected_creativity + \
-                        expected_cooperation + expected_attention) / 5
+        expected_avg = (
+            expected_cognitive
+            + expected_skill
+            + expected_creativity
+            + expected_cooperation
+            + expected_attention
+        ) / 5
         assert result == round(expected_avg)
 
     def test_all_zeros(self):
@@ -55,8 +64,9 @@ class TestComputeProgressFromPortfolios:
         assert result == 0
 
     def test_all_100s(self):
-        portfolio = _make_portfolio(cognitive=100, skill=100,
-                                    creativity=100, cooperation=100, attention=100)
+        portfolio = _make_portfolio(
+            cognitive=100, skill=100, creativity=100, cooperation=100, attention=100
+        )
         result = StudentService._compute_progress_from_portfolios([portfolio])
         assert result == 100
 
@@ -66,8 +76,9 @@ class TestComputeProgressFromPortfolios:
         assert result == round((81 + 72 + 93 + 64 + 55) / 5)
 
     def test_all_none_scores_returns_zero(self):
-        portfolio = _make_portfolio(cognitive=None, skill=None,
-                                    creativity=None, cooperation=None, attention=None)
+        portfolio = _make_portfolio(
+            cognitive=None, skill=None, creativity=None, cooperation=None, attention=None
+        )
         result = StudentService._compute_progress_from_portfolios([portfolio])
         assert result == 0
 
@@ -142,6 +153,7 @@ class TestStudentServiceIntegration:
     @pytest.mark.asyncio
     async def test_create_generates_notification(self, db_session, test_user):
         from sqlalchemy import select
+
         from app.models.notification import Notification
 
         student_in = StudentCreate(
@@ -348,7 +360,9 @@ class TestStudentServiceIntegration:
         created = await StudentService.create(db_session, student_in, test_user.id)
 
         assert await StudentService.verify_ownership(db_session, created.id, test_user.id) is True
-        assert await StudentService.verify_ownership(db_session, created.id, "wrong-user-id") is False
+        assert (
+            await StudentService.verify_ownership(db_session, created.id, "wrong-user-id") is False
+        )
 
     @pytest.mark.asyncio
     async def test_calculate_progress_with_real_db(self, db_session, test_user):

@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.ai import AIConversation, AIMessage
-from app.schemas.ai import ChatRequest, ChatResponse, ConversationSchema, MessageSchema, MessageListSchema
+from app.schemas.ai import (
+    ChatRequest,
+    ChatResponse,
+    ConversationSchema,
+    MessageListSchema,
+    MessageSchema,
+)
 
 TOOL_DEFINITIONS = [
     {
@@ -23,7 +29,11 @@ TOOL_DEFINITIONS = [
                     "grade": {"type": "string", "description": "年级"},
                     "description": {"type": "string", "description": "课程描述"},
                     "schedule": {"type": "string", "description": "课程安排"},
-                    "status": {"type": "string", "description": "课程状态，默认draft", "default": "draft"},
+                    "status": {
+                        "type": "string",
+                        "description": "课程状态，默认draft",
+                        "default": "draft",
+                    },
                 },
                 "required": ["name", "subject", "grade"],
             },
@@ -42,7 +52,11 @@ TOOL_DEFINITIONS = [
                     "grade": {"type": "string", "description": "年级筛选"},
                     "status": {"type": "string", "description": "状态筛选"},
                     "page": {"type": "integer", "description": "页码，默认1", "default": 1},
-                    "page_size": {"type": "integer", "description": "每页数量，默认10", "default": 10},
+                    "page_size": {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "default": 10,
+                    },
                 },
             },
         },
@@ -126,7 +140,11 @@ TOOL_DEFINITIONS = [
                     "grade": {"type": "string", "description": "年级筛选"},
                     "class_name": {"type": "string", "description": "班级筛选"},
                     "page": {"type": "integer", "description": "页码，默认1", "default": 1},
-                    "page_size": {"type": "integer", "description": "每页数量，默认10", "default": 10},
+                    "page_size": {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "default": 10,
+                    },
                 },
             },
         },
@@ -243,7 +261,11 @@ TOOL_DEFINITIONS = [
                     "teaching_process": {"type": "string", "description": "教学过程"},
                     "teaching_resources": {"type": "string", "description": "教学资源"},
                     "notes": {"type": "string", "description": "备注"},
-                    "status": {"type": "string", "description": "教案状态，默认draft", "default": "draft"},
+                    "status": {
+                        "type": "string",
+                        "description": "教案状态，默认draft",
+                        "default": "draft",
+                    },
                 },
                 "required": ["title", "subject", "grade", "duration"],
             },
@@ -260,7 +282,11 @@ TOOL_DEFINITIONS = [
                     "search": {"type": "string", "description": "搜索关键词"},
                     "status": {"type": "string", "description": "状态筛选"},
                     "page": {"type": "integer", "description": "页码，默认1", "default": 1},
-                    "page_size": {"type": "integer", "description": "每页数量，默认10", "default": 10},
+                    "page_size": {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "default": 10,
+                    },
                 },
             },
         },
@@ -343,7 +369,11 @@ TOOL_DEFINITIONS = [
                     "keyword": {"type": "string", "description": "搜索关键词"},
                     "file_type": {"type": "string", "description": "文件类型筛选"},
                     "page": {"type": "integer", "description": "页码，默认1", "default": 1},
-                    "page_size": {"type": "integer", "description": "每页数量，默认10", "default": 10},
+                    "page_size": {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "default": 10,
+                    },
                 },
             },
         },
@@ -403,7 +433,11 @@ TOOL_DEFINITIONS = [
                     "type": {"type": "string", "description": "通知类型筛选"},
                     "read": {"type": "string", "description": "已读状态筛选: true/false"},
                     "page": {"type": "integer", "description": "页码，默认1", "default": 1},
-                    "page_size": {"type": "integer", "description": "每页数量，默认10", "default": 10},
+                    "page_size": {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "default": 10,
+                    },
                 },
             },
         },
@@ -465,9 +499,9 @@ TOOL_DEFINITIONS = [
 
 
 async def _create_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.courses import CourseService
-    from app.schemas.course import CourseCreate
     from app.models.user import User
+    from app.schemas.course import CourseCreate
+    from app.services.courses import CourseService
 
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
@@ -480,7 +514,7 @@ async def _create_course(db: AsyncSession, user_id: str, **kwargs):
         "name": course.name,
         "subject": course.subject,
         "grade": course.grade,
-        "status": course.status
+        "status": course.status,
     }
 
 
@@ -494,8 +528,14 @@ async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
     total = await CourseService.count(db, user_id, **kwargs)
     return {
         "items": [
-            {"id": c.id, "name": c.name, "subject": c.subject,
-                "grade": c.grade, "status": c.status, "teacher": c.teacher}
+            {
+                "id": c.id,
+                "name": c.name,
+                "subject": c.subject,
+                "grade": c.grade,
+                "status": c.status,
+                "teacher": c.teacher,
+            }
             for c in courses
         ],
         "total": total,
@@ -523,16 +563,18 @@ async def _get_course(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_course(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.courses import CourseService
-    from app.schemas.course import CourseUpdate
     from app.models.user import User
+    from app.schemas.course import CourseUpdate
+    from app.services.courses import CourseService
 
     course_id = kwargs.pop("course_id")
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     teacher_name = user.username if user else "未知"
 
-    course = await CourseService.update(db, course_id, CourseUpdate(**kwargs), user_id, teacher_name)
+    course = await CourseService.update(
+        db, course_id, CourseUpdate(**kwargs), user_id, teacher_name
+    )
     if not course:
         return {"error": "课程不存在或无权限"}
     await db.commit()
@@ -541,7 +583,7 @@ async def _update_course(db: AsyncSession, user_id: str, **kwargs):
         "name": course.name,
         "subject": course.subject,
         "grade": course.grade,
-        "status": course.status
+        "status": course.status,
     }
 
 
@@ -555,8 +597,8 @@ async def _delete_course(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _create_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.students import StudentService
     from app.schemas.student import StudentCreate
+    from app.services.students import StudentService
 
     student = await StudentService.create(db, StudentCreate(**kwargs), user_id)
     await db.commit()
@@ -564,7 +606,7 @@ async def _create_student(db: AsyncSession, user_id: str, **kwargs):
         "id": student.id,
         "name": student.name,
         "grade": student.grade,
-        "class_name": student.class_name
+        "class_name": student.class_name,
     }
 
 
@@ -578,8 +620,13 @@ async def _list_students(db: AsyncSession, user_id: str, **kwargs):
     total = await StudentService.count(db, user_id, **kwargs)
     return {
         "items": [
-            {"id": s.id, "name": s.name, "grade": s.grade,
-                "class_name": s.class_name, "gender": str(s.gender)}
+            {
+                "id": s.id,
+                "name": s.name,
+                "grade": s.grade,
+                "class_name": s.class_name,
+                "gender": str(s.gender),
+            }
             for s in students
         ],
         "total": total,
@@ -607,8 +654,8 @@ async def _get_student(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_student(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.students import StudentService
     from app.schemas.student import StudentUpdate
+    from app.services.students import StudentService
 
     student_id = kwargs.pop("student_id")
     student = await StudentService.update(db, student_id, StudentUpdate(**kwargs), user_id)
@@ -619,7 +666,7 @@ async def _update_student(db: AsyncSession, user_id: str, **kwargs):
         "id": student.id,
         "name": student.name,
         "grade": student.grade,
-        "class_name": student.class_name
+        "class_name": student.class_name,
     }
 
 
@@ -658,18 +705,19 @@ async def _get_monthly_trends(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _create_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plans import LessonPlanService
     from app.schemas.lesson_plan import LessonPlanCreate
+    from app.services.lesson_plans import LessonPlanService
 
     service = LessonPlanService(db)
     plan = await service.create(LessonPlanCreate(**kwargs), user_id)
     await db.commit()
     return {
-    "id": plan.id,
-    "title": plan.title,
-    "subject": plan.subject,
-    "grade": plan.grade,
-     "status": plan.status}
+        "id": plan.id,
+        "title": plan.title,
+        "subject": plan.subject,
+        "grade": plan.grade,
+        "status": plan.status,
+    }
 
 
 async def _list_lesson_plans(db: AsyncSession, user_id: str, **kwargs):
@@ -682,11 +730,19 @@ async def _list_lesson_plans(db: AsyncSession, user_id: str, **kwargs):
     search = kwargs.pop("search", None)
 
     service = LessonPlanService(db)
-    plans = await service.get_list(user_id, skip=skip, limit=page_size, status_filter=status_filter, search=search)
+    plans = await service.get_list(
+        user_id, skip=skip, limit=page_size, status_filter=status_filter, search=search
+    )
     total = await service.count(user_id, status_filter=status_filter, search=search)
     return {
         "items": [
-            {"id": p.id, "title": p.title, "subject": p.subject, "grade": p.grade, "status": p.status}
+            {
+                "id": p.id,
+                "title": p.title,
+                "subject": p.subject,
+                "grade": p.grade,
+                "status": p.status,
+            }
             for p in plans
         ],
         "total": total,
@@ -719,8 +775,8 @@ async def _get_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.lesson_plans import LessonPlanService
     from app.schemas.lesson_plan import LessonPlanUpdate
+    from app.services.lesson_plans import LessonPlanService
 
     plan_id = kwargs.pop("plan_id")
     service = LessonPlanService(db)
@@ -729,11 +785,12 @@ async def _update_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
         return {"error": "教案不存在或无权限"}
     await db.commit()
     return {
-    "id": plan.id,
-    "title": plan.title,
-    "subject": plan.subject,
-    "grade": plan.grade,
-     "status": plan.status}
+        "id": plan.id,
+        "title": plan.title,
+        "subject": plan.subject,
+        "grade": plan.grade,
+        "status": plan.status,
+    }
 
 
 async def _publish_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
@@ -758,8 +815,8 @@ async def _delete_lesson_plan(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _list_resources(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resources import ResourceService
     from app.schemas.resource import ResourceSearchParams
+    from app.services.resources import ResourceService
 
     page = kwargs.pop("page", 1)
     page_size = kwargs.pop("page_size", 10)
@@ -774,8 +831,13 @@ async def _list_resources(db: AsyncSession, user_id: str, **kwargs):
     resources, total = await ResourceService.get_resources(db, params)
     return {
         "items": [
-            {"id": r.id, "name": r.name, "file_type": r.file_type,
-                "file_size": r.file_size, "description": r.description}
+            {
+                "id": r.id,
+                "name": r.name,
+                "file_type": r.file_type,
+                "file_size": r.file_size,
+                "description": r.description,
+            }
             for r in resources
         ],
         "total": total,
@@ -801,11 +863,13 @@ async def _get_resource(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _update_resource(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.resources import ResourceService
     from app.schemas.resource import ResourceUpdate
+    from app.services.resources import ResourceService
 
     resource_id = kwargs.pop("resource_id")
-    resource = await ResourceService.update_resource(db, resource_id, ResourceUpdate(**kwargs), user_id)
+    resource = await ResourceService.update_resource(
+        db, resource_id, ResourceUpdate(**kwargs), user_id
+    )
     if not resource:
         return {"error": "资源不存在或无权限"}
     return {"id": resource.id, "name": resource.name, "description": resource.description}
@@ -819,8 +883,8 @@ async def _delete_resource(db: AsyncSession, user_id: str, **kwargs):
 
 
 async def _list_notifications(db: AsyncSession, user_id: str, **kwargs):
-    from app.services.notifications import NotificationService
     from app.models.notification import NotificationType
+    from app.services.notifications import NotificationService
 
     page = kwargs.pop("page", 1)
     page_size = kwargs.pop("page_size", 10)
@@ -835,12 +899,21 @@ async def _list_notifications(db: AsyncSession, user_id: str, **kwargs):
     if kwargs.get("read"):
         read = kwargs["read"].lower() == "true"
 
-    notifications = await NotificationService.get_list(db, user_id, skip=skip, limit=page_size, notification_type=notification_type, read=read)
-    total = await NotificationService.count(db, user_id, notification_type=notification_type, read=read)
+    notifications = await NotificationService.get_list(
+        db, user_id, skip=skip, limit=page_size, notification_type=notification_type, read=read
+    )
+    total = await NotificationService.count(
+        db, user_id, notification_type=notification_type, read=read
+    )
     return {
         "items": [
-            {"id": n.id, "title": n.title, "content": n.content,
-                "type": str(n.type), "read": n.read}
+            {
+                "id": n.id,
+                "title": n.title,
+                "content": n.content,
+                "type": str(n.type),
+                "read": n.read,
+            }
             for n in notifications
         ],
         "total": total,
@@ -978,36 +1051,44 @@ class AIService:
         if not effective_config:
             raise ValueError("NO_API_KEY")
 
-        conversation = await AIService._get_or_create_conversation(db, user_id, request.conversation_id, request.message)
+        conversation = await AIService._get_or_create_conversation(
+            db, user_id, request.conversation_id, request.message
+        )
 
-        await AIService._save_message(db, conversation.id, "user", request.message, module_tag=request.module)
+        await AIService._save_message(
+            db, conversation.id, "user", request.message, module_tag=request.module
+        )
 
         messages = await AIService._build_messages(db, conversation.id, request.module)
 
         if stream:
             return AIService._stream_chat(db, user_id, conversation, messages, effective_config)
         else:
-            return await AIService._non_stream_chat(db, user_id, conversation, messages, effective_config)
+            return await AIService._non_stream_chat(
+                db, user_id, conversation, messages, effective_config
+            )
 
     @staticmethod
     async def _get_next_session_number(db: AsyncSession, user_id: str) -> int:
         result = await db.execute(
-            select(AIConversation.id)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
+            select(AIConversation.id).where(
+                AIConversation.user_id == user_id, AIConversation.is_deleted == False
+            )  # noqa: E712
         )
         existing_ids = result.scalars().all()
         max_num = 0
         for eid in existing_ids:
             pass
         result2 = await db.execute(
-            select(AIConversation.title)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
+            select(AIConversation.title).where(
+                AIConversation.user_id == user_id, AIConversation.is_deleted == False
+            )  # noqa: E712
         )
         existing_titles = result2.scalars().all()
         for title in existing_titles:
             if title.startswith("新会话"):
                 try:
-                    num_str = title[len("新会话"):].split(" ")[0]
+                    num_str = title[len("新会话") :].split(" ")[0]
                     num = int(num_str)
                     if num > max_num:
                         max_num = num
@@ -1017,10 +1098,8 @@ class AIService:
 
     @staticmethod
     async def _get_or_create_conversation(
-    db: AsyncSession,
-    user_id: str,
-    conversation_id: Optional[str],
-     message: str) -> AIConversation:
+        db: AsyncSession, user_id: str, conversation_id: Optional[str], message: str
+    ) -> AIConversation:
         if conversation_id:
             result = await db.execute(
                 select(AIConversation).where(
@@ -1035,6 +1114,7 @@ class AIService:
 
         next_num = await AIService._get_next_session_number(db, user_id)
         from datetime import datetime
+
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         title = f"新会话{next_num} [{timestamp}]"
         conv = AIConversation(user_id=user_id, title=title)
@@ -1068,9 +1148,8 @@ class AIService:
 
     @staticmethod
     async def _build_messages(
-    db: AsyncSession,
-    conversation_id: str,
-     module: Optional[str] = None) -> list:
+        db: AsyncSession, conversation_id: str, module: Optional[str] = None
+    ) -> list:
         result = await db.execute(
             select(AIMessage)
             .where(
@@ -1099,49 +1178,55 @@ class AIService:
                         pass
                 messages.append(entry)
             elif msg.role == "tool":
-                messages.append({"role": "tool", "content": msg.content,
-                                "tool_call_id": msg.tool_call_id or ""})
+                messages.append(
+                    {"role": "tool", "content": msg.content, "tool_call_id": msg.tool_call_id or ""}
+                )
 
         return messages
 
     @staticmethod
     def _get_module_tag(tool_name: str) -> str:
         if tool_name in (
-    "create_course",
-    "list_courses",
-    "get_course",
-    "update_course",
-     "delete_course"):
+            "create_course",
+            "list_courses",
+            "get_course",
+            "update_course",
+            "delete_course",
+        ):
             return "course"
         if tool_name in (
-    "create_student",
-    "list_students",
-    "get_student",
-    "update_student",
-     "delete_student"):
+            "create_student",
+            "list_students",
+            "get_student",
+            "update_student",
+            "delete_student",
+        ):
             return "student"
         if tool_name in (
-    "get_dashboard_stats",
-    "get_course_statistics",
-    "get_student_statistics",
-     "get_monthly_trends"):
+            "get_dashboard_stats",
+            "get_course_statistics",
+            "get_student_statistics",
+            "get_monthly_trends",
+        ):
             return "data"
         if tool_name in (
-    "create_lesson_plan",
-    "list_lesson_plans",
-    "get_lesson_plan",
-    "update_lesson_plan",
-    "publish_lesson_plan",
-     "delete_lesson_plan"):
+            "create_lesson_plan",
+            "list_lesson_plans",
+            "get_lesson_plan",
+            "update_lesson_plan",
+            "publish_lesson_plan",
+            "delete_lesson_plan",
+        ):
             return "lesson_plan"
         if tool_name in ("list_resources", "get_resource", "update_resource", "delete_resource"):
             return "resource"
         if tool_name in (
-    "list_notifications",
-    "get_notification",
-    "mark_notification_read",
-    "mark_all_notifications_read",
-     "delete_notification"):
+            "list_notifications",
+            "get_notification",
+            "mark_notification_read",
+            "mark_all_notifications_read",
+            "delete_notification",
+        ):
             return "notification"
         return ""
 
@@ -1154,7 +1239,8 @@ class AIService:
         idx = tc.get("index", 0)
         while len(tool_calls_list) <= idx:
             tool_calls_list.append(
-                {"id": "", "function": {"name": "", "arguments": ""}, "type": "function"})
+                {"id": "", "function": {"name": "", "arguments": ""}, "type": "function"}
+            )
         if tc.get("id"):
             tool_calls_list[idx]["id"] = tc["id"]
         if tc.get("function", {}).get("name"):
@@ -1206,7 +1292,15 @@ class AIService:
             delta = chunk.get("choices", [{}])[0].get("delta", {})
             if delta.get("content"):
                 state["response_content"] += delta["content"]
-                return f"data: {json.dumps({'type': 'content', 'content': delta['content'], 'conversation_id': conversation_id}, ensure_ascii=False)}\n\n"
+                data = json.dumps(
+                    {
+                        "type": "content",
+                        "content": delta["content"],
+                        "conversation_id": conversation_id,
+                    },
+                    ensure_ascii=False,
+                )
+                return f"data: {data}\n\n"
             if delta.get("tool_calls"):
                 for tc in delta["tool_calls"]:
                     AIService._update_tool_calls_from_delta(state["tool_calls_list"], tc)
@@ -1220,7 +1314,8 @@ class AIService:
         user_id: str,
         conversation: AIConversation,
         messages: list,
-        effective_config: dict) -> AsyncGenerator:
+        effective_config: dict,
+    ) -> AsyncGenerator:
         max_iterations = 5
         current_messages = messages.copy()
 
@@ -1244,7 +1339,10 @@ class AIService:
                 ) as response:
                     if response.status_code != 200:
                         await response.aread()
-                        yield f"data: {json.dumps({'type': 'error', 'content': 'AI服务调用失败'}, ensure_ascii=False)}\n\n"
+                        data = json.dumps(
+                            {"type": "error", "content": "AI服务调用失败"}, ensure_ascii=False
+                        )
+                        yield f"data: {data}\n\n"
                         return
 
                     async for line in response.aiter_lines():
@@ -1259,36 +1357,54 @@ class AIService:
 
             if response_content:
                 await AIService._save_message(
-                    db, conversation.id, "assistant", response_content,
+                    db,
+                    conversation.id,
+                    "assistant",
+                    response_content,
                     tool_calls=json.dumps(tool_calls_list) if tool_calls_list else None,
                 )
 
             if not tool_calls_list:
-                yield f"data: {json.dumps({'type': 'done', 'conversation_id': conversation.id}, ensure_ascii=False)}\n\n"
+                data = json.dumps(
+                    {"type": "done", "conversation_id": conversation.id}, ensure_ascii=False
+                )
+                yield f"data: {data}\n\n"
                 return
 
             current_messages.append(
-                {"role": "assistant", "content": response_content, "tool_calls": tool_calls_list})
+                {"role": "assistant", "content": response_content, "tool_calls": tool_calls_list}
+            )
 
             for tc in tool_calls_list:
                 tool_name = tc["function"]["name"]
-                yield f"data: {json.dumps({'type': 'tool_call', 'tool_name': tool_name}, ensure_ascii=False)}\n\n"
+                data = json.dumps({"type": "tool_call", "tool_name": tool_name}, ensure_ascii=False)
+                yield f"data: {data}\n\n"
 
                 result_str, module_tag = await AIService._execute_single_tool(db, user_id, tc)
 
                 current_messages.append(
-                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
-                await AIService._save_message(db, conversation.id, "tool", result_str, tool_call_id=tc["id"], module_tag=module_tag)
+                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]}
+                )
+                await AIService._save_message(
+                    db,
+                    conversation.id,
+                    "tool",
+                    result_str,
+                    tool_call_id=tc["id"],
+                    module_tag=module_tag,
+                )
 
-        yield f"data: {json.dumps({'type': 'done', 'conversation_id': conversation.id}, ensure_ascii=False)}\n\n"
+        data = json.dumps({"type": "done", "conversation_id": conversation.id}, ensure_ascii=False)
+        yield f"data: {data}\n\n"
 
     @staticmethod
     async def _non_stream_chat(
-    db: AsyncSession,
-    user_id: str,
-    conversation: AIConversation,
-    messages: list,
-     effective_config: dict) -> ChatResponse:
+        db: AsyncSession,
+        user_id: str,
+        conversation: AIConversation,
+        messages: list,
+        effective_config: dict,
+    ) -> ChatResponse:
         max_iterations = 5
         current_messages = messages.copy()
         module_tag = None
@@ -1320,7 +1436,10 @@ class AIService:
 
             if response_content:
                 await AIService._save_message(
-                    db, conversation.id, "assistant", response_content,
+                    db,
+                    conversation.id,
+                    "assistant",
+                    response_content,
                     tool_calls=json.dumps([tc for tc in tool_calls]) if tool_calls else None,
                 )
 
@@ -1331,16 +1450,28 @@ class AIService:
                     module_tag=module_tag,
                 )
 
-            current_messages.append( {"role": "assistant",
-    "content": response_content,
-     "tool_calls": [tc for tc in tool_calls]})
+            current_messages.append(
+                {
+                    "role": "assistant",
+                    "content": response_content,
+                    "tool_calls": [tc for tc in tool_calls],
+                }
+            )
 
             for tc in tool_calls:
                 result_str, module_tag = await AIService._execute_single_tool(db, user_id, tc)
 
                 current_messages.append(
-                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]})
-                await AIService._save_message(db, conversation.id, "tool", result_str, tool_call_id=tc["id"], module_tag=module_tag)
+                    {"role": "tool", "content": result_str, "tool_call_id": tc["id"]}
+                )
+                await AIService._save_message(
+                    db,
+                    conversation.id,
+                    "tool",
+                    result_str,
+                    tool_call_id=tc["id"],
+                    module_tag=module_tag,
+                )
 
         return ChatResponse(
             conversation_id=conversation.id,
@@ -1352,7 +1483,9 @@ class AIService:
     async def get_conversations(db: AsyncSession, user_id: str):
         result = await db.execute(
             select(AIConversation)
-            .where(AIConversation.user_id == user_id, AIConversation.is_deleted == False)  # noqa: E712
+            .where(
+                AIConversation.user_id == user_id, AIConversation.is_deleted == False
+            )  # noqa: E712
             .order_by(AIConversation.updated_at.desc())
         )
         conversations = result.scalars().all()
@@ -1420,10 +1553,8 @@ class AIService:
 
     @staticmethod
     async def rename_conversation(
-    db: AsyncSession,
-    conversation_id: str,
-    user_id: str,
-     new_title: str) -> bool:
+        db: AsyncSession, conversation_id: str, user_id: str, new_title: str
+    ) -> bool:
         result = await db.execute(
             select(AIConversation).where(
                 AIConversation.id == conversation_id,

@@ -2,13 +2,14 @@
 安全模块
 包含密码哈希和JWT认证功能
 """
+
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Union
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
 import bcrypt
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,13 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_async_session as get_db
 
-
 # HTTP Bearer认证
 security = HTTPBearer(auto_error=False)
 
 
 class TokenPayload(BaseModel):
     """JWT Token载荷"""
+
     model_config = {"populate_by_name": True}
 
     sub: Optional[str] = None  # 用户ID
@@ -33,24 +34,18 @@ class TokenPayload(BaseModel):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode("utf-8"),
-        hashed_password.encode("utf-8")
-    )
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
 def get_password_hash(password: str) -> str:
-    return bcrypt.hashpw(
-        password.encode("utf-8"),
-        bcrypt.gensalt()
-    ).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def create_access_token(
     subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None,
     extra_claims: Optional[dict] = None,
-    token_version: Optional[str] = None
+    token_version: Optional[str] = None,
 ) -> str:
     """
     创建访问令牌
@@ -75,7 +70,7 @@ def create_access_token(
         "exp": expire,
         "sub": str(subject),
         "type": "access",
-        "iat": datetime.now(timezone.utc)  # 签发时间
+        "iat": datetime.now(timezone.utc),  # 签发时间
     }
 
     # 添加令牌版本号（用于失效控制）
@@ -85,41 +80,31 @@ def create_access_token(
     if extra_claims:
         to_encode.update(extra_claims)
 
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
 def create_refresh_token(
     subject: Union[str, Any],
     expires_delta: Optional[timedelta] = None,
-    token_version: Optional[str] = None
+    token_version: Optional[str] = None,
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
-            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
-        )
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode = {
         "exp": expire,
         "sub": str(subject),
         "type": "refresh",
-        "iat": datetime.now(timezone.utc)
+        "iat": datetime.now(timezone.utc),
     }
 
     if token_version:
         to_encode["jti"] = str(token_version)
 
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
@@ -134,11 +119,7 @@ def decode_token(token: str) -> Optional[TokenPayload]:
         TokenPayload对象，如果无效则返回None
     """
     try:
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return TokenPayload(**payload)
     except jwt.exceptions.InvalidTokenError:
         return None
@@ -173,9 +154,7 @@ def verify_token(token: str, token_type: str = "access") -> Optional[str]:
     return payload.sub
 
 
-async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-) -> str:
+async def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     """
     获取当前用户ID（FastAPI依赖）
 
@@ -207,10 +186,7 @@ async def get_current_user_id(
     return user_id
 
 
-async def get_current_user_id_from_token_with_version_check(
-    token: str,
-    db: AsyncSession
-) -> str:
+async def get_current_user_id_from_token_with_version_check(token: str, db: AsyncSession) -> str:
     """
     直接根据Token字符串获取当前用户ID并校验Token版本
 
@@ -261,10 +237,7 @@ async def get_current_user_id_from_token_with_version_check(
         )
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="账户已被禁用"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="账户已被禁用")
 
     if token_version and str(user.token_version) != token_version:
         raise HTTPException(
@@ -278,7 +251,7 @@ async def get_current_user_id_from_token_with_version_check(
 
 async def get_current_user_id_with_version_check(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> str:
     """
     获取当前用户ID并校验Token版本（FastAPI依赖）
@@ -305,9 +278,10 @@ async def get_current_user_id_with_version_check(
     return await get_current_user_id_from_token_with_version_check(credentials.credentials, db)
 
 
-from cryptography.fernet import Fernet
 import base64
 import hashlib
+
+from cryptography.fernet import Fernet
 
 
 def _get_encryption_key() -> bytes:

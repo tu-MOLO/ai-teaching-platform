@@ -1,15 +1,16 @@
 """
 成长档案服务
 """
+
 from typing import List, Optional
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import NotFoundException
 from app.models.portfolio import Portfolio
 from app.models.student import Student
 from app.schemas.portfolio import PortfolioCreate, PortfolioUpdate
-from app.core.exceptions import NotFoundException
 
 
 class PortfolioService:
@@ -33,7 +34,7 @@ class PortfolioService:
             select(Student).where(
                 Student.id == portfolio_in.student_id,
                 Student.user_id == user_id,
-                Student.is_deleted == False  # noqa: E712
+                Student.is_deleted == False,  # noqa: E712
             )
         )
         if not student_result.scalar_one_or_none():
@@ -60,7 +61,7 @@ class PortfolioService:
             select(Portfolio).where(
                 Portfolio.id == portfolio_id,
                 Portfolio.user_id == user_id,
-                Portfolio.is_deleted == False  # noqa: E712
+                Portfolio.is_deleted == False,  # noqa: E712
             )
         )
         return result.scalar_one_or_none()
@@ -72,7 +73,7 @@ class PortfolioService:
         skip: int = 0,
         limit: int = 100,
         student_id: Optional[str] = None,
-        type: Optional[str] = None
+        type: Optional[str] = None,
     ) -> List[Portfolio]:
         """
         获取成长档案列表（用户隔离）
@@ -89,8 +90,7 @@ class PortfolioService:
             成长档案列表
         """
         query = select(Portfolio).where(
-            Portfolio.user_id == user_id,
-            Portfolio.is_deleted == False  # noqa: E712
+            Portfolio.user_id == user_id, Portfolio.is_deleted == False  # noqa: E712
         )
 
         if student_id:
@@ -106,10 +106,7 @@ class PortfolioService:
 
     @staticmethod
     async def update(
-        db: AsyncSession,
-        portfolio_id: str,
-        portfolio_in: PortfolioUpdate,
-        user_id: str
+        db: AsyncSession, portfolio_id: str, portfolio_in: PortfolioUpdate, user_id: str
     ) -> Optional[Portfolio]:
         """
         更新成长档案（带所有权验证）
@@ -157,10 +154,7 @@ class PortfolioService:
 
     @staticmethod
     async def count(
-        db: AsyncSession,
-        user_id: str,
-        student_id: Optional[str] = None,
-        type: Optional[str] = None
+        db: AsyncSession, user_id: str, student_id: Optional[str] = None, type: Optional[str] = None
     ) -> int:
         """
         统计成长档案数量（用户隔离）
@@ -174,9 +168,10 @@ class PortfolioService:
         Returns:
             成长档案数量
         """
-        query = select(func.count()).select_from(Portfolio).where(
-            Portfolio.user_id == user_id,
-            Portfolio.is_deleted == False  # noqa: E712
+        query = (
+            select(func.count())
+            .select_from(Portfolio)
+            .where(Portfolio.user_id == user_id, Portfolio.is_deleted == False)  # noqa: E712
         )
 
         if student_id:

@@ -17,7 +17,7 @@ vi.mock('../../stores/theme', () => ({
 }))
 
 vi.mock('antd', () => ({
-  Card: ({ children, title, styles, ...props }: any) =>
+  Card: ({ children, title, ...props }: any) =>
     React.createElement('div', { 'data-testid': 'card', ...props }, title, children),
   Button: ({ children, icon, ...props }: any) =>
     React.createElement('button', { 'data-testid': 'btn', ...props }, icon, children),
@@ -31,7 +31,7 @@ vi.mock('antd', () => ({
     React.createElement('span', { 'data-testid': 'tag', 'data-color': color }, children),
   Badge: ({ children, count }: any) =>
     React.createElement('span', { 'data-testid': 'badge', 'data-count': count }, children),
-  Space: ({ children, direction, ...props }: any) =>
+  Space: ({ children, ...props }: any) =>
     React.createElement('div', { 'data-testid': 'space', ...props }, children),
   Typography: {
     Title: ({ children, level, style }: any) =>

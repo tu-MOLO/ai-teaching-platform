@@ -12,9 +12,9 @@ vi.mock('antd', () => ({
   Card: ({ children, className}: any) =>
     React.createElement('div', { 'data-testid': 'card', className }, children),
   Typography: {
-    Title: ({ children, level, style, ...props }: any) =>
+    Title: ({ children, ...props }: any) =>
       React.createElement('h5', { 'data-testid': 'title', ...props }, children),
-    Text: ({ children, type, style, ...props }: any) =>
+    Text: ({ children, type, ...props }: any) =>
       React.createElement('span', { 'data-testid': 'text', 'data-type': type, ...props }, children),
   },
   Tag: ({ children, color}: any) =>

@@ -1,37 +1,38 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
+import pytest
+
+from app.models.notification import Notification, NotificationType
+from app.models.resource import Resource
 from app.services.ai import (
     _create_course,
-    _list_courses,
-    _get_course,
-    _update_course,
-    _delete_course,
-    _create_student,
-    _list_students,
-    _get_student,
-    _update_student,
-    _delete_student,
-    _get_dashboard_stats,
-    _get_course_statistics,
-    _get_student_statistics,
-    _get_monthly_trends,
     _create_lesson_plan,
-    _list_lesson_plans,
-    _get_lesson_plan,
-    _update_lesson_plan,
-    _publish_lesson_plan,
+    _create_student,
+    _delete_course,
     _delete_lesson_plan,
-    _list_resources,
-    _get_resource,
-    _list_notifications,
-    _get_notification,
-    _mark_notification_read,
-    _mark_all_notifications_read,
     _delete_notification,
+    _delete_student,
+    _get_course,
+    _get_course_statistics,
+    _get_dashboard_stats,
+    _get_lesson_plan,
+    _get_monthly_trends,
+    _get_notification,
+    _get_resource,
+    _get_student,
+    _get_student_statistics,
+    _list_courses,
+    _list_lesson_plans,
+    _list_notifications,
+    _list_resources,
+    _list_students,
+    _mark_all_notifications_read,
+    _mark_notification_read,
+    _publish_lesson_plan,
+    _update_course,
+    _update_lesson_plan,
+    _update_student,
 )
-from app.models.resource import Resource
-from app.models.notification import Notification, NotificationType
 
 
 class TestCourseToolExecutors:
@@ -696,13 +697,17 @@ class TestNotificationToolExecutors:
         await db_session.commit()
         await db_session.refresh(notification)
 
-        result = await _mark_notification_read(db_session, test_user.id, notification_id=notification.id)
+        result = await _mark_notification_read(
+            db_session, test_user.id, notification_id=notification.id
+        )
         assert result["id"] == notification.id
         assert result["read"] is True
 
     @pytest.mark.asyncio
     async def test_mark_notification_read_not_found(self, db_session, test_user):
-        result = await _mark_notification_read(db_session, test_user.id, notification_id="nonexistent-id")
+        result = await _mark_notification_read(
+            db_session, test_user.id, notification_id="nonexistent-id"
+        )
         assert "error" in result
 
     @pytest.mark.asyncio
@@ -734,10 +739,14 @@ class TestNotificationToolExecutors:
         await db_session.commit()
         await db_session.refresh(notification)
 
-        result = await _delete_notification(db_session, test_user.id, notification_id=notification.id)
+        result = await _delete_notification(
+            db_session, test_user.id, notification_id=notification.id
+        )
         assert result["success"] is True
 
     @pytest.mark.asyncio
     async def test_delete_notification_not_found(self, db_session, test_user):
-        result = await _delete_notification(db_session, test_user.id, notification_id="nonexistent-id")
+        result = await _delete_notification(
+            db_session, test_user.id, notification_id="nonexistent-id"
+        )
         assert result["success"] is False

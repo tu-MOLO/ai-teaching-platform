@@ -1,9 +1,10 @@
 """
 课程服务
 """
+
 from typing import List, Optional
 
-from sqlalchemy import select, func, or_
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.course import Course
@@ -18,10 +19,7 @@ class CourseService:
 
     @staticmethod
     async def create(
-        db: AsyncSession,
-        course_in: CourseCreate,
-        user_id: str,
-        teacher_name: str
+        db: AsyncSession, course_in: CourseCreate, user_id: str, teacher_name: str
     ) -> Course:
         """
         创建课程
@@ -51,7 +49,7 @@ class CourseService:
                 user_id=user_id,
                 target_id=db_course.id,
                 target_type="course",
-            )
+            ),
         )
 
         return db_course
@@ -73,7 +71,7 @@ class CourseService:
             select(Course).where(
                 Course.id == course_id,
                 Course.user_id == user_id,
-                Course.is_deleted == False  # noqa: E712
+                Course.is_deleted == False,  # noqa: E712
             )
         )
         return result.scalar_one_or_none()
@@ -88,7 +86,7 @@ class CourseService:
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         status: Optional[str] = None,
-        teacher: Optional[str] = None
+        teacher: Optional[str] = None,
     ) -> List[Course]:
         """
         获取课程列表
@@ -107,8 +105,7 @@ class CourseService:
             课程列表（仅返回属于该用户的课程）
         """
         query = select(Course).where(
-            Course.user_id == user_id,
-            Course.is_deleted == False  # noqa: E712
+            Course.user_id == user_id, Course.is_deleted == False  # noqa: E712
         )
 
         if keyword:
@@ -143,7 +140,7 @@ class CourseService:
         subject: Optional[str] = None,
         grade: Optional[str] = None,
         status: Optional[str] = None,
-        teacher: Optional[str] = None
+        teacher: Optional[str] = None,
     ) -> int:
         """
         统计课程数量
@@ -159,9 +156,10 @@ class CourseService:
         Returns:
             课程数量（仅统计属于该用户的课程）
         """
-        query = select(func.count()).select_from(Course).where(
-            Course.user_id == user_id,
-            Course.is_deleted == False  # noqa: E712
+        query = (
+            select(func.count())
+            .select_from(Course)
+            .where(Course.user_id == user_id, Course.is_deleted == False)  # noqa: E712
         )
 
         if keyword:
@@ -189,11 +187,7 @@ class CourseService:
 
     @staticmethod
     async def update(
-        db: AsyncSession,
-        course_id: str,
-        course_in: CourseUpdate,
-        user_id: str,
-        teacher_name: str
+        db: AsyncSession, course_id: str, course_in: CourseUpdate, user_id: str, teacher_name: str
     ) -> Optional[Course]:
         """
         更新课程

@@ -1,6 +1,6 @@
+import bcrypt
 import pytest
 import pytest_asyncio
-import bcrypt
 
 from app.models.user import User, UserRole
 
@@ -11,16 +11,16 @@ async def other_user(db_session):
         email="other_user@example.com",
         username="otheruser2",
         full_name="Other User 2",
-        hashed_password=bcrypt.hashpw(
-            "OtherPass123!".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_password=bcrypt.hashpw("OtherPass123!".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
         role=UserRole.TEACHER,
         is_active=True,
         token_version=1,
         security_question="What is your pet name?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Buddy".encode("utf-8"), bcrypt.gensalt()
-        ).decode("utf-8"),
+        hashed_security_answer=bcrypt.hashpw("Buddy".encode("utf-8"), bcrypt.gensalt()).decode(
+            "utf-8"
+        ),
     )
     db_session.add(user)
     await db_session.commit()
@@ -30,10 +30,13 @@ async def other_user(db_session):
 
 @pytest_asyncio.fixture(scope="function")
 async def other_auth_headers(client, other_user):
-    login_resp = await client.post("/api/v1/auth/login", json={
-        "username": "otheruser2",
-        "password": "OtherPass123!",
-    })
+    login_resp = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "username": "otheruser2",
+            "password": "OtherPass123!",
+        },
+    )
     token = login_resp.json()["token"]["access_token"]
     return {"Authorization": f"Bearer {token}"}
 
@@ -83,7 +86,8 @@ class TestUserAPI:
 
     @pytest.mark.asyncio
     async def test_update_user_duplicate_username(
-    self, client, test_user, other_user, auth_headers):
+        self, client, test_user, other_user, auth_headers
+    ):
         response = await client.put(
             f"/api/v1/users/{test_user.id}",
             json={"username": "otheruser2"},

@@ -1,10 +1,10 @@
 from typing import Optional
 
-from sqlalchemy import String, Text, ForeignKey, Index
+from sqlalchemy import ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.base import UUIDMixin, TimestampMixin, SoftDeleteMixin
+from app.models.base import SoftDeleteMixin, TimestampMixin, UUIDMixin
 
 
 class AIModelBase(Base, UUIDMixin, TimestampMixin):
@@ -37,9 +37,7 @@ class AIConversation(AIModelBase, SoftDeleteMixin):
         lazy="selectin",
     )
 
-    __table_args__ = (
-        Index("ix_ai_conversations_user_id", "user_id"),
-    )
+    __table_args__ = (Index("ix_ai_conversations_user_id", "user_id"),)
 
     def __repr__(self) -> str:
         return f"<AIConversation(id={self.id}, user_id={self.user_id}, title={self.title})>"
@@ -84,12 +82,10 @@ class AIMessage(AIModelBase):
         back_populates="messages",
     )
 
-    __table_args__ = (
-        Index("ix_ai_messages_conversation_id", "conversation_id"),
-    )
+    __table_args__ = (Index("ix_ai_messages_conversation_id", "conversation_id"),)
 
     def __repr__(self) -> str:
-        return f"<AIMessage(id={
-    self.id}, conversation_id={
-        self.conversation_id}, role={
-            self.role})>"
+        return (
+            f"<AIMessage(id={self.id}, conversation_id={self.conversation_id},"
+            f" role={self.role})>"
+        )

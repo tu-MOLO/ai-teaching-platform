@@ -3,21 +3,23 @@
 防止暴力破解和 API 滥用
 支持内存和 Redis 两种后端
 """
+
 import asyncio
 import time
 from dataclasses import dataclass
 from functools import wraps
-from typing import Optional, Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
-from fastapi import Request, HTTPException, status
+from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials
 
 
 @dataclass
 class RateLimitConfig:
     """限流配置"""
+
     requests: int  # 允许的最大请求数
-    window: int    # 时间窗口（秒）
+    window: int  # 时间窗口（秒）
     key_func: Optional[Callable] = None  # 自定义键生成函数
 
 
@@ -29,11 +31,7 @@ class RateLimiter:
         self._configs: Dict[str, RateLimitConfig] = {}
 
     def configure(self, name: str, requests: int, window: int, key_func: Optional[Callable] = None):
-        self._configs[name] = RateLimitConfig(
-            requests=requests,
-            window=window,
-            key_func=key_func
-        )
+        self._configs[name] = RateLimitConfig(requests=requests, window=window, key_func=key_func)
 
     def _get_client_ip(self, request: Request) -> str:
         forwarded = request.headers.get("X-Forwarded-For")
@@ -46,8 +44,12 @@ class RateLimiter:
             return request.client.host
         return "unknown"
 
-    def _generate_key(self, request: Request, config_name: str,
-                      credentials: Optional[HTTPAuthorizationCredentials] = None) -> str:
+    def _generate_key(
+        self,
+        request: Request,
+        config_name: str,
+        credentials: Optional[HTTPAuthorizationCredentials] = None,
+    ) -> str:
         config = self._configs.get(config_name)
         if config and config.key_func:
             return config.key_func(request)
@@ -74,7 +76,7 @@ class RateLimiter:
                 "limit": config.requests,
                 "remaining": 0,
                 "reset_time": reset_time,
-                "retry_after": max(1, retry_after)
+                "retry_after": max(1, retry_after),
             }
 
         requests.append(now)
@@ -87,7 +89,7 @@ class RateLimiter:
             "limit": config.requests,
             "remaining": max(0, remaining),
             "reset_time": reset_time,
-            "retry_after": 0
+            "retry_after": 0,
         }
 
     def reset(self, key: str):
@@ -128,7 +130,7 @@ class RedisRateLimiter(RateLimiter):
                     "limit": config.requests,
                     "remaining": 0,
                     "reset_time": reset_time,
-                    "retry_after": retry_after
+                    "retry_after": retry_after,
                 }
 
             remaining = config.requests - count - 1
@@ -136,7 +138,7 @@ class RedisRateLimiter(RateLimiter):
                 "limit": config.requests,
                 "remaining": max(0, remaining),
                 "reset_time": now + config.window,
-                "retry_after": 0
+                "retry_after": 0,
             }
         except Exception:
             return await asyncio.to_thread(self.is_allowed, key, config_name)
@@ -156,12 +158,13 @@ def rate_limit(config_name: str):
         async def login(request: Request, ...):
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # 从参数中获取 request 和 credentials
-            request = kwargs.get('request')
-            credentials = kwargs.get('credentials')
+            request = kwargs.get("request")
+            credentials = kwargs.get("credentials")
 
             # 如果参数中没有，尝试从 args 中查找
             if not request:
@@ -173,7 +176,7 @@ def rate_limit(config_name: str):
             if not request:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Rate limiting requires Request parameter"
+                    detail="Rate limiting requires Request parameter",
                 )
 
             # 生成限流键
@@ -190,15 +193,17 @@ def rate_limit(config_name: str):
                         "X-RateLimit-Limit": str(info["limit"]),
                         "X-RateLimit-Remaining": str(info["remaining"]),
                         "X-RateLimit-Reset": str(int(info["reset_time"])),
-                        "Retry-After": str(info["retry_after"])
-                    }
+                        "Retry-After": str(info["retry_after"]),
+                    },
                 )
 
             # 添加限流信息到响应头（通过 request state）
             request.state.rate_limit_info = info
 
             return await func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -215,7 +220,7 @@ class RateLimitDependency:
         return cls._instances[config_name]
 
     def __init__(self, config_name: str):
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self.config_name = config_name
         self._initialized = True
@@ -273,6 +278,7 @@ def init_rate_limiter():
 
     if settings.TESTING:
         from app.core.logging import get_logger
+
         get_logger(__name__).info("TESTING mode: rate limiter disabled")
         return
 
@@ -288,16 +294,20 @@ def init_rate_limiter():
     try:
         if settings.REDIS_URL:
             import redis.asyncio as aioredis
+
             redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=False)
             rate_limiter = RedisRateLimiter(redis_client)
             from app.core.logging import get_logger
+
             get_logger(__name__).info("Redis rate limiter initialized")
         else:
             raise ImportError("No REDIS_URL configured")
     except Exception:
         from app.core.logging import get_logger
+
         get_logger(__name__).warning(
-            "Redis unavailable, using in-memory rate limiter (single-worker only)")
+            "Redis unavailable, using in-memory rate limiter (single-worker only)"
+        )
 
     for name, requests, window in configs:
         rate_limiter.configure(name=name, requests=requests, window=window)

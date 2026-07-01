@@ -1,6 +1,7 @@
 """
 Reporting services used by the frontend dashboard and reports pages.
 """
+
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -21,27 +22,23 @@ class ReportService:
         year = base_date.year + (base_date.month + month_offset - 1) // 12
         month = (base_date.month + month_offset - 1) % 12 + 1
         return base_date.replace(
-    year=year,
-    month=month,
-    day=1,
-    hour=0,
-    minute=0,
-    second=0,
-     microsecond=0)
+            year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0
+        )
 
     @staticmethod
     async def get_dashboard_stats(
-        db: AsyncSession, user_id: Optional[str] = None) -> Dict[str, Any]:
+        db: AsyncSession, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         course_filters = [Course.is_deleted == False]  # noqa: E712
         student_filters = [Student.is_deleted == False]  # noqa: E712
         lesson_plan_filters = [LessonPlan.is_deleted == False]  # noqa: E712
         resource_filters = [Resource.is_deleted == False]  # noqa: E712
 
         if user_id is not None:
-          course_filters.append(Course.user_id == user_id)
-          student_filters.append(Student.user_id == user_id)
-          lesson_plan_filters.append(LessonPlan.user_id == user_id)
-          resource_filters.append(Resource.user_id == user_id)
+            course_filters.append(Course.user_id == user_id)
+            student_filters.append(Student.user_id == user_id)
+            lesson_plan_filters.append(LessonPlan.user_id == user_id)
+            resource_filters.append(Resource.user_id == user_id)
 
         total_courses = (
             await db.execute(select(func.count()).select_from(Course).where(*course_filters))
@@ -56,7 +53,9 @@ class ReportService:
         # 计算活跃课程数（进行中状态）
         active_courses = (
             await db.execute(
-                select(func.count()).select_from(Course).where(
+                select(func.count())
+                .select_from(Course)
+                .where(
                     *course_filters,
                     Course.status == CourseStatus.ACTIVE,
                 )
@@ -66,7 +65,9 @@ class ReportService:
         # 计算草稿教案数
         draft_lesson_plans = (
             await db.execute(
-                select(func.count()).select_from(LessonPlan).where(
+                select(func.count())
+                .select_from(LessonPlan)
+                .where(
                     *lesson_plan_filters,
                     LessonPlan.status == LessonPlanStatus.DRAFT,
                 )
@@ -81,14 +82,19 @@ class ReportService:
         ).scalar() or 0
         published_lesson_plans = (
             await db.execute(
-                select(func.count()).select_from(LessonPlan).where(
+                select(func.count())
+                .select_from(LessonPlan)
+                .where(
                     *lesson_plan_filters,
                     LessonPlan.status == LessonPlanStatus.PUBLISHED,
                 )
             )
         ).scalar() or 0
-        completion_rate = round((published_lesson_plans / total_lesson_plans * \
-                                100), 0) if total_lesson_plans > 0 else 0
+        completion_rate = (
+            round((published_lesson_plans / total_lesson_plans * 100), 0)
+            if total_lesson_plans > 0
+            else 0
+        )
 
         now = datetime.now()
         current_month_start = ReportService.get_month_start(now, 0)
@@ -97,7 +103,9 @@ class ReportService:
 
         monthly_courses = (
             await db.execute(
-                select(func.count()).select_from(Course).where(
+                select(func.count())
+                .select_from(Course)
+                .where(
                     *course_filters,
                     Course.created_at >= current_month_start,
                 )
@@ -105,7 +113,9 @@ class ReportService:
         ).scalar() or 0
         monthly_students = (
             await db.execute(
-                select(func.count()).select_from(Student).where(
+                select(func.count())
+                .select_from(Student)
+                .where(
                     *student_filters,
                     Student.created_at >= current_month_start,
                 )
@@ -113,7 +123,9 @@ class ReportService:
         ).scalar() or 0
         monthly_lesson_plans = (
             await db.execute(
-                select(func.count()).select_from(LessonPlan).where(
+                select(func.count())
+                .select_from(LessonPlan)
+                .where(
                     *lesson_plan_filters,
                     LessonPlan.status == LessonPlanStatus.PUBLISHED,
                     LessonPlan.created_at >= current_month_start,
@@ -123,7 +135,9 @@ class ReportService:
 
         last_month_courses = (
             await db.execute(
-                select(func.count()).select_from(Course).where(
+                select(func.count())
+                .select_from(Course)
+                .where(
                     *course_filters,
                     Course.created_at >= last_month_start,
                     Course.created_at < current_month_start,
@@ -132,7 +146,9 @@ class ReportService:
         ).scalar() or 0
         two_months_ago_courses = (
             await db.execute(
-                select(func.count()).select_from(Course).where(
+                select(func.count())
+                .select_from(Course)
+                .where(
                     *course_filters,
                     Course.created_at >= two_months_ago_start,
                     Course.created_at < last_month_start,
@@ -141,7 +157,9 @@ class ReportService:
         ).scalar() or 0
         last_month_students = (
             await db.execute(
-                select(func.count()).select_from(Student).where(
+                select(func.count())
+                .select_from(Student)
+                .where(
                     *student_filters,
                     Student.created_at >= last_month_start,
                     Student.created_at < current_month_start,
@@ -150,7 +168,9 @@ class ReportService:
         ).scalar() or 0
         two_months_ago_students = (
             await db.execute(
-                select(func.count()).select_from(Student).where(
+                select(func.count())
+                .select_from(Student)
+                .where(
                     *student_filters,
                     Student.created_at >= two_months_ago_start,
                     Student.created_at < last_month_start,
@@ -168,7 +188,9 @@ class ReportService:
             "activeCourses": active_courses,
             "averageProgress": completion_rate,
             "courseTrend": ReportService._format_growth(last_month_courses, two_months_ago_courses),
-            "studentTrend": ReportService._format_growth(last_month_students, two_months_ago_students),
+            "studentTrend": ReportService._format_growth(
+                last_month_students, two_months_ago_students
+            ),
             "recentActivities": recent_activities,
             "monthlyCourses": monthly_courses,
             "monthlyStudents": monthly_students,
@@ -206,15 +228,29 @@ class ReportService:
     ) -> List[Dict[str, Any]]:
         recent_activities: List[Dict[str, Any]] = []
         recent_courses = (
-            await db.execute(
-                select(Course).where(*course_filters).order_by(Course.created_at.desc()).limit(3)
+            (
+                await db.execute(
+                    select(Course)
+                    .where(*course_filters)
+                    .order_by(Course.created_at.desc())
+                    .limit(3)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         recent_students = (
-            await db.execute(
-                select(Student).where(*student_filters).order_by(Student.created_at.desc()).limit(2)
+            (
+                await db.execute(
+                    select(Student)
+                    .where(*student_filters)
+                    .order_by(Student.created_at.desc())
+                    .limit(2)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         for course in recent_courses:
             recent_activities.append(
@@ -256,7 +292,8 @@ class ReportService:
 
     @staticmethod
     async def get_course_statistics(
-        db: AsyncSession, user_id: Optional[str] = None) -> Dict[str, Any]:
+        db: AsyncSession, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         course_filters = [Course.is_deleted == False]  # noqa: E712
         if user_id is not None:
             course_filters.append(Course.user_id == user_id)
@@ -300,16 +337,23 @@ class ReportService:
 
         hot_courses = []
         hot_course_rows = (
-            await db.execute(
-                select(Course).where(*course_filters).order_by(Course.created_at.desc()).limit(5)
+            (
+                await db.execute(
+                    select(Course)
+                    .where(*course_filters)
+                    .order_by(Course.created_at.desc())
+                    .limit(5)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         for course in hot_course_rows:
             student_count = (
                 await db.execute(
-                    select(func.count()).select_from(course_student).where(
-                        course_student.c.course_id == course.id
-                    )
+                    select(func.count())
+                    .select_from(course_student)
+                    .where(course_student.c.course_id == course.id)
                 )
             ).scalar() or 0
             hot_courses.append(
@@ -329,7 +373,8 @@ class ReportService:
 
     @staticmethod
     async def get_student_statistics(
-        db: AsyncSession, user_id: Optional[str] = None) -> Dict[str, Any]:
+        db: AsyncSession, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         student_filters = [Student.is_deleted == False]  # noqa: E712
         if user_id is not None:
             student_filters.append(Student.user_id == user_id)
@@ -401,12 +446,15 @@ class ReportService:
         current_date = datetime.now()
         for offset in range(months - 1, -1, -1):
             month_start = ReportService.get_month_start(current_date, -offset)
-            month_end = ReportService.get_month_start(
-                current_date, -offset + 1) - timedelta(seconds=1)
+            month_end = ReportService.get_month_start(current_date, -offset + 1) - timedelta(
+                seconds=1
+            )
 
             courses_count = (
                 await db.execute(
-                    select(func.count()).select_from(Course).where(
+                    select(func.count())
+                    .select_from(Course)
+                    .where(
                         *course_filters,
                         Course.created_at >= month_start,
                         Course.created_at <= month_end,
@@ -415,7 +463,9 @@ class ReportService:
             ).scalar() or 0
             students_count = (
                 await db.execute(
-                    select(func.count()).select_from(Student).where(
+                    select(func.count())
+                    .select_from(Student)
+                    .where(
                         *student_filters,
                         Student.created_at >= month_start,
                         Student.created_at <= month_end,
@@ -424,7 +474,9 @@ class ReportService:
             ).scalar() or 0
             lesson_plans_count = (
                 await db.execute(
-                    select(func.count()).select_from(LessonPlan).where(
+                    select(func.count())
+                    .select_from(LessonPlan)
+                    .where(
                         *lesson_plan_filters,
                         LessonPlan.created_at >= month_start,
                         LessonPlan.created_at <= month_end,

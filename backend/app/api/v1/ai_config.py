@@ -5,7 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.security import get_current_user_id_with_version_check
-from app.schemas.ai_config import AIConfigResponse, AIConfigUpdate, AIConfigTestRequest, AIConfigTestResponse
+from app.schemas.ai_config import (
+    AIConfigResponse,
+    AIConfigTestRequest,
+    AIConfigTestResponse,
+    AIConfigUpdate,
+)
 from app.services.ai_config import AIConfigService
 
 router = APIRouter()

@@ -2,9 +2,25 @@
 API V1路由注册模块
 聚合所有V1版本的API路由
 """
+
 from fastapi import APIRouter
 
-from app.api.v1 import auth, tags, resources, lesson_templates, lesson_plans, students, portfolios, courses, reports, notifications, users, dropdown_options, ai_config, ai
+from app.api.v1 import (
+    ai,
+    ai_config,
+    auth,
+    courses,
+    dropdown_options,
+    lesson_plans,
+    lesson_templates,
+    notifications,
+    portfolios,
+    reports,
+    resources,
+    students,
+    tags,
+    users,
+)
 
 # 创建V1版本的路由器
 api_router = APIRouter()

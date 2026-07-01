@@ -2,21 +2,13 @@
 数据库连接和会话管理模块
 使用SQLAlchemy 2.0异步ORM
 """
-from typing import AsyncGenerator, Annotated
+
+from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-    AsyncAttrs
-)
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    declared_attr,
-    sessionmaker
-)
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, declared_attr, sessionmaker
 
 from app.core.config import settings
 
@@ -42,9 +34,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 # SQLite不需要连接池配置
 if "sqlite" in settings.DATABASE_URL:
     async_engine = create_async_engine(
-        settings.DATABASE_URL,
-        echo=settings.DEBUG,  # 调试模式打印SQL
-        future=True
+        settings.DATABASE_URL, echo=settings.DEBUG, future=True  # 调试模式打印SQL
     )
 else:
     async_engine = create_async_engine(
@@ -55,7 +45,7 @@ else:
         pool_pre_ping=True,  # 连接前ping检查，避免使用失效连接
         pool_timeout=30,  # 连接池耗尽时等待30秒后超时
         echo=settings.DEBUG,  # 调试模式打印SQL
-        future=True
+        future=True,
     )
 
 # 创建异步会话工厂
@@ -64,23 +54,16 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,  # 提交后不过期，避免懒加载问题
     autocommit=False,
-    autoflush=False
+    autoflush=False,
 )
 
 # 创建同步引擎（用于Alembic迁移）
 sync_engine = create_engine(
-    settings.sync_database_url,
-    pool_pre_ping=True,
-    echo=settings.DEBUG,
-    future=True
+    settings.sync_database_url, pool_pre_ping=True, echo=settings.DEBUG, future=True
 )
 
 # 创建同步会话工厂
-SyncSessionLocal = sessionmaker(
-    bind=sync_engine,
-    autocommit=False,
-    autoflush=False
-)
+SyncSessionLocal = sessionmaker(bind=sync_engine, autocommit=False, autoflush=False)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -126,7 +109,21 @@ async def init_db() -> None:
     """
     async with async_engine.begin() as conn:
         # 导入所有模型确保它们被注册
-        from app.models import user, course, student, portfolio, resource, tag, notification, audit_log, lesson_plan, dropdown_option, ai, ai_config  # noqa: F401
+        from app.models import (  # noqa: F401
+            ai,
+            ai_config,
+            audit_log,
+            course,
+            dropdown_option,
+            lesson_plan,
+            notification,
+            portfolio,
+            resource,
+            student,
+            tag,
+            user,
+        )
+
         await conn.run_sync(Base.metadata.create_all)
 
 

@@ -1,4 +1,5 @@
 import io
+
 import pytest
 import pytest_asyncio
 
@@ -81,7 +82,9 @@ class TestResourceAPI:
 
     @pytest.mark.asyncio
     async def test_delete_resource(self, client, test_user, auth_headers, seed_resource):
-        response = await client.delete(f"/api/v1/resources/{seed_resource.id}", headers=auth_headers)
+        response = await client.delete(
+            f"/api/v1/resources/{seed_resource.id}", headers=auth_headers
+        )
         assert response.status_code == 204
 
         get_resp = await client.get(f"/api/v1/resources/{seed_resource.id}", headers=auth_headers)
@@ -94,7 +97,9 @@ class TestResourceAPI:
 
     @pytest.mark.asyncio
     async def test_get_resource_file(self, client, test_user, auth_headers, seed_resource):
-        response = await client.get(f"/api/v1/resources/{seed_resource.id}/file", headers=auth_headers)
+        response = await client.get(
+            f"/api/v1/resources/{seed_resource.id}/file", headers=auth_headers
+        )
         assert response.status_code in (200, 404, 500)
 
     @pytest.mark.asyncio

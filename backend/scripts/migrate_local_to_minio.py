@@ -17,9 +17,9 @@
     MINIO_BUCKET_NAME: MinIO 存储桶名称
     MINIO_SECURE:      是否使用 HTTPS（默认 false）
 """
+
 import argparse
 import asyncio
-import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -30,12 +30,12 @@ sys.path.insert(0, str(backend_dir))
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.services.storage import LocalFileStorage, MinIOStorage
+from app.services.storage import MinIOStorage
 
 logger = get_logger(__name__)
 
 
-async def migrate_files(
+async def migrate_files(  # noqa: C901
     storage_dir: str,
     prefix: Optional[str] = None,
     dry_run: bool = False,
@@ -110,6 +110,7 @@ async def migrate_files(
 
             # 检测 MIME 类型
             import mimetypes
+
             content_type, _ = mimetypes.guess_type(str(file_path))
 
             # 使用 MinIOStorage 直接上传（绕过降级逻辑）
@@ -132,9 +133,9 @@ async def migrate_files(
             failed_files.append(relative_path)
 
     logger.info("=" * 60)
-    logger.info(f"迁移完成: 成功 {success}, 失败 {failed}")
+    logger.info("迁移完成: 成功 {}, 失败 {}".format(success, failed))
     if failed_files:
-        logger.info(f"失败文件:\n  " + "\n  ".join(failed_files))
+        logger.info("失败文件:\n  " + "\n  ".join(failed_files))
     logger.info("=" * 60)
 
     return success, failed, failed_files
@@ -177,10 +178,7 @@ async def verify_files(storage_dir: str, prefix: Optional[str] = None):
                 not_found.append(relative_path)
                 logger.warning(f"  验证失败 {relative_path}: {e}")
 
-    logger.info(
-        f"验证完成: 缺失 {len(not_found)} 个, "
-        f"大小不匹配 {len(size_mismatch)} 个"
-    )
+    logger.info(f"验证完成: 缺失 {len(not_found)} 个, " f"大小不匹配 {len(size_mismatch)} 个")
 
 
 def main():

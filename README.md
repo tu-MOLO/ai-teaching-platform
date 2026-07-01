@@ -140,9 +140,9 @@
 | **aiohttp**     | 3.9.3   | 异步HTTP客户端 |
 | **WeasyPrint**  | 59.0    | PDF导出        |
 | **python-docx** | 0.8.11  | Word导出       |
-| **cryptography** | >=42.0 | API密钥加密    |
+| **cryptography** | >=44.0.0 | API密钥加密    |
 | **orjson**      | 3.9.13  | JSON序列化     |
-| **bcrypt**      | 4.1.2   | 密码哈希       |
+| **bcrypt**      | 4.2.1   | 密码哈希       |
 | **Pytest**      | 7.4.4   | 测试框架       |
 
 ### 前端

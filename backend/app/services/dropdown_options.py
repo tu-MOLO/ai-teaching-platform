@@ -1,15 +1,16 @@
 """
 Service for configurable dropdown options.
 """
+
 from collections import defaultdict
 from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import AlreadyExistsException
 from app.models.dropdown_option import DropdownOption
 from app.schemas.dropdown_option import DropdownOptionCreate, DropdownOptionUpdate
-from app.core.exceptions import AlreadyExistsException
 
 
 class DropdownOptionService:
@@ -40,8 +41,10 @@ class DropdownOptionService:
         group_key: Optional[str] = None,
         active_only: bool = True,
     ) -> int:
-        query = select(func.count()).select_from(DropdownOption).where(
-            DropdownOption.is_deleted == False  # noqa: E712
+        query = (
+            select(func.count())
+            .select_from(DropdownOption)
+            .where(DropdownOption.is_deleted == False)  # noqa: E712
         )
         if group_key:
             query = query.where(DropdownOption.group_key == group_key)

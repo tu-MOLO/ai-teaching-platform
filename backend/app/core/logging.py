@@ -2,6 +2,7 @@
 日志配置模块
 提供统一的日志配置和日志记录功能
 """
+
 import json
 import logging
 import os
@@ -17,12 +18,12 @@ class ColoredFormatter(logging.Formatter):
 
     # ANSI颜色代码
     COLORS = {
-        "DEBUG": "\033[36m",      # 青色
-        "INFO": "\033[32m",       # 绿色
-        "WARNING": "\033[33m",    # 黄色
-        "ERROR": "\033[31m",      # 红色
-        "CRITICAL": "\033[35m",   # 紫色
-        "RESET": "\033[0m"        # 重置
+        "DEBUG": "\033[36m",  # 青色
+        "INFO": "\033[32m",  # 绿色
+        "WARNING": "\033[33m",  # 黄色
+        "ERROR": "\033[31m",  # 红色
+        "CRITICAL": "\033[35m",  # 紫色
+        "RESET": "\033[0m",  # 重置
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -61,10 +62,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_record, ensure_ascii=False)
 
 
-def setup_logging(
-    level: Optional[str] = None,
-    format_string: Optional[str] = None
-) -> None:
+def setup_logging(level: Optional[str] = None, format_string: Optional[str] = None) -> None:
     """
     设置日志配置
 
@@ -87,8 +85,11 @@ def setup_logging(
                 formatter = logging.Formatter(log_format)
         except ValueError:
             fallback_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            formatter = ColoredFormatter(
-                fallback_format) if settings.DEBUG else logging.Formatter(fallback_format)
+            formatter = (
+                ColoredFormatter(fallback_format)
+                if settings.DEBUG
+                else logging.Formatter(fallback_format)
+            )
 
     # 配置根日志记录器
     root_logger = logging.getLogger()

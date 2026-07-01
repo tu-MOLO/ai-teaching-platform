@@ -1,6 +1,7 @@
 """
 课程相关的 Pydantic schemas
 """
+
 from typing import Literal, Optional
 
 from pydantic import Field
@@ -22,6 +23,7 @@ class CourseBase(BaseSchema):
 
 class CourseCreate(BaseSchema):
     """创建课程模型"""
+
     name: str = Field(..., description="课程名称", max_length=200)
     subject: str = Field(..., description="学科", max_length=100)
     grade: str = Field(..., description="年级", max_length=50)

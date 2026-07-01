@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
-from pathlib import Path
 import os
 import sys
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 import httpx
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
@@ -66,9 +66,9 @@ class AcceptanceRunner:
         response = await self.client.request(method, url, headers=merged_headers, **kwargs)
         if response.status_code != expected:
             raise AssertionError(
-    f"{method} {url} expected {expected}, got {
-        response.status_code}, body={
-            response.text}" )
+                f"{method} {url} expected {expected}, got "
+                f"{response.status_code}, body={response.text}"
+            )
         if expected == 204:
             return None
         content_type = response.headers.get("content-type", "")
@@ -160,7 +160,11 @@ class AcceptanceRunner:
             "POST",
             "/api/v1/auth/password/reset",
             200,
-            json={"username": self.username, "new_password": self.password, "security_answer": "验收第一中学"},
+            json={
+                "username": self.username,
+                "new_password": self.password,
+                "security_answer": "验收第一中学",
+            },
         )
         self._record("auth.reset_password")
 
@@ -198,7 +202,9 @@ class AcceptanceRunner:
         }
         created = await self._request("POST", "/api/v1/dropdown-options", 201, json=payload)
         self.dropdown_option_id = created["id"]
-        listed = await self._request("GET", "/api/v1/dropdown-options?group_key=course_subject&active_only=false", 200)
+        listed = await self._request(
+            "GET", "/api/v1/dropdown-options?group_key=course_subject&active_only=false", 200
+        )
         assert any(item["id"] == self.dropdown_option_id for item in listed["data"])
         updated = await self._request(
             "PUT",
@@ -337,7 +343,7 @@ class AcceptanceRunner:
             "type": "evaluation",
             "title": f"验收成长记录{self.timestamp}",
             "content": "成长档案验收",
-            "attachments": f"[\"{attachment_url}\"]",
+            "attachments": f'["{attachment_url}"]',
             "cognitive_score": 80,
             "skill_score": 60,
             "creativity_score": 100,
@@ -346,7 +352,9 @@ class AcceptanceRunner:
         }
         created = await self._request("POST", "/api/v1/portfolios", 201, json=payload)
         self.portfolio_id = created["id"]
-        listed = await self._request("GET", f"/api/v1/portfolios?page=1&page_size=20&student_id={self.student_id}", 200)
+        listed = await self._request(
+            "GET", f"/api/v1/portfolios?page=1&page_size=20&student_id={self.student_id}", 200
+        )
         assert any(item["id"] == self.portfolio_id for item in listed["data"])
         detail = await self._request("GET", f"/api/v1/portfolios/{self.portfolio_id}", 200)
         assert detail["cognitive_score"] == 80
@@ -386,13 +394,21 @@ class AcceptanceRunner:
             json={"notes": "备注已更新"},
         )
         assert updated["notes"] == "备注已更新"
-        published = await self._request("POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/publish", 200)
+        published = await self._request(
+            "POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/publish", 200
+        )
         assert published["status"] == "published"
-        unpublished = await self._request("POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/unpublish", 200)
+        unpublished = await self._request(
+            "POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/unpublish", 200
+        )
         assert unpublished["status"] == "draft"
-        archived = await self._request("POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/archive", 200)
+        archived = await self._request(
+            "POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/archive", 200
+        )
         assert archived["status"] == "archived"
-        restored = await self._request("POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/restore", 200)
+        restored = await self._request(
+            "POST", f"/api/v1/lesson-plans/{self.lesson_plan_id}/restore", 200
+        )
         assert restored["status"] == "draft"
         stats = await self._request("GET", "/api/v1/lesson-plans/stats/monthly", 200)
         assert "monthly_count" in stats
@@ -419,17 +435,25 @@ class AcceptanceRunner:
 
         listed = await self._request("GET", "/api/v1/notifications?page=1&page_size=20", 200)
         assert listed["total"] >= 3
-        filtered = await self._request("GET", "/api/v1/notifications?type=system&page=1&page_size=20", 200)
+        filtered = await self._request(
+            "GET", "/api/v1/notifications?type=system&page=1&page_size=20", 200
+        )
         assert all(item["type"] == "system" for item in filtered["data"])
         stats = await self._request("GET", "/api/v1/notifications/stats", 200)
         assert "system" in stats["by_type"]
         unread = await self._request("GET", "/api/v1/notifications/unread-count", 200)
         assert unread["unread_count"] >= 3
-        detail = await self._request("GET", f"/api/v1/notifications/{self.notification_ids[0]}", 200)
+        detail = await self._request(
+            "GET", f"/api/v1/notifications/{self.notification_ids[0]}", 200
+        )
         assert detail["id"] == self.notification_ids[0]
-        marked = await self._request("PUT", f"/api/v1/notifications/{self.notification_ids[0]}/read", 200)
+        marked = await self._request(
+            "PUT", f"/api/v1/notifications/{self.notification_ids[0]}/read", 200
+        )
         assert marked["read"] is True
-        await self._request("PUT", "/api/v1/notifications/read-batch", 200, json={"ids": self.notification_ids[1:]})
+        await self._request(
+            "PUT", "/api/v1/notifications/read-batch", 200, json={"ids": self.notification_ids[1:]}
+        )
         await self._request("PUT", "/api/v1/notifications/read-all", 200)
         await self._request("DELETE", f"/api/v1/notifications/{self.notification_ids[0]}", 200)
         await self._request("DELETE", "/api/v1/notifications/read/all", 200)
@@ -457,12 +481,40 @@ class AcceptanceRunner:
 
         async with AsyncSessionLocal() as db:
             user_count = (await db.execute(select(func.count()).select_from(User))).scalar() or 0
-            course_count = (await db.execute(select(func.count()).select_from(Course).where(Course.id == self.course_id))).scalar() or 0
-            student_count = (await db.execute(select(func.count()).select_from(Student).where(Student.id == self.student_id))).scalar() or 0
-            resource_count = (await db.execute(select(func.count()).select_from(Resource).where(Resource.id == self.resource_id))).scalar() or 0
-            portfolio_count = (await db.execute(select(func.count()).select_from(Portfolio).where(Portfolio.id == self.portfolio_id))).scalar() or 0
-            lesson_plan_count = (await db.execute(select(func.count()).select_from(LessonPlan).where(LessonPlan.id == self.lesson_plan_id))).scalar() or 0
-            tag_count = (await db.execute(select(func.count()).select_from(Tag).where(Tag.id == self.tag_id))).scalar() or 0
+            course_count = (
+                await db.execute(
+                    select(func.count()).select_from(Course).where(Course.id == self.course_id)
+                )
+            ).scalar() or 0
+            student_count = (
+                await db.execute(
+                    select(func.count()).select_from(Student).where(Student.id == self.student_id)
+                )
+            ).scalar() or 0
+            resource_count = (
+                await db.execute(
+                    select(func.count())
+                    .select_from(Resource)
+                    .where(Resource.id == self.resource_id)
+                )
+            ).scalar() or 0
+            portfolio_count = (
+                await db.execute(
+                    select(func.count())
+                    .select_from(Portfolio)
+                    .where(Portfolio.id == self.portfolio_id)
+                )
+            ).scalar() or 0
+            lesson_plan_count = (
+                await db.execute(
+                    select(func.count())
+                    .select_from(LessonPlan)
+                    .where(LessonPlan.id == self.lesson_plan_id)
+                )
+            ).scalar() or 0
+            tag_count = (
+                await db.execute(select(func.count()).select_from(Tag).where(Tag.id == self.tag_id))
+            ).scalar() or 0
             assert user_count >= 1
             assert course_count == 1
             assert student_count == 1

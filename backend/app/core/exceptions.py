@@ -2,8 +2,9 @@
 业务异常模块
 定义统一的错误码和异常类
 """
+
 from enum import Enum
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, status
 
@@ -72,7 +73,7 @@ class BusinessException(HTTPException):
         error_code: ErrorCode,
         message: str,
         status_code: int = status.HTTP_400_BAD_REQUEST,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ):
         self.error_code = error_code
         self.details = details or {}
@@ -89,7 +90,7 @@ class NotFoundException(BusinessException):
         super().__init__(
             error_code=ErrorCode.RESOURCE_NOT_FOUND,
             message=message,
-            status_code=status.HTTP_404_NOT_FOUND
+            status_code=status.HTTP_404_NOT_FOUND,
         )
 
 
@@ -103,7 +104,7 @@ class AlreadyExistsException(BusinessException):
         super().__init__(
             error_code=ErrorCode.RESOURCE_ALREADY_EXISTS,
             message=message,
-            status_code=status.HTTP_409_CONFLICT
+            status_code=status.HTTP_409_CONFLICT,
         )
 
 
@@ -115,22 +116,16 @@ class ValidationException(BusinessException):
             error_code=ErrorCode.DATA_VALIDATION_ERROR,
             message=message,
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            details=details
+            details=details,
         )
 
 
 class AuthenticationException(BusinessException):
     """认证异常"""
 
-    def __init__(
-        self,
-        message: str = "认证失败",
-        error_code: ErrorCode = ErrorCode.UNAUTHORIZED
-    ):
+    def __init__(self, message: str = "认证失败", error_code: ErrorCode = ErrorCode.UNAUTHORIZED):
         super().__init__(
-            error_code=error_code,
-            message=message,
-            status_code=status.HTTP_401_UNAUTHORIZED
+            error_code=error_code, message=message, status_code=status.HTTP_401_UNAUTHORIZED
         )
 
 
@@ -141,7 +136,7 @@ class AuthorizationException(BusinessException):
         super().__init__(
             error_code=ErrorCode.PERMISSION_DENIED,
             message=message,
-            status_code=status.HTTP_403_FORBIDDEN
+            status_code=status.HTTP_403_FORBIDDEN,
         )
 
 
@@ -153,7 +148,7 @@ class RateLimitException(BusinessException):
             error_code=ErrorCode.RATE_LIMIT_EXCEEDED,
             message=f"请求过于频繁，请 {retry_after} 秒后重试",
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            details={"retry_after": retry_after}
+            details={"retry_after": retry_after},
         )
 
 
@@ -164,7 +159,7 @@ class OptimisticLockException(BusinessException):
         self,
         message: str = "数据已被其他用户修改，请刷新后重试",
         expected_version: Optional[int] = None,
-        actual_version: Optional[int] = None
+        actual_version: Optional[int] = None,
     ):
         details = {}
         if expected_version is not None:
@@ -176,7 +171,7 @@ class OptimisticLockException(BusinessException):
             error_code=ErrorCode.VERSION_CONFLICT,
             message=message,
             status_code=status.HTTP_409_CONFLICT,
-            details=details
+            details=details,
         )
 
 
@@ -187,7 +182,7 @@ class DatabaseException(BusinessException):
         super().__init__(
             error_code=ErrorCode.DATABASE_ERROR,
             message=message,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
@@ -199,7 +194,7 @@ class BadRequestException(BusinessException):
             error_code=ErrorCode.INVALID_PARAMETER,
             message=message,
             status_code=status.HTTP_400_BAD_REQUEST,
-            details=details
+            details=details,
         )
 
 
@@ -210,7 +205,7 @@ class ConflictException(BusinessException):
         super().__init__(
             error_code=ErrorCode.RESOURCE_ALREADY_EXISTS,
             message=f"{resource_name}{reason}",
-            status_code=status.HTTP_409_CONFLICT
+            status_code=status.HTTP_409_CONFLICT,
         )
 
 
@@ -222,7 +217,7 @@ class InternalException(BusinessException):
             error_code=ErrorCode.INTERNAL_ERROR,
             message=message,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            details=details
+            details=details,
         )
 
 
@@ -234,7 +229,7 @@ class ServiceUnavailableException(BusinessException):
             error_code=ErrorCode.SERVICE_UNAVAILABLE,
             message=f"{service_name}暂时不可用，请 {retry_after} 秒后重试",
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            details={"retry_after": retry_after}
+            details={"retry_after": retry_after},
         )
 
 

@@ -1,32 +1,36 @@
 """
 资源相关API
 """
+
 import functools
 import mimetypes
-from typing import List, Annotated
+from typing import Annotated, List
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_async_session
-from app.core.security import (
-    get_current_user_id_with_version_check,
-)
 from app.core.exceptions import (
     AuthorizationException,
     BadRequestException,
     InternalException,
-    NotFoundException
+    NotFoundException,
 )
+from app.core.security import (
+    get_current_user_id_with_version_check,
+)
+from app.schemas.base import DataResponse, ListResponse
 from app.schemas.resource import (
-    ResourceCreate, ResourceUpdate, ResourceResponse,
-    ResourceListResponse, ResourceSearchParams
+    ResourceCreate,
+    ResourceListResponse,
+    ResourceResponse,
+    ResourceSearchParams,
+    ResourceUpdate,
 )
-from app.schemas.base import ListResponse, DataResponse
-from app.services.resources import get_resource_service, ResourceService
-from app.core.config import settings
+from app.services.resources import ResourceService, get_resource_service
 from app.services.storage import is_allowed_file
 
 router = APIRouter(tags=["资源"])
@@ -37,10 +41,14 @@ CurrentUser = Annotated[str, Depends(get_current_user_id_with_version_check)]
 
 def serialize_resource(resource, file_url: str | None = None) -> dict:
     resource_dict = resource.to_dict()
-    resource_dict["tags"] = [
-        {"id": tag.id, "name": tag.name, "description": tag.description, "color": tag.color}
-        for tag in resource.tags
-    ] if resource.tags else []
+    resource_dict["tags"] = (
+        [
+            {"id": tag.id, "name": tag.name, "description": tag.description, "color": tag.color}
+            for tag in resource.tags
+        ]
+        if resource.tags
+        else []
+    )
     if file_url is not None:
         resource_dict["file_url"] = file_url
     return resource_dict
@@ -52,6 +60,7 @@ def handle_resource_errors(func):
     让已知异常（BadRequestException、NotFoundException、AuthorizationException）自然抛出，
     只捕获未知异常并包装为 InternalException
     """
+
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         try:
@@ -60,6 +69,7 @@ def handle_resource_errors(func):
             raise
         except Exception as e:
             raise InternalException(str(e))
+
     return wrapper
 
 
@@ -72,7 +82,7 @@ async def create_resource(
     description: str = Form(None),
     tag_ids: List[str] = Form(None),
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     """
     创建资源
@@ -102,14 +112,12 @@ async def create_resource(
     file_size = file.file.tell()
     file.file.seek(0)
     if file_size > settings.MAX_UPLOAD_SIZE:
-        raise BadRequestException(f"文件大小超过限制（最大{settings.MAX_UPLOAD_SIZE//1024//1024}MB）")
+        raise BadRequestException(
+            f"文件大小超过限制（最大{settings.MAX_UPLOAD_SIZE//1024//1024}MB）"
+        )
 
     # 构建资源创建数据
-    resource_data = ResourceCreate(
-        name=name,
-        description=description,
-        tag_ids=tag_ids or []
-    )
+    resource_data = ResourceCreate(name=name, description=description, tag_ids=tag_ids or [])
 
     # 创建资源
     resource = await resource_service.create_resource(
@@ -117,11 +125,13 @@ async def create_resource(
         resource_data=resource_data,
         file_data=file.file,
         file_name=file.filename,
-        user_id=current_user_id
+        user_id=current_user_id,
     )
 
     # 重新查询以预加载tags关系，避免async上下文中的懒加载问题
-    resource_with_tags = await resource_service.get_resource_by_id(db, resource.id, user_id=current_user_id)
+    resource_with_tags = await resource_service.get_resource_by_id(
+        db, resource.id, user_id=current_user_id
+    )
     if not resource_with_tags:
         raise NotFoundException("Resource", resource_id="")
     resource = resource_with_tags
@@ -143,7 +153,7 @@ async def get_resources(
     tag_ids: List[str] = Query(None, description="标签ID列表"),
     file_type: str = Query(None, description="文件类型"),
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     """
     获取资源列表（支持搜索和筛选）
@@ -166,7 +176,7 @@ async def get_resources(
         keyword=keyword,
         tag_ids=tag_ids,
         file_type=file_type,
-        user_id=current_user_id
+        user_id=current_user_id,
     )
 
     # 获取资源列表
@@ -182,16 +192,13 @@ async def get_resources(
         # 确保created_at是字符串格式
         if hasattr(resource, "created_at") and resource.created_at:
             from datetime import datetime
+
             if isinstance(resource.created_at, datetime):
                 resource_dict["created_at"] = resource.created_at.isoformat()
         resources_data.append(resource_dict)
 
     return ListResponse(
-        data=resources_data,
-        total=total,
-        page=page,
-        page_size=page_size,
-        pages=pages
+        data=resources_data, total=total, page=page, page_size=page_size, pages=pages
     )
 
 
@@ -201,7 +208,7 @@ async def get_resource(
     current_user_id: CurrentUser,
     resource_id: str,
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     """
     根据ID获取资源
@@ -232,7 +239,7 @@ async def update_resource(
     current_user_id: CurrentUser,
     resource_data: ResourceUpdate,
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     """
     更新资源
@@ -246,7 +253,9 @@ async def update_resource(
     Returns:
         更新后的资源详情
     """
-    resource = await resource_service.update_resource(db, resource_id, resource_data, current_user_id)
+    resource = await resource_service.update_resource(
+        db, resource_id, resource_data, current_user_id
+    )
     if not resource:
         raise NotFoundException("Resource", resource_id)
     resource = await resource_service.get_resource_by_id(db, resource.id, user_id=current_user_id)
@@ -266,7 +275,7 @@ async def delete_resource(
     resource_id: str,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     """
     删除资源
@@ -290,16 +299,15 @@ async def get_resource_file(
     resource_id: str,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    resource_service: ResourceService = Depends(get_resource_service)
+    resource_service: ResourceService = Depends(get_resource_service),
 ):
     try:
         resource, file_bytes, filename = await resource_service.get_resource_file_content(
-            db=db,
-            resource_id=resource_id,
-            user_id=current_user_id
+            db=db, resource_id=resource_id, user_id=current_user_id
         )
-        media_type = resource.file_type or mimetypes.guess_type(
-            filename)[0] or "application/octet-stream"
+        media_type = (
+            resource.file_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
+        )
         quoted_filename = quote(filename)
         headers = {
             "Content-Disposition": f"inline; filename*=UTF-8''{quoted_filename}",

@@ -120,14 +120,14 @@ vi.mock('antd', () => {
       { Password: (props: any) => React.createElement('input', { type: 'password', ...props }) }
     ),
     InputNumber: (props: any) => React.createElement('input', { type: 'number', ...props }),
-    Button: ({ children, onClick, loading, icon, htmlType, ...props }: any) =>
+    Button: ({ children, onClick, loading, icon, ...props }: any) =>
       React.createElement('button', { onClick, disabled: loading, 'data-testid': `btn-${children}`, ...props }, icon, children),
     Select: SelectComp,
-    Space: ({ children, direction: _direction, size: _size, wrap: _wrap }: any) =>
+    Space: ({ children }: any) =>
       React.createElement('div', { 'data-testid': 'space' }, children),
-    Row: ({ children, justify, align, gutter, ...props }: any) =>
+    Row: ({ children, ...props }: any) =>
       React.createElement('div', { 'data-testid': 'row', ...props }, children),
-    Col: ({ children, xs, sm, md, lg, span, ...props }: any) =>
+    Col: ({ children, ...props }: any) =>
       React.createElement('div', { 'data-testid': 'col', ...props }, children),
     Table: ({ dataSource, columns: _columns, loading: _loading }: any) =>
       React.createElement('div', { 'data-testid': 'table' },

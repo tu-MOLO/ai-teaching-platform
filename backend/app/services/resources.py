@@ -2,21 +2,23 @@
 资源服务模块
 提供资源的CRUD操作、文件上传下载、搜索筛选等功能
 """
+
 import mimetypes
-from pathlib import Path
-from typing import List, Optional, Tuple, BinaryIO
 from datetime import timedelta
+from pathlib import Path
+from typing import BinaryIO, List, Optional, Tuple
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, func
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.exceptions import AuthorizationException
+from app.core.logging import get_logger
 from app.models.resource import Resource
 from app.models.tag import Tag
-from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceSearchParams
-from app.services.storage import get_storage, generate_object_name, MinIOStorage
-from app.core.config import settings
-from app.core.logging import get_logger
+from app.schemas.resource import ResourceCreate, ResourceSearchParams, ResourceUpdate
+from app.services.storage import MinIOStorage, generate_object_name, get_storage
 
 logger = get_logger(__name__)
 
@@ -32,7 +34,7 @@ class ResourceService:
         resource_data: ResourceCreate,
         file_data: BinaryIO,
         file_name: str,
-        user_id: str
+        user_id: str,
     ) -> Resource:
         """
         创建资源
@@ -61,9 +63,7 @@ class ResourceService:
             file_data.seek(0)
 
             await get_storage().upload_file_async(
-                file_data=file_data,
-                object_name=object_name,
-                content_type=content_type
+                file_data=file_data, object_name=object_name, content_type=content_type
             )
 
             # 创建资源对象
@@ -74,7 +74,7 @@ class ResourceService:
                 file_name=file_name,
                 file_size=file_size,
                 file_type=content_type,
-                user_id=user_id
+                user_id=user_id,
             )
 
             # 添加标签
@@ -94,8 +94,7 @@ class ResourceService:
 
     @staticmethod
     async def get_resources(
-        db: AsyncSession,
-        params: ResourceSearchParams
+        db: AsyncSession, params: ResourceSearchParams
     ) -> Tuple[List[Resource], int]:
         """
         获取资源列表（支持搜索和筛选）
@@ -111,12 +110,15 @@ class ResourceService:
             query = select(Resource).where(Resource.is_deleted == False)  # noqa: E712
             query = await ResourceService._build_resource_filters(query, params)
 
-            count_query = select(func.count()).select_from(
-                Resource).where(Resource.is_deleted == False)  # noqa: E712
+            count_query = (
+                select(func.count()).select_from(Resource).where(Resource.is_deleted == False)
+            )  # noqa: E712
             count_query = await ResourceService._build_resource_filters(count_query, params)
 
             if params.tag_ids:
-                count_result = await db.execute(select(func.count()).select_from(count_query.subquery()))
+                count_result = await db.execute(
+                    select(func.count()).select_from(count_query.subquery())
+                )
                 total = count_result.scalar() or 0
             else:
                 count_result = await db.execute(count_query)
@@ -150,17 +152,18 @@ class ResourceService:
             safe_keyword = params.keyword.replace("%", "\\%").replace("_", "\\_")
             keyword_filter = or_(
                 Resource.name.ilike(f"%{safe_keyword}%", escape="\\"),
-                Resource.description.ilike(f"%{safe_keyword}%", escape="\\")
+                Resource.description.ilike(f"%{safe_keyword}%", escape="\\"),
             )
             query = query.where(keyword_filter)
 
         if params.tag_ids:
             from app.models.resource import resource_tag_association
-            query = query.join(
-                resource_tag_association
-            ).where(
-                resource_tag_association.c.tag_id.in_(params.tag_ids)
-            ).group_by(Resource.id)
+
+            query = (
+                query.join(resource_tag_association)
+                .where(resource_tag_association.c.tag_id.in_(params.tag_ids))
+                .group_by(Resource.id)
+            )
 
         if params.file_type:
             safe_file_type = params.file_type.replace("%", "\\%").replace("_", "\\_")
@@ -173,9 +176,7 @@ class ResourceService:
 
     @staticmethod
     async def get_resource_by_id(
-        db: AsyncSession,
-        resource_id: str,
-        user_id: Optional[str] = None
+        db: AsyncSession, resource_id: str, user_id: Optional[str] = None
     ) -> Optional[Resource]:
         """
         根据ID获取资源
@@ -189,8 +190,7 @@ class ResourceService:
         """
         try:
             query = select(Resource).where(
-                Resource.id == resource_id,
-                Resource.is_deleted == False  # noqa: E712
+                Resource.id == resource_id, Resource.is_deleted == False  # noqa: E712
             )
             if user_id:
                 query = query.where(Resource.user_id == user_id)
@@ -204,10 +204,7 @@ class ResourceService:
 
     @staticmethod
     async def update_resource(
-        db: AsyncSession,
-        resource_id: str,
-        resource_data: ResourceUpdate,
-        user_id: str
+        db: AsyncSession, resource_id: str, resource_data: ResourceUpdate, user_id: str
     ) -> Optional[Resource]:
         try:
             db_resource = await ResourceService.get_resource_by_id(db, resource_id)
@@ -260,9 +257,8 @@ class ResourceService:
 
     @staticmethod
     async def get_resource_file_url(
-    resource: Resource,
-    expires: timedelta = timedelta(
-        hours=1)) -> str:
+        resource: Resource, expires: timedelta = timedelta(hours=1)
+    ) -> str:
         """
         获取资源文件的预签名URL或API路径
 
@@ -280,10 +276,8 @@ class ResourceService:
 
     @staticmethod
     async def download_resource(
-    db: AsyncSession,
-    resource_id: str,
-    file_path: str,
-     user_id: str = None) -> str:
+        db: AsyncSession, resource_id: str, file_path: str, user_id: Optional[str] = None
+    ) -> str:
         """
         下载资源文件
 
@@ -309,9 +303,7 @@ class ResourceService:
 
     @staticmethod
     async def get_resource_file_content(
-        db: AsyncSession,
-        resource_id: str,
-        user_id: str
+        db: AsyncSession, resource_id: str, user_id: str
     ) -> tuple[Resource, bytes, str]:
         """
         读取当前用户拥有的资源文件内容
@@ -348,6 +340,7 @@ class ResourceService:
             标签列表
         """
         from app.services.tags import TagService
+
         return await TagService.get_tags_by_ids(db, tag_ids)
 
 

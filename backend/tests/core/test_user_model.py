@@ -12,9 +12,7 @@ def _make_user(**overrides) -> User:
         username="testuser",
         hashed_password="irrelevant",
         security_question="pet name?",
-        hashed_security_answer=bcrypt.hashpw(
-            "Fluffy".encode(), bcrypt.gensalt()
-        ).decode(),
+        hashed_security_answer=bcrypt.hashpw("Fluffy".encode(), bcrypt.gensalt()).decode(),
         role=UserRole.TEACHER,
         login_count=0,
         failed_login_attempts=0,
@@ -27,15 +25,11 @@ def _make_user(**overrides) -> User:
 
 class TestIsLocked:
     def test_locked_until_in_future(self):
-        user = _make_user(
-            locked_until=datetime.now(timezone.utc) + timedelta(minutes=10)
-        )
+        user = _make_user(locked_until=datetime.now(timezone.utc) + timedelta(minutes=10))
         assert user.is_locked() is True
 
     def test_locked_until_in_past(self):
-        user = _make_user(
-            locked_until=datetime.now(timezone.utc) - timedelta(minutes=10)
-        )
+        user = _make_user(locked_until=datetime.now(timezone.utc) - timedelta(minutes=10))
         assert user.is_locked() is False
 
     def test_locked_until_is_none(self):
@@ -43,15 +37,11 @@ class TestIsLocked:
         assert user.is_locked() is False
 
     def test_locked_until_naive_datetime_future(self):
-        user = _make_user(
-            locked_until=datetime.now() + timedelta(minutes=10)
-        )
+        user = _make_user(locked_until=datetime.now() + timedelta(minutes=10))
         assert user.is_locked() is True
 
     def test_locked_until_naive_datetime_past(self):
-        user = _make_user(
-            locked_until=datetime.now(timezone.utc) - timedelta(hours=1)
-        )
+        user = _make_user(locked_until=datetime.now(timezone.utc) - timedelta(hours=1))
         assert user.is_locked() is False
 
 
@@ -79,9 +69,7 @@ class TestRecordLogin:
         assert user.failed_login_attempts == 0
 
     def test_resets_locked_until(self):
-        user = _make_user(
-            locked_until=datetime.now(timezone.utc) + timedelta(minutes=30)
-        )
+        user = _make_user(locked_until=datetime.now(timezone.utc) + timedelta(minutes=30))
         user.record_login()
         assert user.locked_until is None
 
@@ -137,15 +125,11 @@ class TestIncrementTokenVersion:
 
 class TestIsResetLocked:
     def test_reset_locked_until_in_future(self):
-        user = _make_user(
-            reset_locked_until=datetime.now(timezone.utc) + timedelta(minutes=10)
-        )
+        user = _make_user(reset_locked_until=datetime.now(timezone.utc) + timedelta(minutes=10))
         assert user.is_reset_locked() is True
 
     def test_reset_locked_until_in_past(self):
-        user = _make_user(
-            reset_locked_until=datetime.now(timezone.utc) - timedelta(minutes=10)
-        )
+        user = _make_user(reset_locked_until=datetime.now(timezone.utc) - timedelta(minutes=10))
         assert user.is_reset_locked() is False
 
     def test_reset_locked_until_is_none(self):
@@ -180,9 +164,7 @@ class TestResetResetLock:
         assert user.failed_reset_attempts == 0
 
     def test_resets_reset_locked_until(self):
-        user = _make_user(
-            reset_locked_until=datetime.now(timezone.utc) + timedelta(minutes=30)
-        )
+        user = _make_user(reset_locked_until=datetime.now(timezone.utc) + timedelta(minutes=30))
         user.reset_reset_lock()
         assert user.reset_locked_until is None
 

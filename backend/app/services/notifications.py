@@ -1,9 +1,10 @@
 """
 通知服务 - 异步版本
 """
+
 from typing import List, Optional
 
-from sqlalchemy import desc, select, func
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.notification import Notification, NotificationType
@@ -51,7 +52,7 @@ class NotificationService:
                 content=bulk_in.content,
                 type=bulk_in.type,
                 target_id=bulk_in.target_id,
-                target_type=bulk_in.target_type
+                target_type=bulk_in.target_type,
             )
             notifications.append(notification)
             db.add(notification)
@@ -63,9 +64,8 @@ class NotificationService:
 
     @staticmethod
     async def get(
-    db: AsyncSession,
-    notification_id: str,
-     user_id: Optional[str] = None) -> Optional[Notification]:
+        db: AsyncSession, notification_id: str, user_id: Optional[str] = None
+    ) -> Optional[Notification]:
         """
         获取通知
 
@@ -78,8 +78,7 @@ class NotificationService:
             通知对象
         """
         query = select(Notification).where(
-            Notification.id == notification_id,
-            Notification.is_deleted == False  # noqa: E712
+            Notification.id == notification_id, Notification.is_deleted == False  # noqa: E712
         )
 
         if user_id:
@@ -95,7 +94,7 @@ class NotificationService:
         skip: int = 0,
         limit: int = 20,
         notification_type: Optional[NotificationType] = None,
-        read: Optional[bool] = None
+        read: Optional[bool] = None,
     ) -> List[Notification]:
         """
         获取用户的通知列表
@@ -112,8 +111,7 @@ class NotificationService:
             通知列表
         """
         query = select(Notification).where(
-            Notification.user_id == user_id,
-            Notification.is_deleted == False  # noqa: E712
+            Notification.user_id == user_id, Notification.is_deleted == False  # noqa: E712
         )
 
         if notification_type:
@@ -134,7 +132,7 @@ class NotificationService:
         db: AsyncSession,
         user_id: str,
         notification_type: Optional[NotificationType] = None,
-        read: Optional[bool] = None
+        read: Optional[bool] = None,
     ) -> int:
         """
         统计通知数量
@@ -149,8 +147,7 @@ class NotificationService:
             通知数量
         """
         query = select(func.count(Notification.id)).where(
-            Notification.user_id == user_id,
-            Notification.is_deleted == False  # noqa: E712
+            Notification.user_id == user_id, Notification.is_deleted == False  # noqa: E712
         )
 
         if notification_type:
@@ -177,16 +174,15 @@ class NotificationService:
         query = select(func.count(Notification.id)).where(
             Notification.user_id == user_id,
             Notification.read == False,  # noqa: E712
-            Notification.is_deleted == False  # noqa: E712
+            Notification.is_deleted == False,  # noqa: E712
         )
         result = await db.execute(query)
         return result.scalar() or 0
 
     @staticmethod
     async def mark_as_read(
-    db: AsyncSession,
-    notification_id: str,
-     user_id: str) -> Optional[Notification]:
+        db: AsyncSession, notification_id: str, user_id: str
+    ) -> Optional[Notification]:
         """
         标记通知为已读
 
@@ -226,7 +222,7 @@ class NotificationService:
             .where(
                 Notification.user_id == user_id,
                 Notification.read == False,  # noqa: E712
-                Notification.is_deleted == False  # noqa: E712
+                Notification.is_deleted == False,  # noqa: E712
             )
             .values(read=True)
         )
@@ -236,9 +232,8 @@ class NotificationService:
 
     @staticmethod
     async def mark_multiple_as_read(
-    db: AsyncSession,
-    user_id: str,
-     notification_ids: List[str]) -> int:
+        db: AsyncSession, user_id: str, notification_ids: List[str]
+    ) -> int:
         """
         批量标记通知为已读
 
@@ -257,7 +252,7 @@ class NotificationService:
             .where(
                 Notification.user_id == user_id,
                 Notification.id.in_(notification_ids),
-                Notification.is_deleted == False  # noqa: E712
+                Notification.is_deleted == False,  # noqa: E712
             )
             .values(read=True)
         )
@@ -266,8 +261,9 @@ class NotificationService:
         return result.rowcount  # type: ignore[attr-defined]
 
     @staticmethod
-    async def update(db: AsyncSession, notification_id: str, user_id: str,
-                     notification_in: NotificationUpdate) -> Optional[Notification]:
+    async def update(
+        db: AsyncSession, notification_id: str, user_id: str, notification_in: NotificationUpdate
+    ) -> Optional[Notification]:
         """
         更新通知
 
@@ -328,7 +324,7 @@ class NotificationService:
         query = select(Notification).where(
             Notification.user_id == user_id,
             Notification.read == True,  # noqa: E712
-            Notification.is_deleted == False  # noqa: E712
+            Notification.is_deleted == False,  # noqa: E712
         )
         result = await db.execute(query)
         notifications = result.scalars().all()

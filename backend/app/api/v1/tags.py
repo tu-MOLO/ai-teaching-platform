@@ -1,6 +1,7 @@
 """
 标签相关API
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
@@ -9,9 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
 from app.core.exceptions import AlreadyExistsException, InternalException, NotFoundException
 from app.core.security import get_current_user_id_with_version_check
+from app.schemas.base import DataResponse, ListResponse
 from app.schemas.tag import TagCreate, TagListResponse, TagResponse, TagUpdate
-from app.schemas.base import ListResponse, DataResponse
-from app.services.tags import get_tag_service, TagService
+from app.services.tags import TagService, get_tag_service
 
 router = APIRouter(tags=["标签"])
 
@@ -24,7 +25,7 @@ async def get_tags(
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     db: AsyncSession = Depends(get_async_session),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     获取标签列表（公开接口）
@@ -43,13 +44,7 @@ async def get_tags(
         tags = await tag_service.get_tags(db, skip=skip, limit=page_size)
         total = await tag_service.count_tags(db)
         pages = (total + page_size - 1) // page_size
-        return ListResponse(
-            data=tags,
-            total=total,
-            page=page,
-            page_size=page_size,
-            pages=pages
-        )
+        return ListResponse(data=tags, total=total, page=page, page_size=page_size, pages=pages)
     except Exception as _e:  # noqa: F841
         raise InternalException("获取标签列表失败")
 
@@ -59,7 +54,7 @@ async def get_tag(
     tag_id: str,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     根据ID获取标签
@@ -89,7 +84,7 @@ async def create_tag(
     tag_data: TagCreate,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     创建标签
@@ -112,7 +107,7 @@ async def update_tag(
     tag_data: TagUpdate,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     更新标签
@@ -142,7 +137,7 @@ async def delete_tag(
     tag_id: str,
     current_user_id: CurrentUser,
     db: AsyncSession = Depends(get_async_session),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     删除标签

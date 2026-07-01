@@ -2,8 +2,10 @@
 教案服务层
 提供教案的CRUD操作
 """
+
 from typing import List, Optional
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
@@ -42,7 +44,7 @@ class LessonPlanService:
             teaching_process=data.teaching_process,
             teaching_resources=data.teaching_resources,
             notes=data.notes,
-            status=data.status or LessonPlanStatus.DRAFT
+            status=data.status or LessonPlanStatus.DRAFT,
         )
 
         self.db.add(lesson_plan)
@@ -56,7 +58,7 @@ class LessonPlanService:
         skip: int = 0,
         limit: int = 20,
         status_filter: Optional[str] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
     ) -> List[LessonPlan]:
         """
         获取教案列表
@@ -72,8 +74,7 @@ class LessonPlanService:
             教案列表
         """
         query = select(LessonPlan).where(
-            LessonPlan.user_id == user_id,
-            LessonPlan.is_deleted == False  # noqa: E712
+            LessonPlan.user_id == user_id, LessonPlan.is_deleted == False  # noqa: E712
         )
 
         if status_filter:
@@ -82,8 +83,8 @@ class LessonPlanService:
         if search:
             safe_search = search.replace("%", "\\%").replace("_", "\\_")
             query = query.where(
-                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\")) |
-                (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
+                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\"))
+                | (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
             )
 
         query = query.order_by(LessonPlan.created_at.desc())
@@ -109,8 +110,7 @@ class LessonPlanService:
             教案数量
         """
         query = select(func.count(LessonPlan.id)).where(
-            LessonPlan.user_id == user_id,
-            LessonPlan.is_deleted == False  # noqa: E712
+            LessonPlan.user_id == user_id, LessonPlan.is_deleted == False  # noqa: E712
         )
 
         if status_filter:
@@ -119,8 +119,8 @@ class LessonPlanService:
         if search:
             safe_search = search.replace("%", "\\%").replace("_", "\\_")
             query = query.where(
-                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\")) |
-                (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
+                (LessonPlan.title.ilike(f"%{safe_search}%", escape="\\"))
+                | (LessonPlan.subject.ilike(f"%{safe_search}%", escape="\\"))
             )
 
         result = await self.db.execute(query)
@@ -141,16 +141,13 @@ class LessonPlanService:
             select(LessonPlan).where(
                 LessonPlan.id == plan_id,
                 LessonPlan.user_id == user_id,
-                LessonPlan.is_deleted == False  # noqa: E712
+                LessonPlan.is_deleted == False,  # noqa: E712
             )
         )
         return result.scalar_one_or_none()
 
     async def update(
-        self,
-        plan_id: str,
-        user_id: str,
-        data: LessonPlanUpdate
+        self, plan_id: str, user_id: str, data: LessonPlanUpdate
     ) -> Optional[LessonPlan]:
         """
         更新教案
@@ -222,7 +219,7 @@ class LessonPlanService:
                 user_id=user_id,
                 target_id=lesson_plan.id,
                 target_type="lesson_plan",
-            )
+            ),
         )
 
         return lesson_plan
@@ -312,7 +309,7 @@ class LessonPlanService:
                 LessonPlan.user_id == user_id,
                 LessonPlan.is_deleted == False,  # noqa: E712
                 LessonPlan.created_at >= start_date,
-                LessonPlan.created_at < end_date
+                LessonPlan.created_at < end_date,
             )
         )
         return result.scalar() or 0
@@ -331,7 +328,7 @@ class LessonPlanService:
             select(func.count(LessonPlan.id)).where(
                 LessonPlan.user_id == user_id,
                 LessonPlan.is_deleted == False,  # noqa: E712
-                LessonPlan.status == LessonPlanStatus.DRAFT
+                LessonPlan.status == LessonPlanStatus.DRAFT,
             )
         )
         return result.scalar() or 0

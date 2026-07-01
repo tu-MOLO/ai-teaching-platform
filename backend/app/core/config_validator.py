@@ -2,6 +2,7 @@
 配置验证模块
 确保生产环境配置安全合规
 """
+
 import re
 import secrets
 import string
@@ -26,17 +27,17 @@ class ConfigValidator:
     # 弱密钥模式（不应在生产环境使用）
     # 使用全词匹配，避免误判正常密钥中包含这些常见单词子串的情况
     WEAK_SECRET_PATTERNS = [
-        r'^password$',
-        r'^secret$',
-        r'^123456$',
-        r'^qwerty$',
-        r'^admin$',
-        r'^change$',
-        r'^default$',
-        r'^test$',
-        r'^example$',
-        r'^your-$',
-        r'^min-32',
+        r"^password$",
+        r"^secret$",
+        r"^123456$",
+        r"^qwerty$",
+        r"^admin$",
+        r"^change$",
+        r"^default$",
+        r"^test$",
+        r"^example$",
+        r"^your-$",
+        r"^min-32",
     ]
 
     @staticmethod
@@ -93,7 +94,7 @@ class ConfigValidator:
         errors = []
 
         # 检查是否使用弱密码
-        weak_db_passwords = ['password', '123456', 'admin', 'postgres', 'changeme']
+        weak_db_passwords = ["password", "123456", "admin", "postgres", "changeme"]
         url_lower = database_url.lower()
 
         for weak_pwd in weak_db_passwords:
@@ -101,7 +102,7 @@ class ConfigValidator:
                 errors.append(f"数据库密码过于简单，不应包含: '{weak_pwd}'")
 
         # 检查是否使用 SSL（生产环境建议）
-        if 'sslmode' not in database_url and 'postgresql' in database_url:
+        if "sslmode" not in database_url and "postgresql" in database_url:
             logger.warning("数据库连接未启用 SSL，生产环境建议使用 sslmode=require")
 
         return len(errors) == 0, errors
@@ -134,7 +135,7 @@ class ConfigValidator:
             errors.extend(db_errors)
 
         # 4. 检查 MinIO 配置
-        minio_weak_keys = ['minioadmin', 'password', '123456', 'admin']
+        minio_weak_keys = ["minioadmin", "password", "123456", "admin"]
         if settings.MINIO_ACCESS_KEY in minio_weak_keys:
             errors.append(f"MinIO Access Key 过于简单: {settings.MINIO_ACCESS_KEY}")
         if settings.MINIO_SECRET_KEY in minio_weak_keys:
@@ -193,7 +194,7 @@ class ConfigValidator:
         """
         # 使用 secrets 模块生成加密安全的随机字符串
         alphabet = string.ascii_letters + string.digits + string.punctuation
-        return ''.join(secrets.choice(alphabet) for _ in range(length))
+        return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 def validate_config_on_startup() -> None:

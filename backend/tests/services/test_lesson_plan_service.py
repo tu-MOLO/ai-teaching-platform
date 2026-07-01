@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.services.lesson_plans import LessonPlanService
+import pytest
+
 from app.models.lesson_plan import LessonPlanStatus
 from app.schemas.lesson_plan import LessonPlanCreate, LessonPlanUpdate
+from app.services.lesson_plans import LessonPlanService
 
 
 class TestRestore:
@@ -81,7 +82,9 @@ class TestPublish:
         service = LessonPlanService(mock_db)
         with patch.object(service, "get_by_id", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = mock_plan
-            with patch("app.services.notifications.NotificationService.create", new_callable=AsyncMock) as mock_notify:
+            with patch(
+                "app.services.notifications.NotificationService.create", new_callable=AsyncMock
+            ) as mock_notify:
                 result = await service.publish("plan-1", "user-1")
 
         assert result is mock_plan
@@ -360,6 +363,7 @@ class TestLessonPlanServiceIntegration:
         await service.create(data, test_user.id)
 
         from datetime import datetime
+
         now = datetime.now()
         count = await service.get_monthly_count(test_user.id, now.year, now.month)
         assert count >= 1

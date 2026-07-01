@@ -2,6 +2,7 @@
 用户管理API模块
 提供教师自助资料读取与更新
 """
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -10,13 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.core.exceptions import (
-    AuthorizationException,
     AlreadyExistsException,
-    NotFoundException,
+    AuthorizationException,
 )
 from app.core.security import get_current_user_id_with_version_check
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
+from app.services.users import UserService
 
 router = APIRouter()
 
@@ -27,19 +28,13 @@ DBSession = Annotated[AsyncSession, Depends(get_async_session)]
 async def get_user(
     user_id: str,
     db: DBSession,
-    current_user_id: Annotated[str, Depends(get_current_user_id_with_version_check)]
+    current_user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
 ) -> UserResponse:
     """获取当前教师自己的资料"""
     if current_user_id != user_id:
         raise AuthorizationException("仅可访问当前登录教师自己的资料")
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise NotFoundException("用户")
-
+    user = await UserService.get_by_id_or_raise(db, user_id)
     return UserResponse.model_validate(user)
 
 
@@ -48,18 +43,13 @@ async def update_user(
     user_id: str,
     user_data: UserUpdate,
     db: DBSession,
-    current_user_id: Annotated[str, Depends(get_current_user_id_with_version_check)]
+    current_user_id: Annotated[str, Depends(get_current_user_id_with_version_check)],
 ) -> UserResponse:
     """更新当前教师自己的资料"""
     if current_user_id != user_id:
         raise AuthorizationException("仅可修改当前登录教师自己的资料")
 
-    stmt = select(User).where(User.id == user_id, User.is_deleted == False)  # noqa: E712
-    result = await db.execute(stmt)
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise NotFoundException("用户")
+    user = await UserService.get_by_id_or_raise(db, user_id)
 
     payload = user_data.model_dump(exclude_unset=True)
 

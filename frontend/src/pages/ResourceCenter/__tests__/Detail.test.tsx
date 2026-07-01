@@ -38,6 +38,7 @@ vi.mock('antd', () => ({
 vi.mock('@ant-design/icons', () => ({
   DownloadOutlined: () => React.createElement('span', null, 'Download'),
   LeftOutlined: () => React.createElement('span', null, 'Left'),
+  DeleteOutlined: () => React.createElement('span', null, 'Delete'),
 }))
 
 describe('ResourceDetail', () => {

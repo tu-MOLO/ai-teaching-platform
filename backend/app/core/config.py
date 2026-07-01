@@ -2,9 +2,11 @@
 应用配置模块
 包含数据库、MinIO、JWT等配置
 """
+
 import json
 from typing import List, Optional, Union
-from pydantic import field_validator, AnyHttpUrl
+
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,10 +14,7 @@ class Settings(BaseSettings):
     """应用配置类"""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
     # 应用基础配置
@@ -57,11 +56,12 @@ class Settings(BaseSettings):
         if not v:
             raise ValueError(
                 "SECRET_KEY 未设置！请在 .env 文件中设置 SECRET_KEY。\n"
-                "生成方式：python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+                '生成方式：python -c "import secrets; print(secrets.token_urlsafe(64))"'
             )
         if len(v) < 32:
             raise ValueError(f"SECRET_KEY 长度不足: 当前 {len(v)} 字符, 需要至少 32 字符")
         return v
+
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
@@ -75,8 +75,19 @@ class Settings(BaseSettings):
 
     # 文件上传配置
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB
-    ALLOWED_EXTENSIONS: List[str] = [".pdf", ".doc", ".docx", ".txt",
-        ".md", ".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mp3"]
+    ALLOWED_EXTENSIONS: List[str] = [
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".txt",
+        ".md",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".mp4",
+        ".mp3",
+    ]
 
     @field_validator("ALLOWED_EXTENSIONS", mode="before")
     @classmethod

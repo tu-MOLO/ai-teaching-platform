@@ -1,16 +1,16 @@
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.core.rate_limiter import (
-    RateLimiter,
     RateLimitDependency,
+    RateLimiter,
     RedisRateLimiter,
+    init_rate_limiter,
     rate_limit,
     rate_limit_dep,
-    init_rate_limiter,
 )
 
 
@@ -35,6 +35,7 @@ class TestConfigure:
     def test_add_config_with_key_func(self, limiter):
         def key_func(req):
             return "custom"
+
         limiter.configure("custom", requests=10, window=30, key_func=key_func)
         assert limiter._configs["custom"].key_func is key_func
 
@@ -176,6 +177,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test", requests=1, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -202,6 +204,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test2", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -224,6 +227,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test3", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -247,6 +251,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test4", requests=1, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -275,6 +280,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test5", requests=10, window=120)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -314,6 +320,7 @@ class TestRateLimitDependency:
         redis_limiter.configure("dep_test7", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = redis_limiter
 
@@ -346,6 +353,7 @@ class TestRateLimitDependency:
         redis_limiter.configure("dep_test8", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = redis_limiter
 
@@ -370,6 +378,7 @@ class TestRateLimitDependency:
         limiter.configure("dep_test9", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
@@ -484,10 +493,12 @@ class TestRateLimitDecorator:
         limiter.configure("decorator_test", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
         try:
+
             @rate_limit("decorator_test")
             async def my_view(request: Request):
                 return "ok"
@@ -509,10 +520,12 @@ class TestRateLimitDecorator:
         limiter.configure("decorator_test2", requests=1, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
         try:
+
             @rate_limit("decorator_test2")
             async def my_view(request: Request):
                 return "ok"
@@ -537,10 +550,12 @@ class TestRateLimitDecorator:
         limiter.configure("decorator_test3", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
         try:
+
             @rate_limit("decorator_test3")
             async def my_view():
                 return "ok"
@@ -557,10 +572,12 @@ class TestRateLimitDecorator:
         limiter.configure("decorator_test4", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
         try:
+
             @rate_limit("decorator_test4")
             async def my_view(request: Request):
                 return "ok"
@@ -582,10 +599,12 @@ class TestRateLimitDecorator:
         limiter.configure("decorator_test5", requests=5, window=60)
 
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
         rl_module.rate_limiter = limiter
 
         try:
+
             @rate_limit("decorator_test5")
             async def my_view(request: Request):
                 return "ok"
@@ -613,10 +632,12 @@ class TestRateLimitDep:
 class TestInitRateLimiter:
     def test_fallback_to_memory_when_no_redis(self):
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
 
         with patch("app.core.config.settings") as mock_settings:
             mock_settings.REDIS_URL = None
+            mock_settings.TESTING = False
             rl_module.rate_limiter = RateLimiter()
             init_rate_limiter()
             assert isinstance(rl_module.rate_limiter, RateLimiter)
@@ -627,25 +648,31 @@ class TestInitRateLimiter:
 
     def test_configs_are_applied(self):
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
 
-        rl_module.rate_limiter = RateLimiter()
-        init_rate_limiter()
+        with patch("app.core.config.settings") as mock_settings:
+            mock_settings.TESTING = False
+            mock_settings.REDIS_URL = None
+            rl_module.rate_limiter = RateLimiter()
+            init_rate_limiter()
 
-        assert rl_module.rate_limiter._configs["login"].requests == 5
-        assert rl_module.rate_limiter._configs["register"].requests == 3
-        assert rl_module.rate_limiter._configs["password_reset"].requests == 3
-        assert rl_module.rate_limiter._configs["api"].requests == 100
-        assert rl_module.rate_limiter._configs["strict"].requests == 10
+            assert rl_module.rate_limiter._configs["login"].requests == 5
+            assert rl_module.rate_limiter._configs["register"].requests == 3
+            assert rl_module.rate_limiter._configs["password_reset"].requests == 3
+            assert rl_module.rate_limiter._configs["api"].requests == 100
+            assert rl_module.rate_limiter._configs["strict"].requests == 10
 
         rl_module.rate_limiter = original
 
     def test_redis_init_when_url_set(self):
         import app.core.rate_limiter as rl_module
+
         original = rl_module.rate_limiter
 
         with patch("app.core.config.settings") as mock_settings:
             mock_settings.REDIS_URL = "redis://localhost:6379"
+            mock_settings.TESTING = False
             with patch("redis.asyncio.from_url") as mock_from_url:
                 mock_redis = MagicMock()
                 mock_from_url.return_value = mock_redis

@@ -2,10 +2,11 @@
 性能优化工具模块
 提供查询优化、性能监控和缓存功能
 """
+
 import functools
 import time
 from contextlib import contextmanager
-from typing import Optional, Callable, Any, List, TypeVar
+from typing import Any, Callable, List, Optional, TypeVar
 
 from sqlalchemy import event
 
@@ -61,6 +62,7 @@ class PerformanceMonitor:
         Args:
             engine: SQLAlchemy 引擎
         """
+
         @event.listens_for(engine, "before_cursor_execute")
         def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             context._query_start_time = time.time()
@@ -71,9 +73,7 @@ class PerformanceMonitor:
 
             # 记录慢查询
             if total_time > PerformanceMonitor.SLOW_QUERY_THRESHOLD:
-                logger.warning(
-                    f"Slow query detected ({total_time:.2f}ms): {statement[:200]}..."
-                )
+                logger.warning(f"Slow query detected ({total_time:.2f}ms): {statement[:200]}...")
 
             # 记录调试信息
             logger.debug(f"Query executed in {total_time:.2f}ms")
@@ -99,9 +99,7 @@ class PerformanceMonitor:
             elapsed_ms = (time.time() - start_time) * 1000
 
             if elapsed_ms > threshold_ms:
-                logger.warning(
-                    f"Slow operation detected: {operation_name} took {elapsed_ms:.2f}ms"
-                )
+                logger.warning(f"Slow operation detected: {operation_name} took {elapsed_ms:.2f}ms")
             else:
                 logger.debug(f"Operation {operation_name} took {elapsed_ms:.2f}ms")
 
@@ -206,6 +204,7 @@ def cached(ttl: int = 300, key_func: Optional[Callable] = None):
     Returns:
         装饰器函数
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
@@ -242,6 +241,7 @@ def cached(ttl: int = 300, key_func: Optional[Callable] = None):
         )
 
         return wrapper
+
     return decorator
 
 

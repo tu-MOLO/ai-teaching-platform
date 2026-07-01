@@ -2,12 +2,12 @@ import string
 
 import pytest
 
+from app.core.config import settings
 from app.core.config_validator import (
     ConfigValidationError,
     ConfigValidator,
     check_config_security,
 )
-from app.core.config import settings
 
 
 class TestValidateSecretKey:
@@ -159,9 +159,7 @@ class TestValidateDatabaseUrl:
         assert any("postgres" in e for e in errors)
 
     def test_sqlite_url_no_ssl_check(self):
-        valid, errors = ConfigValidator.validate_database_url(
-            "sqlite+aiosqlite:///./test.db"
-        )
+        valid, errors = ConfigValidator.validate_database_url("sqlite+aiosqlite:///./test.db")
         assert valid is True
         assert errors == []
 
