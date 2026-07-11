@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy import Boolean, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -28,6 +28,12 @@ class AIConversation(AIModelBase, SoftDeleteMixin):
     module: Mapped[Optional[str]] = mapped_column(
         String(50),
         nullable=True,
+    )
+
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
 
     messages: Mapped[list["AIMessage"]] = relationship(

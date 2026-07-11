@@ -146,12 +146,12 @@ describe('ai service', () => {
 
       await getConversations()
 
-      expect(mockGet).toHaveBeenCalledWith('/ai/conversations')
+      expect(mockGet).toHaveBeenCalledWith('/ai/conversations', { params: {} })
     })
 
     it('returns conversation list', async () => {
       const { getConversations } = await import('../ai')
-      const list = { data: [{ id: '1', title: 'Chat 1', module: null, created_at: '', updated_at: '' }], total: 1 }
+      const list = { data: [{ id: '1', title: 'Chat 1', module: null, created_at: '', updated_at: '', is_archived: false }], total: 1 }
 
       mockGet.mockResolvedValue(list)
 

@@ -35,6 +35,7 @@ export interface Conversation {
   id: string
   title: string
   module: string | null
+  is_archived: boolean
   created_at: string
   updated_at: string
 }
@@ -99,8 +100,9 @@ export const resetAIConfig = async (): Promise<AIConfigResponse> => {
   return toItem<AIConfigResponse>(response)
 }
 
-export const getConversations = async (): Promise<ConversationListResponse> => {
-  const response = await api.get('/ai/conversations')
+export const getConversations = async (archived?: boolean): Promise<ConversationListResponse> => {
+  const params = archived !== undefined ? { archived } : {}
+  const response = await api.get('/ai/conversations', { params })
   return toItem<ConversationListResponse>(response)
 }
 
@@ -113,8 +115,17 @@ export const deleteConversation = async (conversationId: string): Promise<void> 
   await api.delete(`/ai/conversations/${conversationId}`)
 }
 
+export const batchDeleteConversations = async (conversationIds: string[]): Promise<{ count: number }> => {
+  const response = await api.post('/ai/conversations/batch-delete', { conversation_ids: conversationIds })
+  return response.data
+}
+
 export const renameConversation = async (conversationId: string, title: string): Promise<void> => {
   await api.patch(`/ai/conversations/${conversationId}`, { title })
+}
+
+export const archiveConversation = async (conversationId: string, archived: boolean): Promise<void> => {
+  await api.post(`/ai/conversations/${conversationId}/archive`, null, { params: { archived } })
 }
 
 export const sendChatMessage = async (data: ChatRequest): Promise<ChatResponse> => {

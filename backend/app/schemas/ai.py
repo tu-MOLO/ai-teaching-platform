@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.schemas.base import BaseSchema
+from app.schemas.base import BaseSchema, ListResponse
 
 
 class ChatRequest(BaseSchema):
@@ -22,17 +22,21 @@ class ConversationRenameRequest(BaseSchema):
     title: str = Field(..., min_length=1, max_length=100)
 
 
+class ConversationBatchDeleteRequest(BaseSchema):
+    conversation_ids: List[str] = Field(..., min_length=1)
+
+
 class ConversationSchema(BaseSchema):
     id: str = Field(...)
     title: str = Field(...)
     module: Optional[str] = Field(None)
+    is_archived: bool = Field(default=False)
     created_at: str = Field(...)
     updated_at: str = Field(...)
 
 
-class ConversationListSchema(BaseSchema):
-    data: List[ConversationSchema] = Field(default_factory=list)
-    total: int = Field(default=0)
+class ConversationListSchema(ListResponse[ConversationSchema]):
+    pass
 
 
 class MessageSchema(BaseSchema):

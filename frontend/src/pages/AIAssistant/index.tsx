@@ -25,6 +25,7 @@ const AIAssistant: React.FC = () => {
     isStreaming,
     aiConfig,
     configLoaded,
+    showArchived,
     loadConversations,
     selectConversation,
     addMessage,
@@ -33,6 +34,9 @@ const AIAssistant: React.FC = () => {
     setCurrentConversationId,
     loadAIConfig,
     renameConversation,
+    archiveConversation,
+    batchDeleteConversations,
+    toggleShowArchived,
   } = useAIStore()
 
   useEffect(() => {
@@ -187,6 +191,10 @@ const AIAssistant: React.FC = () => {
             onDelete={handleDeleteConversation}
             onNew={handleNewConversation}
             onRename={renameConversation}
+            onArchive={archiveConversation}
+            onBatchDelete={batchDeleteConversations}
+            showArchived={showArchived}
+            onToggleShowArchived={toggleShowArchived}
           />
         )}
       </div>

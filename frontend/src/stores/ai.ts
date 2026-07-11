@@ -4,6 +4,8 @@ import {
   getConversationMessages,
   getAIConfig,
   renameConversation as renameConversationApi,
+  archiveConversation as archiveConversationApi,
+  batchDeleteConversations as batchDeleteConversationsApi,
   type Conversation,
   type Message,
   type AIConfigResponse,
@@ -17,6 +19,7 @@ interface AIState {
   isStreaming: boolean
   aiConfig: AIConfigResponse | null
   configLoaded: boolean
+  showArchived: boolean
 
   loadConversations: () => Promise<void>
   selectConversation: (id: string | null) => Promise<void>
@@ -27,10 +30,13 @@ interface AIState {
   setCurrentConversationId: (id: string | null) => void
   loadAIConfig: () => Promise<void>
   renameConversation: (id: string, title: string) => Promise<void>
+  archiveConversation: (id: string, archived: boolean) => Promise<void>
+  batchDeleteConversations: (ids: string[]) => Promise<void>
+  toggleShowArchived: () => void
   reset: () => void
 }
 
-export const useAIStore = create<AIState>((set) => ({
+export const useAIStore = create<AIState>((set, get) => ({
   conversations: [],
   currentConversationId: null,
   messages: [],
@@ -38,10 +44,12 @@ export const useAIStore = create<AIState>((set) => ({
   isStreaming: false,
   aiConfig: null,
   configLoaded: false,
+  showArchived: false,
 
   loadConversations: async () => {
     try {
-      const response = await getConversations()
+      const { showArchived } = get()
+      const response = await getConversations(showArchived)
       set({ conversations: response.data || [] })
     } catch {
       // ignore
@@ -103,6 +111,42 @@ export const useAIStore = create<AIState>((set) => ({
     }
   },
 
+  archiveConversation: async (id: string, archived: boolean) => {
+    try {
+      await archiveConversationApi(id, archived)
+      const { showArchived, loadConversations } = get()
+      await loadConversations()
+      // 如果当前会话被归档且不在归档视图，清空当前会话
+      if (!showArchived && archived) {
+        const { currentConversationId } = get()
+        if (currentConversationId === id) {
+          set({ currentConversationId: null, messages: [] })
+        }
+      }
+    } catch {
+      // ignore
+    }
+  },
+
+  batchDeleteConversations: async (ids: string[]) => {
+    if (ids.length === 0) return
+    try {
+      await batchDeleteConversationsApi(ids)
+      const { currentConversationId, loadConversations } = get()
+      await loadConversations()
+      if (currentConversationId && ids.includes(currentConversationId)) {
+        set({ currentConversationId: null, messages: [] })
+      }
+    } catch {
+      // ignore
+    }
+  },
+
+  toggleShowArchived: () => {
+    set((state) => ({ showArchived: !state.showArchived }))
+    get().loadConversations()
+  },
+
   reset: () => {
     set({
       conversations: [],
@@ -110,6 +154,7 @@ export const useAIStore = create<AIState>((set) => ({
       messages: [],
       isLoading: false,
       isStreaming: false,
+      showArchived: false,
     })
   },
 }))

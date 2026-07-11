@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +8,7 @@ from app.core.rate_limiter import rate_limit_dep
 from app.core.security import get_current_user_id_with_version_check
 from app.schemas.ai import (
     ChatRequest,
+    ConversationBatchDeleteRequest,
     ConversationListSchema,
     ConversationRenameRequest,
     MessageListSchema,
@@ -47,10 +48,11 @@ async def chat(
 
 @router.get("/conversations", response_model=ConversationListSchema, summary="对话列表")
 async def list_conversations(
+    archived: bool = Query(None, description="筛选归档状态：true=已归档，false=未归档，不传=全部"),
     user_id: str = Depends(get_current_user_id_with_version_check),
     db: AsyncSession = Depends(get_db),
 ):
-    conversations = await AIService.get_conversations(db, user_id)
+    conversations = await AIService.get_conversations(db, user_id, archived=archived)
     return ConversationListSchema(
         data=conversations,
         total=len(conversations),
@@ -80,6 +82,18 @@ async def delete_conversation(
     return {"message": "删除成功", "code": "success"}
 
 
+@router.post("/conversations/batch-delete", summary="批量删除对话")
+async def batch_delete_conversations(
+    request: ConversationBatchDeleteRequest,
+    user_id: str = Depends(get_current_user_id_with_version_check),
+    db: AsyncSession = Depends(get_db),
+):
+    deleted_count = await AIService.batch_delete_conversations(
+        db, request.conversation_ids, user_id
+    )
+    return {"message": f"成功删除 {deleted_count} 条对话", "code": "success", "count": deleted_count}
+
+
 @router.patch("/conversations/{conversation_id}", summary="重命名对话")
 async def rename_conversation(
     conversation_id: str,
@@ -91,3 +105,17 @@ async def rename_conversation(
     if not result:
         raise NotFoundException("对话")
     return {"message": "重命名成功", "code": "success"}
+
+
+@router.post("/conversations/{conversation_id}/archive", summary="归档/取消归档对话")
+async def archive_conversation(
+    conversation_id: str,
+    archived: bool = Query(..., description="true=归档，false=取消归档"),
+    user_id: str = Depends(get_current_user_id_with_version_check),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await AIService.archive_conversation(db, conversation_id, user_id, archived)
+    if not result:
+        raise NotFoundException("对话")
+    action = "归档" if archived else "取消归档"
+    return {"message": f"{action}成功", "code": "success"}

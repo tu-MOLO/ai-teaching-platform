@@ -242,8 +242,8 @@ describe('useAIStore', () => {
   describe('renameConversation', () => {
     it('calls API and updates conversation in state', async () => {
       const conversations = [
-        { id: '1', title: 'Old Title', module: null, created_at: '', updated_at: '' },
-        { id: '2', title: 'Chat 2', module: 'course', created_at: '', updated_at: '' },
+        { id: '1', title: 'Old Title', module: null, created_at: '', updated_at: '', is_archived: false },
+        { id: '2', title: 'Chat 2', module: 'course', created_at: '', updated_at: '', is_archived: false },
       ]
       useAIStore.setState({ conversations })
       mockRenameConversationApi.mockResolvedValueOnce(undefined)
@@ -256,7 +256,7 @@ describe('useAIStore', () => {
     })
 
     it('handles error gracefully', async () => {
-      const conversations = [{ id: '1', title: 'Old Title', module: null, created_at: '', updated_at: '' }]
+      const conversations = [{ id: '1', title: 'Old Title', module: null, created_at: '', updated_at: '', is_archived: false }]
       useAIStore.setState({ conversations })
       mockRenameConversationApi.mockRejectedValueOnce(new Error('Failed'))
 
@@ -269,7 +269,7 @@ describe('useAIStore', () => {
   describe('reset', () => {
     it('clears conversations, currentConversationId, messages, loading, streaming', () => {
       useAIStore.setState({
-        conversations: [{ id: '1', title: 'Chat', module: null, created_at: '', updated_at: '' }],
+        conversations: [{ id: '1', title: 'Chat', module: null, created_at: '', updated_at: '', is_archived: false }],
         currentConversationId: '1',
         messages: [{ id: 'm1', conversation_id: '1', role: 'user', content: 'Hi', tool_calls: null, tool_call_id: null, module_tag: null, created_at: '' }],
         isLoading: true,

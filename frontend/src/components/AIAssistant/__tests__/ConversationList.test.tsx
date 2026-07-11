@@ -61,6 +61,15 @@ vi.mock('antd', () => {
         onBlur,
         type: 'text',
       }),
+    Switch: ({ checked, onChange }: any) =>
+      React.createElement('input', {
+        type: 'checkbox',
+        checked,
+        onChange: onChange ? () => onChange(!checked) : undefined,
+        'data-testid': 'archive-switch',
+      }),
+    Tooltip: ({ children }: any) =>
+      React.createElement('span', { 'data-testid': 'tooltip' }, children),
     message: {
       success: vi.fn(),
       error: vi.fn(),
@@ -74,6 +83,7 @@ vi.mock('@ant-design/icons', () => ({
   DeleteOutlined: () => React.createElement('span', { 'data-testid': 'delete-icon' }, 'Delete'),
   MessageOutlined: () => React.createElement('span', { 'data-testid': 'message-icon' }, 'Message'),
   EditOutlined: () => React.createElement('span', { 'data-testid': 'edit-icon' }, 'Edit'),
+  InboxOutlined: () => React.createElement('span', { 'data-testid': 'inbox-icon' }, 'Inbox'),
 }))
 
 describe('ConversationList', () => {
@@ -81,10 +91,12 @@ describe('ConversationList', () => {
   const mockOnDelete = vi.fn()
   const mockOnNew = vi.fn()
   const mockOnRename = vi.fn().mockResolvedValue(undefined)
+  const mockOnArchive = vi.fn().mockResolvedValue(undefined)
+  const mockOnToggleShowArchived = vi.fn()
 
   const conversations = [
-    { id: '1', title: 'Conversation 1', updated_at: '2024-01-01T00:00:00Z', module: null, created_at: '2024-01-01T00:00:00Z' },
-    { id: '2', title: 'Conversation 2', updated_at: '2024-01-02T00:00:00Z', module: null, created_at: '2024-01-02T00:00:00Z' },
+    { id: '1', title: 'Conversation 1', updated_at: '2024-01-01T00:00:00Z', module: null, created_at: '2024-01-01T00:00:00Z', is_archived: false },
+    { id: '2', title: 'Conversation 2', updated_at: '2024-01-02T00:00:00Z', module: null, created_at: '2024-01-02T00:00:00Z', is_archived: false },
   ]
 
   beforeEach(() => {
@@ -100,6 +112,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     expect(screen.getByText('新建对话')).toBeInTheDocument()
@@ -114,6 +129,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     expect(screen.getByText('Conversation 1')).toBeInTheDocument()
@@ -129,6 +147,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     const items = screen.getAllByTestId('list-item')
@@ -145,6 +166,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     await user.click(screen.getByText('新建对话'))
@@ -161,6 +185,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     const items = screen.getAllByTestId('list-item')
@@ -177,6 +204,9 @@ describe('ConversationList', () => {
         onDelete: mockOnDelete,
         onNew: mockOnNew,
         onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
       })
     )
     expect(screen.getByText('新建对话')).toBeInTheDocument()

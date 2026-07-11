@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Optional, cast
 
 import httpx
@@ -1044,6 +1045,13 @@ MODULE_GUIDES = {
 class AIService:
 
     @staticmethod
+    def _format_datetime(dt: datetime) -> str:
+        """将 datetime 格式化为带 UTC 时区的 ISO 字符串，便于前端正确转换本地时间。"""
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.isoformat()
+
+    @staticmethod
     async def chat(db: AsyncSession, user_id: str, request: ChatRequest, stream: bool = True):
         from app.services.ai_config import AIConfigService
 
@@ -1071,30 +1079,29 @@ class AIService:
 
     @staticmethod
     async def _get_next_session_number(db: AsyncSession, user_id: str) -> int:
+        """获取今天会话的序号"""
+        from datetime import datetime
+        today = datetime.now().strftime("%Y-%m-%d")
+        
         result = await db.execute(
-            select(AIConversation.id).where(
-                AIConversation.user_id == user_id, AIConversation.is_deleted == False
-            )  # noqa: E712
-        )
-        existing_ids = result.scalars().all()
-        max_num = 0
-        for eid in existing_ids:
-            pass
-        result2 = await db.execute(
             select(AIConversation.title).where(
-                AIConversation.user_id == user_id, AIConversation.is_deleted == False
-            )  # noqa: E712
+                AIConversation.user_id == user_id,
+                AIConversation.is_deleted == False,  # noqa: E712
+                AIConversation.title.like(f"{today}%")
+            )
         )
-        existing_titles = result2.scalars().all()
+        existing_titles = result.scalars().all()
+        max_num = 0
         for title in existing_titles:
-            if title.startswith("新会话"):
-                try:
-                    num_str = title[len("新会话") :].split(" ")[0]
-                    num = int(num_str)
+            # 解析标题格式: "2026-07-11 会话 1" 或 "2026-07-11 会话 2"
+            try:
+                parts = title.split(" 会话 ")
+                if len(parts) == 2:
+                    num = int(parts[1])
                     if num > max_num:
                         max_num = num
-                except (ValueError, IndexError):
-                    pass
+            except (ValueError, IndexError):
+                pass
         return max_num + 1
 
     @staticmethod
@@ -1116,8 +1123,8 @@ class AIService:
         next_num = await AIService._get_next_session_number(db, user_id)
         from datetime import datetime
 
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        title = f"新会话{next_num} [{timestamp}]"
+        today = datetime.now().strftime("%Y-%m-%d")
+        title = f"{today} 会话 {next_num}"
         conv = AIConversation(user_id=user_id, title=title)
         db.add(conv)
         await db.commit()
@@ -1485,22 +1492,26 @@ class AIService:
         )
 
     @staticmethod
-    async def get_conversations(db: AsyncSession, user_id: str):
-        result = await db.execute(
-            select(AIConversation)
-            .where(
-                AIConversation.user_id == user_id, AIConversation.is_deleted == False
-            )  # noqa: E712
-            .order_by(AIConversation.updated_at.desc())
+    async def get_conversations(db: AsyncSession, user_id: str, archived: Optional[bool] = None):
+        query = select(AIConversation).where(
+            AIConversation.user_id == user_id,
+            AIConversation.is_deleted == False  # noqa: E712
         )
+        
+        if archived is not None:
+            query = query.where(AIConversation.is_archived == archived)
+        
+        query = query.order_by(AIConversation.updated_at.desc())
+        result = await db.execute(query)
         conversations = result.scalars().all()
         return [
             ConversationSchema(
                 id=c.id,
                 title=c.title,
                 module=c.module,
-                created_at=c.created_at.isoformat(),
-                updated_at=c.updated_at.isoformat(),
+                is_archived=c.is_archived,
+                created_at=AIService._format_datetime(c.created_at),
+                updated_at=AIService._format_datetime(c.updated_at),
             )
             for c in conversations
         ]
@@ -1534,7 +1545,7 @@ class AIService:
                     tool_calls=m.tool_calls,
                     tool_call_id=m.tool_call_id,
                     module_tag=m.module_tag,
-                    created_at=m.created_at.isoformat(),
+                    created_at=AIService._format_datetime(m.created_at),
                 )
                 for m in messages
             ]
@@ -1557,6 +1568,27 @@ class AIService:
         return True
 
     @staticmethod
+    async def batch_delete_conversations(
+        db: AsyncSession, conversation_ids: list[str], user_id: str
+    ) -> int:
+        """批量软删除指定用户的对话，返回实际删除数量。"""
+        if not conversation_ids:
+            return 0
+
+        result = await db.execute(
+            select(AIConversation).where(
+                AIConversation.id.in_(conversation_ids),
+                AIConversation.user_id == user_id,
+                AIConversation.is_deleted == False,  # noqa: E712
+            )
+        )
+        conversations = result.scalars().all()
+        for conv in conversations:
+            conv.soft_delete()
+        await db.commit()
+        return len(conversations)
+
+    @staticmethod
     async def rename_conversation(
         db: AsyncSession, conversation_id: str, user_id: str, new_title: str
     ) -> bool:
@@ -1571,5 +1603,23 @@ class AIService:
         if not conv:
             return False
         conv.title = new_title[:100]
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def archive_conversation(
+        db: AsyncSession, conversation_id: str, user_id: str, archived: bool
+    ) -> bool:
+        result = await db.execute(
+            select(AIConversation).where(
+                AIConversation.id == conversation_id,
+                AIConversation.user_id == user_id,
+                AIConversation.is_deleted == False,  # noqa: E712
+            )
+        )
+        conv = result.scalar_one_or_none()
+        if not conv:
+            return False
+        conv.is_archived = archived
         await db.commit()
         return True
