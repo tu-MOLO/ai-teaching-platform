@@ -52,6 +52,8 @@ export const uploadResource = async (
       'Content-Type': 'multipart/form-data'
     },
     onUploadProgress,
+    // 文件上传可能耗时较长，覆盖默认 10s 超时为 5 分钟
+    timeout: 5 * 60 * 1000,
   });
   return toItem<Resource>(response);
 };

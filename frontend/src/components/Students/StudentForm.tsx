@@ -36,7 +36,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
       onFinish={onSubmit}
       style={{ maxWidth: 600 }}
       initialValues={{
-        gender: '男',
+        gender: 'male',
         is_active: true,
         ...initialData,
       }}

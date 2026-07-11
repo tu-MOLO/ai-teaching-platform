@@ -27,10 +27,13 @@ const { Header: AntHeader } = Layout
 
 // 格式化时间显示
 const formatTime = (dateString: string): string => {
-  const date = new Date(dateString)
+  // 后端返回 UTC 时间，但 SQLite 可能不带时区后缀，追加 Z 确保正确解析为 UTC
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(dateString)
+  const normalized = hasTimezone ? dateString : dateString + 'Z'
+  const date = new Date(normalized)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  
+
   // 小于1分钟
   if (diff < 60000) {
     return '刚刚'
@@ -85,9 +88,19 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
     }
   }, [])
 
-  // 组件加载时获取通知
+  // 组件加载时获取通知，并定时轮询（60秒）
   useEffect(() => {
     fetchNotifications()
+    const interval = setInterval(fetchNotifications, 60000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
+
+  // 打开通知下拉时刷新通知列表
+  const handleNotificationOpenChange = useCallback((open: boolean) => {
+    setNotificationOpen(open)
+    if (open) {
+      fetchNotifications()
+    }
   }, [fetchNotifications])
 
   // 搜索处理
@@ -285,7 +298,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
           placement="bottomRight"
           trigger={['click']}
           open={notificationOpen}
-          onOpenChange={setNotificationOpen}
+          onOpenChange={handleNotificationOpenChange}
           overlayClassName="notification-dropdown-wrapper"
         >
           <Tooltip title="通知">

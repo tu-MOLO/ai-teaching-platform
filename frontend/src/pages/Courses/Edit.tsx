@@ -5,6 +5,7 @@ import { CourseForm, CourseFormData } from '@/components';
 import { getCourse, updateCourse } from '../../services/course';
 import { refreshDashboardStats } from '../../stores/dashboard';
 import { useUserStore } from '../../stores/user';
+import { BusinessError } from '../../types/error';
 
 const { Title } = Typography;
 
@@ -58,6 +59,10 @@ const EditCourse: React.FC = () => {
   const handleSubmit = async (values: CourseFormData) => {
     if (!id) return;
 
+    // 提交前关闭所有打开的下拉弹层，避免后续重渲染时引发 removeChild DOM 错误
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setSaving(true);
     try {
       await updateCourse(id, values);
@@ -65,7 +70,11 @@ const EditCourse: React.FC = () => {
       refreshDashboardStats();
       navigate('/courses');
     } catch (error) {
-      message.error('课程更新失败，请重试');
+      if (error instanceof BusinessError) {
+        message.error(error.message || '课程更新失败，请检查输入信息');
+      } else {
+        message.error('课程更新失败，请重试');
+      }
       console.error('Update course error:', error);
     } finally {
       setSaving(false);

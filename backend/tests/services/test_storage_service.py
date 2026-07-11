@@ -197,7 +197,7 @@ class TestMinIOStorageUploadFile:
         s = MinIOStorage()
         s.upload_file(b"data", "test.txt")
 
-        mock_local.upload_file.assert_called_once_with(b"data", "test.txt", None, None)
+        mock_local.upload_file.assert_called_once_with(b"data", "test.txt")
 
     @patch.object(MinIOStorage, "_check_connection", return_value=True)
     def test_upload_file_bytes(self, mock_check):
@@ -265,9 +265,7 @@ class TestMinIOStorageUploadFile:
 
         s.upload_file(b"data", "test.txt")
 
-        mock_local.upload_file.assert_called_once_with(
-            b"data", "test.txt", "application/octet-stream", None
-        )
+        mock_local.upload_file.assert_called_once_with(b"data", "test.txt")
 
 
 class TestMinIOStorageDownloadFile:
@@ -281,7 +279,7 @@ class TestMinIOStorageDownloadFile:
         s = MinIOStorage()
         s.download_file("test.txt")
 
-        mock_local.download_file.assert_called_once_with("test.txt", None)
+        mock_local.download_file.assert_called_once_with("test.txt")
 
     @patch.object(MinIOStorage, "_check_connection", return_value=True)
     def test_download_file_to_memory(self, mock_check):
@@ -346,7 +344,7 @@ class TestMinIOStorageDeleteFiles:
         s = MinIOStorage()
         s.delete_files(["a.txt", "b.txt"])
 
-        assert mock_local.delete_file.call_count == 2
+        mock_local.delete_files.assert_called_once_with(["a.txt", "b.txt"])
 
     @patch.object(MinIOStorage, "_check_connection", return_value=True)
     def test_delete_files_minio(self, mock_check):

@@ -9,6 +9,13 @@
   width: 100%;
 }
 
+/* 确保筛选下拉的整个区域（含箭头）均可点击 */
+.notifications-toolbar .ant-select .ant-select-selector,
+.notifications-toolbar .ant-select .ant-select-arrow {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .notifications-header {
   display: flex;
   justify-content: space-between;

@@ -16,7 +16,7 @@ from app.schemas.dropdown_option import DropdownOptionCreate
 from app.services.dropdown_options import DropdownOptionService
 
 DEFAULTS: dict[str, list[tuple[str, str]]] = {
-    "student_gender": [("男", "男"), ("女", "女")],
+    "student_gender": [("男", "male"), ("女", "female"), ("其他", "other")],
     "student_grade": [
         ("培智一年级", "培智一年级"),
         ("培智二年级", "培智二年级"),
@@ -45,7 +45,7 @@ DEFAULTS: dict[str, list[tuple[str, str]]] = {
         ("培智五年级", "培智五年级"),
         ("培智六年级", "培智六年级"),
     ],
-    "course_status": [("进行中", "active"), ("已结束", "inactive")],
+    "course_status": [("进行中", "active"), ("已结束", "inactive"), ("草稿", "draft")],
     "lesson_plan_subject": [
         ("语文", "语文"),
         ("数学", "数学"),

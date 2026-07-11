@@ -19,6 +19,10 @@ const CreateStudent: React.FC = () => {
   const returnTo = searchParams.get('returnTo') || '/students';
 
   const handleSubmit = async (values: StudentFormData) => {
+    // 提交前关闭所有打开的下拉弹层，避免后续重渲染时引发 removeChild DOM 错误
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setLoading(true);
     try {
       if (!values.birth_date) {

@@ -24,7 +24,11 @@ const TYPE_LABELS: Record<NotificationType, string> = {
 }
 
 const formatTime = (dateString: string): string => {
-  const date = new Date(dateString)
+  // 后端返回 UTC 时间，但 SQLite 可能不带时区后缀（如 2026-07-09T01:30:00）
+  // 若无时区信息，追加 Z 使 JS 正确解析为 UTC，否则会被当作本地时间导致偏差
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(dateString)
+  const normalized = hasTimezone ? dateString : dateString + 'Z'
+  const date = new Date(normalized)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
   if (diff < 60000) return '刚刚'

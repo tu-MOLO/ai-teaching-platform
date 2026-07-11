@@ -195,23 +195,46 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ reportsLoading: true, reportsError: null })
 
     try {
-      const [dashboard, courses, students, trends] = await Promise.all([
+      // 使用 allSettled 容错：单个接口失败不应导致全部报告数据丢失
+      const [dashboardRes, coursesRes, studentsRes, trendsRes] = await Promise.allSettled([
         reportService.getDashboardReport(),
         reportService.getCourseReport(),
         reportService.getStudentReport(),
         reportService.getMonthlyTrends(7)
       ])
 
+      const prev = get().reportData
+      const dashboardData = dashboardRes.status === 'fulfilled' ? dashboardRes.value : prev.dashboardData
+      const courseData = coursesRes.status === 'fulfilled' ? coursesRes.value : prev.courseData
+      const studentData = studentsRes.status === 'fulfilled' ? studentsRes.value : prev.studentData
+      const monthlyTrends = trendsRes.status === 'fulfilled' ? trendsRes.value : prev.monthlyTrends
+
+      const hasFailure = [dashboardRes, coursesRes, studentsRes, trendsRes].some(
+        (r) => r.status === 'rejected'
+      )
+
       set({
         reportData: {
-          dashboardData: dashboard,
-          courseData: courses,
-          studentData: students,
-          monthlyTrends: trends
+          dashboardData,
+          courseData,
+          studentData,
+          monthlyTrends
         },
         lastFetchTime: Date.now(),
-        reportsLoading: false
+        reportsLoading: false,
+        reportsError: hasFailure && !dashboardData && !courseData && !studentData
+          ? '获取报告数据失败'
+          : null
       })
+
+      if (hasFailure) {
+        const failedNames: string[] = []
+        if (dashboardRes.status === 'rejected') failedNames.push('仪表盘')
+        if (coursesRes.status === 'rejected') failedNames.push('课程')
+        if (studentsRes.status === 'rejected') failedNames.push('学生')
+        if (trendsRes.status === 'rejected') failedNames.push('趋势')
+        console.warn('部分报告接口请求失败:', failedNames.join(', '))
+      }
     } catch (error) {
       set({
         reportsError: '获取报告数据失败',

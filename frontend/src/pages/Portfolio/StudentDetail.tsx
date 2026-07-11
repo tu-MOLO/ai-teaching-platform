@@ -35,9 +35,10 @@ const StudentDetail: React.FC = () => {
   const [student, setStudent] = useState<Student | null>(null)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [filterType, setFilterType] = useState<string>('')
-  
+
   // 获取自定义记录类型
   const { getAllTypes } = usePortfolioTypesStore()
   const portfolioTypes = getAllTypes()
@@ -47,10 +48,12 @@ const StudentDetail: React.FC = () => {
 
     try {
       setLoading(true)
+      setLoadError(false)
       const studentData = await studentService.getStudent(id)
       setStudent(studentData)
     } catch (error) {
       message.error('获取学生信息失败')
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -144,8 +147,22 @@ const StudentDetail: React.FC = () => {
     fetchPortfolio()
   }, [id])
 
-  if (loading || !student) {
+  if (loading) {
     return <div className="loading">加载中...</div>
+  }
+
+  if (loadError || !student) {
+    return (
+      <div className="loading" style={{ textAlign: 'center', padding: '60px 0' }}>
+        <p style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>
+          {loadError ? '加载学生信息失败，请稍后重试' : '未找到学生信息'}
+        </p>
+        <Space>
+          <Button type="primary" onClick={fetchStudent}>重新加载</Button>
+          <Button onClick={() => navigate('/portfolio')}>返回档案列表</Button>
+        </Space>
+      </div>
+    )
   }
 
   return (
@@ -240,17 +257,19 @@ const StudentDetail: React.FC = () => {
                 style={{ padding: '40px 0' }}
               />
             ) : (
-              <Timeline mode="left">
-                {filteredPortfolioItems.map((item) => (
-                  <Timeline.Item key={item.id}>
+              <Timeline
+                mode="left"
+                items={filteredPortfolioItems.map((item) => ({
+                  key: item.id,
+                  children: (
                     <TimelineItem
                       item={item}
                       onDelete={handleDeleteRecord}
                       onEdit={handleEditRecord}
                     />
-                  </Timeline.Item>
-                ))}
-              </Timeline>
+                  ),
+                }))}
+              />
             )}
           </Card>
         </div>

@@ -27,6 +27,10 @@ import {
   SafetyOutlined
 } from '@ant-design/icons'
 import { userService, UserProfile } from '../../services/user'
+import { BusinessError } from '../../types/error'
+import { useAuthStore } from '../../stores/auth'
+import { useUserStore } from '../../stores/user'
+import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import './index.css'
 
@@ -50,6 +54,7 @@ const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [passwordModalVisible, setPasswordModalVisible] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  const navigate = useNavigate()
 
   // 获取用户资料
   const fetchProfile = async () => {
@@ -61,6 +66,8 @@ const Profile: React.FC = () => {
         username: data.username,
         email: data.email,
         full_name: data.full_name,
+        phone: data.phone,
+        bio: data.bio,
       })
     } catch (error) {
       message.error('获取用户资料失败')
@@ -90,6 +97,8 @@ const Profile: React.FC = () => {
         username: profile.username,
         email: profile.email,
         full_name: profile.full_name,
+        phone: profile.phone,
+        bio: profile.bio,
       })
     }
   }
@@ -101,10 +110,23 @@ const Profile: React.FC = () => {
       setSaving(true)
       const updatedProfile = await userService.updateUserProfile(values)
       setProfile(updatedProfile)
+      // 同步回填表单，避免取消编辑后字段丢失
+      form.setFieldsValue({
+        username: updatedProfile.username,
+        email: updatedProfile.email,
+        full_name: updatedProfile.full_name,
+        phone: updatedProfile.phone,
+        bio: updatedProfile.bio,
+      })
       setIsEditing(false)
       message.success(profile ? '个人资料更新成功' : '个人资料创建成功')
     } catch (error) {
-      message.error(profile ? '更新失败，请重试' : '创建失败，请重试')
+      // 表单校验错误已在字段下方展示，不再弹全局消息
+      if (error instanceof BusinessError) {
+        message.error(error.message || '保存失败')
+      } else if (!(error as { errorFields?: unknown }).errorFields) {
+        message.error(profile ? '更新失败，请重试' : '创建失败，请重试')
+      }
     } finally {
       setSaving(false)
     }
@@ -128,12 +150,25 @@ const Profile: React.FC = () => {
       const values = await passwordForm.validateFields()
       setChangingPassword(true)
       await userService.changePassword(values.currentPassword, values.newPassword)
-      message.success('密码修改成功')
+      message.success('密码修改成功，请重新登录')
       setPasswordModalVisible(false)
       passwordForm.resetFields()
-    } catch (error: any) {
-      if (error.response?.data?.detail) {
-        message.error(error.response.data.detail)
+      // 后端修改密码后会 increment_token_version，当前 token 已失效，需登出并跳转登录页
+      const { logout } = useAuthStore.getState()
+      const { clearUser } = useUserStore.getState()
+      await logout()
+      clearUser()
+      navigate('/login', { replace: true })
+    } catch (error) {
+      // 拦截器已将错误统一转为 BusinessError
+      if (error instanceof BusinessError) {
+        message.error(error.message || '密码修改失败')
+      } else if (error instanceof Error && error.message) {
+        // 表单校验错误等
+        // form.validateFields 抛出的错误不展示全局消息（字段下方已有提示）
+        if (!(error as { errorFields?: unknown }).errorFields) {
+          message.error(error.message)
+        }
       } else {
         message.error('密码修改失败，请检查当前密码是否正确')
       }

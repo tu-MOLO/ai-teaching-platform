@@ -4,12 +4,13 @@
 """
 
 import asyncio
+import functools
 import io
 import mimetypes
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, BinaryIO, Optional, Union
+from typing import Any, BinaryIO, Callable, Optional, TypeVar, Union
 
 from minio import Minio
 from minio.commonconfig import CopySource
@@ -21,6 +22,85 @@ from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+T = TypeVar("T")
+
+
+_UNSET = object()
+
+
+def storage_fallback(
+    fallback_enabled: bool = True,
+    fallback_method_name: Optional[str] = None,
+    fallback_value: Any = _UNSET,
+):
+    """
+    MinIO 操作降级装饰器
+
+    统一管理 MinIO 连接检查、异常捕获和本地存储降级逻辑，
+    消除各方法中重复的降级代码。
+
+    Args:
+        fallback_enabled: 是否启用本地存储降级
+        fallback_method_name: 指定本地存储中对应的降级方法名，
+                             默认为被装饰方法的名称
+        fallback_value: 当未启用降级时，MinIO 不可用返回的默认值；
+                       未设置时则抛出 RuntimeError
+
+    Raises:
+        RuntimeError: MinIO 不可用且未启用降级、也未设置 fallback_value 时抛出
+    """
+
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(self: "MinIOStorage", *args: Any, **kwargs: Any) -> T:
+            method_name = fallback_method_name or func.__name__
+
+            if not self._check_connection():
+                if fallback_enabled:
+                    logger.info(f"Using local storage fallback for {func.__name__}")
+                    fallback_method = getattr(self._get_fallback_storage(), method_name)
+                    return fallback_method(*args, **kwargs)
+                if fallback_value is not _UNSET:
+                    logger.warning(f"MinIO unavailable for {func.__name__}, returning fallback value")
+                    return fallback_value  # type: ignore[return-value]
+                raise RuntimeError(f"MinIO is not available for {func.__name__}")
+
+            if self.client is None:
+                raise RuntimeError("Storage client is not initialized")
+            if self.bucket_name is None:
+                raise RuntimeError("Storage bucket is not set")
+
+            try:
+                return func(self, *args, **kwargs)
+            except S3Error as e:
+                if fallback_enabled:
+                    logger.error(
+                        f"MinIO operation failed in {func.__name__}: {e}. "
+                        "Falling back to local storage."
+                    )
+                    fallback_method = getattr(self._get_fallback_storage(), method_name)
+                    return fallback_method(*args, **kwargs)
+                if fallback_value is not _UNSET:
+                    logger.error(f"MinIO operation failed in {func.__name__}: {e}, returning fallback value")
+                    return fallback_value  # type: ignore[return-value]
+                raise
+            except Exception as e:
+                if fallback_enabled:
+                    logger.error(
+                        f"Unexpected error in {func.__name__}: {e}. "
+                        "Falling back to local storage."
+                    )
+                    fallback_method = getattr(self._get_fallback_storage(), method_name)
+                    return fallback_method(*args, **kwargs)
+                if fallback_value is not _UNSET:
+                    logger.error(f"Unexpected error in {func.__name__}: {e}, returning fallback value")
+                    return fallback_value  # type: ignore[return-value]
+                raise
+
+        return wrapper
+
+    return decorator
 
 
 class LocalFileStorage:
@@ -103,6 +183,11 @@ class LocalFileStorage:
         if file_path.exists():
             file_path.unlink()
             logger.info(f"Deleted file: {object_name}")
+
+    def delete_files(self, object_names: list[str]) -> None:
+        """从本地存储批量删除文件"""
+        for object_name in object_names:
+            self.delete_file(object_name)
 
     def get_file_url(self, object_name: str, expires: Any = None) -> str:
         """获取文件的URL"""
@@ -291,6 +376,7 @@ class MinIOStorage:
             file_stream.close()
         return result
 
+    @storage_fallback()
     def upload_file(
         self,
         file_data: Union[bytes, BinaryIO, str, Path],
@@ -313,41 +399,14 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        if not self._check_connection():
-            logger.info(f"Using local storage fallback for upload: {object_name}")
-            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
-                file_data, object_name, content_type, metadata
-            )
-
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            file_stream, file_size, should_close, content_type = self._prepare_upload_stream(
-                file_data, content_type
-            )
-            result = self._do_minio_upload(
-                file_stream, file_size, object_name, content_type, metadata, should_close
-            )
-            logger.info(f"Uploaded file: {object_name}, etag: {result.etag}")
-            return result
-        except S3Error as e:
-            logger.error(
-                f"Failed to upload file {object_name} to MinIO: {e}. Falling back to local storage."
-            )
-            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
-                file_data, object_name, content_type, metadata
-            )
-        except Exception as e:
-            logger.error(
-                f"Unexpected error uploading file {object_name}: {e}. "
-                "Falling back to local storage."
-            )
-            return self._get_fallback_storage().upload_file(  # type: ignore[func-returns-value]
-                file_data, object_name, content_type, metadata
-            )
+        file_stream, file_size, should_close, content_type = self._prepare_upload_stream(
+            file_data, content_type
+        )
+        result = self._do_minio_upload(
+            file_stream, file_size, object_name, content_type, metadata, should_close
+        )
+        logger.info(f"Uploaded file: {object_name}, etag: {result.etag}")
+        return result
 
     async def upload_file_async(
         self,
@@ -367,6 +426,7 @@ class MinIOStorage:
         """异步从MinIO或本地存储下载文件"""
         return await asyncio.to_thread(self.download_file, object_name, file_path)
 
+    @storage_fallback()
     def download_file(
         self, object_name: str, file_path: Optional[Union[str, Path]] = None
     ) -> Union[bytes, Path]:
@@ -384,47 +444,27 @@ class MinIOStorage:
             S3Error: MinIO操作错误
             FileNotFoundError: 文件不存在
         """
-        # 检查连接，如果失败则降级到本地存储
-        if not self._check_connection():
-            logger.info(f"Using local storage fallback for download: {object_name}")
-            return self._get_fallback_storage().download_file(object_name, file_path)
+        if file_path:
+            # 下载到文件
+            self.client.fget_object(
+                bucket_name=self.bucket_name, object_name=object_name, file_path=str(file_path)
+            )
+            logger.info(f"Downloaded file to: {file_path}")
+            return Path(file_path)
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
+        # 下载到内存
+        response = self.client.get_object(
+            bucket_name=self.bucket_name, object_name=object_name
+        )
         try:
-            if file_path:
-                # 下载到文件
-                self.client.fget_object(
-                    bucket_name=self.bucket_name, object_name=object_name, file_path=str(file_path)
-                )
-                logger.info(f"Downloaded file to: {file_path}")
-                return Path(file_path)
-            else:
-                # 下载到内存
-                response = self.client.get_object(
-                    bucket_name=self.bucket_name, object_name=object_name
-                )
-                data = response.read()
-                response.close()
-                response.release_conn()
-                logger.info(f"Downloaded file: {object_name}, size: {len(data)} bytes")
-                return data
+            data = response.read()
+            logger.info(f"Downloaded file: {object_name}, size: {len(data)} bytes")
+            return data
+        finally:
+            response.close()
+            response.release_conn()
 
-        except S3Error as e:
-            logger.error(
-                f"Failed to download file {object_name} from MinIO: {e}. Trying local storage."
-            )
-            # MinIO失败时尝试本地存储
-            return self._get_fallback_storage().download_file(object_name, file_path)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error downloading file {object_name}: {e}. Trying local storage."
-            )
-            return self._get_fallback_storage().download_file(object_name, file_path)
-
+    @storage_fallback()
     def delete_file(self, object_name: str) -> None:
         """
         从MinIO或本地存储删除文件
@@ -435,31 +475,8 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.info(f"Using local storage fallback for delete: {object_name}")
-            self._get_fallback_storage().delete_file(object_name)
-            return
-
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            self.client.remove_object(bucket_name=self.bucket_name, object_name=object_name)
-            logger.info(f"Deleted file from MinIO: {object_name}")
-        except S3Error as e:
-            logger.error(
-                f"Failed to delete file {object_name} from MinIO: {e}. Trying local storage."
-            )
-            # MinIO失败时尝试本地存储
-            self._get_fallback_storage().delete_file(object_name)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error deleting file {object_name}: {e}. Trying local storage."
-            )
-            self._get_fallback_storage().delete_file(object_name)
+        self.client.remove_object(bucket_name=self.bucket_name, object_name=object_name)
+        logger.info(f"Deleted file from MinIO: {object_name}")
 
     def _delete_from_minio(self, object_names: list[str]) -> None:
         """从MinIO批量删除文件"""
@@ -476,11 +493,7 @@ class MinIOStorage:
             logger.error(f"Failed to delete {error.name}: {error.code}")
         logger.info(f"Deleted {len(object_names)} files from MinIO")
 
-    def _delete_from_local(self, object_names: list[str]) -> None:
-        """从本地存储批量删除文件"""
-        for object_name in object_names:
-            self._get_fallback_storage().delete_file(object_name)
-
+    @storage_fallback()
     def delete_files(self, object_names: list[str]) -> None:
         """
         批量删除文件
@@ -491,29 +504,13 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        if not self._check_connection():
-            logger.info("Using local storage fallback for batch delete")
-            self._delete_from_local(object_names)
-            return
-
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            self._delete_from_minio(object_names)
-        except S3Error as e:
-            logger.error(f"Failed to delete files from MinIO: {e}. Trying local storage.")
-            self._delete_from_local(object_names)
-        except Exception as e:
-            logger.error(f"Unexpected error deleting files: {e}. Trying local storage.")
-            self._delete_from_local(object_names)
+        self._delete_from_minio(object_names)
 
     async def delete_file_async(self, object_name):
         """异步从MinIO或本地存储删除文件"""
         return await asyncio.to_thread(self.delete_file, object_name)
 
+    @storage_fallback()
     def get_file_url(self, object_name: str, expires: timedelta = timedelta(hours=1)) -> str:
         """
         获取文件的预签名URL
@@ -528,32 +525,11 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.info(f"Using local storage fallback for get_file_url: {object_name}")
-            return self._get_fallback_storage().get_file_url(object_name)
+        return self.client.presigned_get_object(
+            bucket_name=self.bucket_name, object_name=object_name, expires=expires
+        )
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            url = self.client.presigned_get_object(
-                bucket_name=self.bucket_name, object_name=object_name, expires=expires
-            )
-            return url
-        except S3Error as e:
-            logger.error(
-                f"Failed to generate presigned URL for {object_name}: {e}. Using local URL."
-            )
-            return self._get_fallback_storage().get_file_url(object_name)
-        except Exception as e:
-            logger.error(
-                f"Unexpected error generating URL for {object_name}: {e}. Using local URL."
-            )
-            return self._get_fallback_storage().get_file_url(object_name)
-
+    @storage_fallback(fallback_enabled=False)
     def get_upload_url(
         self,
         object_name: str,
@@ -572,27 +548,14 @@ class MinIOStorage:
             预签名上传URL
 
         Raises:
+            RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.warning(f"Cannot generate upload URL in local storage mode for: {object_name}")
-            raise RuntimeError("MinIO is not available, cannot generate presigned upload URL")
+        return self.client.presigned_put_object(
+            bucket_name=self.bucket_name, object_name=object_name, expires=expires
+        )
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            url = self.client.presigned_put_object(
-                bucket_name=self.bucket_name, object_name=object_name, expires=expires
-            )
-            return url
-        except S3Error as e:
-            logger.error(f"Failed to generate presigned upload URL for {object_name}: {e}")
-            raise
-
+    @storage_fallback()
     def file_exists(self, object_name: str) -> bool:
         """
         检查文件是否存在
@@ -603,26 +566,10 @@ class MinIOStorage:
         Returns:
             文件是否存在
         """
-        # 检查连接
-        if not self._check_connection():
-            return self._get_fallback_storage().file_exists(object_name)
+        self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
+        return True
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
-            return True
-        except S3Error:
-            # 尝试本地存储
-            return self._get_fallback_storage().file_exists(object_name)
-        except Exception as e:
-            logger.error(f"Error checking file existence for {object_name}: {e}")
-            # 尝试本地存储
-            return self._get_fallback_storage().file_exists(object_name)
-
+    @storage_fallback(fallback_enabled=False)
     def get_file_info(self, object_name: str) -> dict:
         """
         获取文件信息
@@ -634,32 +581,20 @@ class MinIOStorage:
             文件信息字典
 
         Raises:
+            RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.warning(f"Cannot get file info in local storage mode for: {object_name}")
-            raise RuntimeError("MinIO is not available, cannot get file info")
+        stat = self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
+        return {
+            "object_name": stat.object_name,
+            "size": stat.size,
+            "etag": stat.etag,
+            "content_type": stat.content_type,
+            "last_modified": stat.last_modified,
+            "metadata": stat.metadata,
+        }
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            stat = self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
-            return {
-                "object_name": stat.object_name,
-                "size": stat.size,
-                "etag": stat.etag,
-                "content_type": stat.content_type,
-                "last_modified": stat.last_modified,
-                "metadata": stat.metadata,
-            }
-        except S3Error as e:
-            logger.error(f"Failed to get file info for {object_name}: {e}")
-            raise
-
+    @storage_fallback(fallback_enabled=False, fallback_value=[])
     def list_files(self, prefix: Optional[str] = None, recursive: bool = False) -> list[dict]:
         """
         列出存储桶中的文件
@@ -671,35 +606,22 @@ class MinIOStorage:
         Returns:
             文件信息列表
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.warning("Cannot list files in local storage mode")
-            return []
+        objects = self.client.list_objects(
+            bucket_name=self.bucket_name, prefix=prefix, recursive=recursive
+        )
 
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
+        return [
+            {
+                "object_name": obj.object_name,
+                "size": obj.size,
+                "etag": obj.etag,
+                "last_modified": obj.last_modified,
+                "is_dir": obj.is_dir,
+            }
+            for obj in objects
+        ]
 
-        try:
-            objects = self.client.list_objects(
-                bucket_name=self.bucket_name, prefix=prefix, recursive=recursive
-            )
-
-            return [
-                {
-                    "object_name": obj.object_name,
-                    "size": obj.size,
-                    "etag": obj.etag,
-                    "last_modified": obj.last_modified,
-                    "is_dir": obj.is_dir,
-                }
-                for obj in objects
-            ]
-        except S3Error as e:
-            logger.error(f"Failed to list files: {e}")
-            raise
-
+    @storage_fallback(fallback_enabled=False)
     def copy_file(self, source_object: str, dest_object: str) -> ObjectWriteResult:
         """
         复制文件
@@ -712,31 +634,16 @@ class MinIOStorage:
             ObjectWriteResult: 写入结果
 
         Raises:
+            RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
-        # 检查连接
-        if not self._check_connection():
-            logger.warning(
-                f"Cannot copy file in local storage mode: {source_object} -> {dest_object}"
-            )
-            raise RuntimeError("MinIO is not available, cannot copy file")
-
-        if self.client is None:
-            raise RuntimeError("Storage client is not initialized")
-        if self.bucket_name is None:
-            raise RuntimeError("Storage bucket is not set")
-
-        try:
-            result = self.client.copy_object(
-                bucket_name=self.bucket_name,
-                object_name=dest_object,
-                source=CopySource(self.bucket_name, source_object),
-            )
-            logger.info(f"Copied file from {source_object} to {dest_object}")
-            return result
-        except S3Error as e:
-            logger.error(f"Failed to copy file from {source_object} to {dest_object}: {e}")
-            raise
+        result = self.client.copy_object(
+            bucket_name=self.bucket_name,
+            object_name=dest_object,
+            source=CopySource(self.bucket_name, source_object),
+        )
+        logger.info(f"Copied file from {source_object} to {dest_object}")
+        return result
 
 
 # 全局存储实例 - 延迟初始化模式

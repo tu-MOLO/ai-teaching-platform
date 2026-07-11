@@ -263,6 +263,8 @@ async def get_current_user(
         email=user.email,
         username=user.username,
         full_name=user.full_name,
+        phone=user.phone,
+        bio=user.bio,
         avatar_url=user.avatar_url,
         role=user.role,
         status=user.status.value if hasattr(user.status, "value") else str(user.status),

@@ -1058,6 +1058,7 @@ class AIService:
         await AIService._save_message(
             db, conversation.id, "user", request.message, module_tag=request.module
         )
+        await db.commit()
 
         messages = await AIService._build_messages(db, conversation.id, request.module)
 
@@ -1363,6 +1364,7 @@ class AIService:
                     response_content,
                     tool_calls=json.dumps(tool_calls_list) if tool_calls_list else None,
                 )
+                await db.commit()
 
             if not tool_calls_list:
                 data = json.dumps(
@@ -1393,6 +1395,7 @@ class AIService:
                     tool_call_id=tc["id"],
                     module_tag=module_tag,
                 )
+                await db.commit()
 
         data = json.dumps({"type": "done", "conversation_id": conversation.id}, ensure_ascii=False)
         yield f"data: {data}\n\n"
@@ -1442,6 +1445,7 @@ class AIService:
                     response_content,
                     tool_calls=json.dumps([tc for tc in tool_calls]) if tool_calls else None,
                 )
+                await db.commit()
 
             if not tool_calls:
                 return ChatResponse(
@@ -1472,6 +1476,7 @@ class AIService:
                     tool_call_id=tc["id"],
                     module_tag=module_tag,
                 )
+                await db.commit()
 
         return ChatResponse(
             conversation_id=conversation.id,

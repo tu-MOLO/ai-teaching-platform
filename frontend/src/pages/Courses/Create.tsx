@@ -21,6 +21,10 @@ const CreateCourse: React.FC = () => {
    * 处理表单提交
    */
   const handleSubmit = async (values: CourseFormData) => {
+    // 提交前关闭所有打开的下拉弹层，避免后续重渲染时引发 removeChild DOM 错误
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setLoading(true);
     try {
       await createCourse(values);

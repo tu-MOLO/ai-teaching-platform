@@ -51,7 +51,10 @@ const typeStyleMapping: Record<string, string> = {
 }
 
 const formatTime = (dateString: string): string => {
-  const date = new Date(dateString)
+  // 后端返回 UTC 时间，但 SQLite 可能不带时区后缀，追加 Z 确保正确解析为 UTC
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(dateString)
+  const normalized = hasTimezone ? dateString : dateString + 'Z'
+  const date = new Date(normalized)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
 

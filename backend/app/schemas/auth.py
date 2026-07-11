@@ -146,6 +146,8 @@ class CurrentUserResponse(BaseSchema):
     email: EmailStr = Field(..., description="邮箱地址")
     username: str = Field(..., description="用户名")
     full_name: Optional[str] = Field(default=None, description="真实姓名")
+    phone: Optional[str] = Field(default=None, description="手机号码")
+    bio: Optional[str] = Field(default=None, description="个人简介")
     avatar_url: Optional[str] = Field(default=None, description="头像URL")
     role: UserRole = Field(..., description="用户角色")
     status: str = Field(..., description="用户状态")

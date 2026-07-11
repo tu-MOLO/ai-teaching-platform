@@ -5,6 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { StudentForm, type StudentFormData } from '@/components'
 import { studentService } from '../../services/student'
 import { refreshDashboardStats } from '../../stores/dashboard'
+import { BusinessError } from '../../types/error'
 import type { Student } from '../../types/student'
 
 const { Title } = Typography
@@ -49,6 +50,10 @@ const EditStudent: React.FC = () => {
       return
     }
 
+    // 提交前关闭所有打开的下拉弹层，避免后续重渲染时引发 removeChild DOM 错误
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     setLoading(true)
     try {
       await studentService.updateStudent(id, {
@@ -64,7 +69,11 @@ const EditStudent: React.FC = () => {
       refreshDashboardStats()
       navigate(returnTo)
     } catch (error) {
-      message.error('更新失败，请重试')
+      if (error instanceof BusinessError) {
+        message.error(error.message || '更新失败，请检查输入信息')
+      } else {
+        message.error('更新失败，请重试')
+      }
       console.error('Update student error:', error)
     } finally {
       setLoading(false)

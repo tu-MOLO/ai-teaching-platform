@@ -162,7 +162,7 @@ const EvaluationForm: React.FC<EvaluationFormProps> = ({
       <Tooltip
         title={dimension.description}
         placement="right"
-        overlayStyle={{ maxWidth: 300 }}
+        styles={{ root: { maxWidth: 300 } }}
       >
         <InfoCircleOutlined
           style={{

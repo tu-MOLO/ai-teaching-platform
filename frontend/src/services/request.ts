@@ -44,13 +44,17 @@ async function refreshAccessToken(): Promise<string | null> {
 function handleApiError(error: AxiosError): BusinessError {
   if (error.response) {
     const { status, data } = error.response
-    const errorData = data as ApiErrorResponse
+    const errorData = data as ApiErrorResponse & { message?: string; errors?: Array<{ field: string; message: string }> }
 
-    if (errorData?.error) {
+    if (errorData?.error || errorData?.code) {
+      const message = errorData.message || errorData.error || getHttpErrorMessage(status)
+      const details = errorData.errors
+        ? { errors: errorData.errors }
+        : errorData.details
       return new BusinessError(
-        errorData.error,
-        errorData.code,
-        errorData.details,
+        message,
+        errorData.code || errorData.error,
+        details,
         status
       )
     }

@@ -40,18 +40,7 @@ python scripts/init_tags.py
 python scripts/init_templates.py
 python scripts/init_data.py
 
-:: Exit venv after seed data init
-call venv\Scripts\deactivate.bat
-
 echo   Default teacher account: teacher / Teacher@Local2026!
-
-:: Check Node.js
-node --version >nul 2>&1
-if errorlevel 1 (
-    echo [错误] 未找到 Node.js，请安装 Node.js 18+
-    pause
-    exit /b 1
-)
 
 :: 5. Start Backend
 echo [5/6] Starting backend server (port 8000)...
@@ -77,9 +66,9 @@ echo.
 echo ============================================
 echo  Startup Complete! Access URLs:
 echo.
-echo  Frontend: http://localhost:5173
-echo  Backend API: http://localhost:8000
-echo  API Docs: http://localhost:8000/docs
+echo  Frontend:     http://localhost:5173
+echo  Backend API:  http://localhost:8000
+echo  API Docs:     http://localhost:8000/docs
 echo.
 echo  Close this window without stopping services.
 echo  Backend and Frontend run in separate windows.

@@ -6,11 +6,22 @@
 from typing import Annotated, AsyncGenerator
 
 from fastapi import Depends
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, declared_attr, sessionmaker
 
 from app.core.config import settings
+
+
+def _sqlite_pragma_on_connect(dbapi_conn, _conn_record):
+    """Enable WAL mode and set busy timeout for SQLite connections."""
+    try:
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.close()
+    except Exception:
+        pass
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -34,8 +45,12 @@ class Base(AsyncAttrs, DeclarativeBase):
 # SQLite不需要连接池配置
 if "sqlite" in settings.DATABASE_URL:
     async_engine = create_async_engine(
-        settings.DATABASE_URL, echo=settings.DEBUG, future=True  # 调试模式打印SQL
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        future=True,
+        connect_args={"timeout": 30, "check_same_thread": False},
     )
+    event.listen(async_engine.sync_engine, "connect", _sqlite_pragma_on_connect)
 else:
     async_engine = create_async_engine(
         settings.DATABASE_URL,
@@ -59,8 +74,14 @@ AsyncSessionLocal = async_sessionmaker(
 
 # 创建同步引擎（用于Alembic迁移）
 sync_engine = create_engine(
-    settings.sync_database_url, pool_pre_ping=True, echo=settings.DEBUG, future=True
+    settings.sync_database_url,
+    pool_pre_ping=True,
+    echo=settings.DEBUG,
+    future=True,
+    connect_args={"timeout": 30, "check_same_thread": False} if "sqlite" in settings.sync_database_url else {},
 )
+if "sqlite" in settings.sync_database_url:
+    event.listen(sync_engine, "connect", _sqlite_pragma_on_connect)
 
 # 创建同步会话工厂
 SyncSessionLocal = sessionmaker(bind=sync_engine, autocommit=False, autoflush=False)

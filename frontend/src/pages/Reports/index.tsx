@@ -62,10 +62,29 @@ const Reports: React.FC = () => {
   useEffect(() => {
     if (reportsLoading || reportsError) return;
 
-    if (pieChartContainerRef.current && courseData?.categoryStats) {
-      if (pieChartRef.current) pieChartRef.current.dispose();
-      pieChartRef.current = echarts.init(pieChartContainerRef.current);
-      pieChartRef.current.setOption({
+    // 安全检查图表是否已销毁（兼容测试环境 mock）
+    const isChartDisposed = (chart: echarts.ECharts | null): boolean => {
+      if (!chart) return true;
+      return typeof chart.isDisposed === 'function' && chart.isDisposed();
+    };
+
+    const initChart = (
+      container: HTMLDivElement | null,
+      ref: React.MutableRefObject<echarts.ECharts | null>
+    ): echarts.ECharts | null => {
+      if (!container) return null;
+      // 若已存在实例且未销毁，复用并清空选项；否则新建
+      if (ref.current && !isChartDisposed(ref.current)) {
+        ref.current.clear();
+        return ref.current;
+      }
+      ref.current = echarts.init(container);
+      return ref.current;
+    };
+
+    const pieChart = initChart(pieChartContainerRef.current, pieChartRef);
+    if (pieChart && courseData?.categoryStats?.length) {
+      pieChart.setOption({
         tooltip: { trigger: 'item', formatter: '{b}: {c}门 ({d}%)' },
         series: [{
           name: '课程分类', type: 'pie', radius: ['40%', '70%'], center: ['50%', '50%'],
@@ -80,10 +99,9 @@ const Reports: React.FC = () => {
       });
     }
 
-    if (barChartContainerRef.current && studentData?.gradeDistribution) {
-      if (barChartRef.current) barChartRef.current.dispose();
-      barChartRef.current = echarts.init(barChartContainerRef.current);
-      barChartRef.current.setOption({
+    const barChart = initChart(barChartContainerRef.current, barChartRef);
+    if (barChart && studentData?.gradeDistribution?.length) {
+      barChart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}: {c}人' },
         grid: { left: '3%', right: '12%', bottom: '3%', top: '3%', containLabel: true },
         xAxis: { type: 'value', axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
@@ -98,11 +116,10 @@ const Reports: React.FC = () => {
       });
     }
 
-    if (lineChartContainerRef.current && monthlyTrends.length > 0) {
-      if (lineChartRef.current) lineChartRef.current.dispose();
-      lineChartRef.current = echarts.init(lineChartContainerRef.current);
+    const lineChart = initChart(lineChartContainerRef.current, lineChartRef);
+    if (lineChart && monthlyTrends.length > 0) {
       const months = monthlyTrends.map(t => t.month.slice(5) + '月');
-      lineChartRef.current.setOption({
+      lineChart.setOption({
         tooltip: { trigger: 'axis' },
         legend: { data: ['课程', '学生', '教案'], bottom: 0, itemWidth: 12, itemHeight: 12 },
         grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
@@ -117,16 +134,26 @@ const Reports: React.FC = () => {
     }
 
     const handleResize = () => {
-      pieChartRef.current?.resize();
-      barChartRef.current?.resize();
-      lineChartRef.current?.resize();
+      if (pieChartRef.current && !isChartDisposed(pieChartRef.current)) pieChartRef.current.resize();
+      if (barChartRef.current && !isChartDisposed(barChartRef.current)) barChartRef.current.resize();
+      if (lineChartRef.current && !isChartDisposed(lineChartRef.current)) lineChartRef.current.resize();
     };
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
-      pieChartRef.current?.dispose();
-      barChartRef.current?.dispose();
-      lineChartRef.current?.dispose();
+      // 安全销毁：检查是否已销毁，避免重复 dispose 警告
+      if (pieChartRef.current && !isChartDisposed(pieChartRef.current)) {
+        pieChartRef.current.dispose();
+      }
+      pieChartRef.current = null;
+      if (barChartRef.current && !isChartDisposed(barChartRef.current)) {
+        barChartRef.current.dispose();
+      }
+      barChartRef.current = null;
+      if (lineChartRef.current && !isChartDisposed(lineChartRef.current)) {
+        lineChartRef.current.dispose();
+      }
+      lineChartRef.current = null;
     };
   }, [courseData, studentData, monthlyTrends, reportsLoading, reportsError]);
 
