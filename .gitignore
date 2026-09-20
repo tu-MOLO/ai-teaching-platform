@@ -62,6 +62,8 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 ai_teaching.db
+ai_teaching.db-shm
+ai_teaching.db-wal
 test.db
 
 # ============================================

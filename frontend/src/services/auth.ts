@@ -59,6 +59,16 @@ export interface SecurityQuestionResponse {
   is_legacy: boolean
 }
 
+export interface SendCodeData {
+  email: string
+}
+
+export interface ResetPasswordByCodeData {
+  email: string
+  code: string
+  new_password: string
+}
+
 export const authService = {
   /**
    * 用户登录
@@ -112,6 +122,27 @@ export const authService = {
    */
   getSecurityQuestion: async (data: SecurityQuestionData): Promise<SecurityQuestionResponse> => {
     return api.post('/auth/password/reset/question', data)
+  },
+
+  /**
+   * 发送注册验证码
+   */
+  sendRegisterCode: async (data: SendCodeData): Promise<{ message: string; code: string }> => {
+    return api.post('/auth/send-register-code', data)
+  },
+
+  /**
+   * 发送重置密码验证码
+   */
+  sendResetCode: async (data: SendCodeData): Promise<{ message: string; code: string }> => {
+    return api.post('/auth/send-reset-code', data)
+  },
+
+  /**
+   * 通过验证码重置密码
+   */
+  resetPasswordByCode: async (data: ResetPasswordByCodeData): Promise<{ message: string; code: string }> => {
+    return api.post('/auth/password/reset-by-code', data)
   }
 }
 

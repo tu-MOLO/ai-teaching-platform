@@ -27,6 +27,7 @@ from app.core.security import (
     verify_password,
 )
 from app.models.user import User, UserRole, UserStatus
+from app.models.verification_code import VerificationCodeType
 from app.schemas.auth import (
     CurrentUserResponse,
     LoginRequest,
@@ -34,13 +35,16 @@ from app.schemas.auth import (
     PasswordChangeRequest,
     PasswordResetRequest,
     RegisterRequest,
+    ResetPasswordByCodeRequest,
     SecurityQuestionRequest,
     SecurityQuestionResponse,
+    SendCodeRequest,
     TokenData,
     UserAuthInfo,
 )
 from app.schemas.base import MessageResponse
 from app.services.users import UserService
+from app.services.verification_code_service import VerificationCodeService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -154,6 +158,15 @@ async def register(
     )
     if (await db.execute(email_stmt)).scalar_one_or_none():
         raise ConflictException("邮箱", "已被注册")
+
+    # 如果提供了验证码，先校验
+    if register_data.verification_code:
+        await VerificationCodeService.verify_code(
+            db,
+            register_data.email,
+            register_data.verification_code,
+            VerificationCodeType.REGISTER,
+        )
 
     new_user = User(
         email=str(register_data.email),
@@ -377,6 +390,101 @@ async def reset_password(
     user.increment_token_version()
     user.failed_login_attempts = 0
     user.locked_until = None
+    await db.commit()
+
+    return MessageResponse(
+        message="密码已重置，请使用新密码登录",
+        code="success",
+    )
+
+
+@router.post(
+    "/send-register-code",
+    response_model=MessageResponse,
+    summary="发送注册验证码",
+)
+async def send_register_code(
+    request: Request,
+    code_data: SendCodeRequest,
+    db: DBSession,
+    _: None = Depends(rate_limit_dep("register")),
+) -> MessageResponse:
+    """发送注册验证码到指定邮箱"""
+    # 检查邮箱是否已被注册
+    email_stmt = select(User).where(
+        User.email == code_data.email,
+        User.is_deleted == False,  # noqa: E712
+    )
+    if (await db.execute(email_stmt)).scalar_one_or_none():
+        raise ConflictException("邮箱", "已被注册")
+
+    await VerificationCodeService.create_and_send_code(
+        db, code_data.email, VerificationCodeType.REGISTER
+    )
+
+    return MessageResponse(message="验证码已发送，请查收邮件", code="success")
+
+
+@router.post(
+    "/send-reset-code",
+    response_model=MessageResponse,
+    summary="发送重置密码验证码",
+)
+async def send_reset_code(
+    request: Request,
+    code_data: SendCodeRequest,
+    db: DBSession,
+    _: None = Depends(rate_limit_dep("password_reset")),
+) -> MessageResponse:
+    """发送重置密码验证码到指定邮箱"""
+    # 检查邮箱是否已注册
+    email_stmt = select(User).where(
+        User.email == code_data.email,
+        User.is_deleted == False,  # noqa: E712
+    )
+    if not (await db.execute(email_stmt)).scalar_one_or_none():
+        raise NotFoundException("该邮箱未注册")
+
+    await VerificationCodeService.create_and_send_code(
+        db, code_data.email, VerificationCodeType.RESET_PASSWORD
+    )
+
+    return MessageResponse(message="验证码已发送，请查收邮件", code="success")
+
+
+@router.post(
+    "/password/reset-by-code",
+    response_model=MessageResponse,
+    summary="通过验证码重置密码",
+)
+async def reset_password_by_code(
+    request: Request,
+    reset_data: ResetPasswordByCodeRequest,
+    db: DBSession,
+    _: None = Depends(rate_limit_dep("password_reset")),
+) -> MessageResponse:
+    """通过邮箱验证码重置密码"""
+    # 校验验证码
+    await VerificationCodeService.verify_code(
+        db, reset_data.email, reset_data.code, VerificationCodeType.RESET_PASSWORD
+    )
+
+    # 查找用户
+    stmt = select(User).where(
+        User.email == reset_data.email,
+        User.is_deleted == False,  # noqa: E712
+    )
+    result = await db.execute(stmt)
+    user = result.scalar_one_or_none()
+    if not user:
+        raise NotFoundException("用户")
+
+    # 重置密码
+    user.hashed_password = get_password_hash(reset_data.new_password)
+    user.increment_token_version()
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    user.reset_reset_lock()
     await db.commit()
 
     return MessageResponse(

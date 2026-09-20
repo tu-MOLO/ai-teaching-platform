@@ -22,13 +22,14 @@
   - [环境要求](#环境要求)
   - [Docker部署（推荐）](#docker部署推荐)
   - [本地开发](#本地开发)
-- [项目结构](#-项目结构)
+  - [一键本地启动](#一键本地启动)
 - [API文档](#-api文档)
 - [测试](#-测试)
 - [CI/CD](#-cicd)
 - [部署](#-部署)
 - [更新日志](#-更新日志)
 - [贡献指南](#-贡献指南)
+- [联系方式](#-联系方式)
 - [许可证](#-许可证)
 
 ---
@@ -37,8 +38,8 @@
 
 ### 📚 课程管理
 
-- 课程信息CRUD操作
-- 课程状态跟踪（草稿/进行中/已结课）
+- 课程信息 CRUD 操作
+- 课程状态跟踪（草稿 / 进行中 / 已结课）
 - 课程分类和标签管理
 - 课程与学生多对多关联
 
@@ -60,9 +61,8 @@
 
 ### 📂 资源中心
 
-- 文件上传/下载（拖拽上传）
-- 默认本地文件存储
-- 可选 MinIO 对象存储
+- 文件上传 / 下载（拖拽上传）
+- 默认本地文件存储，可选 MinIO 对象存储
 - 资源标签和预览功能
 - 文件类型校验与大小限制（100MB）
 
@@ -73,15 +73,15 @@
 - 默认使用智谱 BigModel（glm-4.7-flash），可随时切换
 - Function Calling 工具调用：直接操作课程、学生、教案、资源、通知等平台数据
 - 多轮上下文记忆与流式响应（SSE）
-- 模块化对话标签（课程/学生/教案/数据/资源/通知）
-- API 密钥加密存储（cryptography），安全域名白名单校验
-- 对话历史管理（创建、重命名、删除）
+- 模块化对话标签（课程 / 学生 / 教案 / 数据 / 资源 / 通知）
+- API 密钥加密存储（cryptography）+ 安全域名白名单校验
+- 对话历史管理（创建、重命名、归档、批量删除）
 
 ### 🔔 通知系统
 
 - 站内通知列表
-- 已读/未读状态管理
-- 批量标记已读
+- 已读 / 未读状态管理
+- 批量标记已读、一键全部已读
 - 未读数量统计
 
 ### 📊 报告统计
@@ -93,13 +93,13 @@
 
 ### 🔐 用户认证与权限
 
-- JWT Token认证（Access Token 30分钟 / Refresh Token 7天）
+- JWT Token 认证（Access Token 30 分钟 / Refresh Token 7 天）
 - 教师单角色产品逻辑
 - 本地注册、登录、改密、重置密码
-- 密保问题验证用于密码重置
+- 密码重置双通道：密保问题验证 或 邮箱验证码（SMTP 发送，10 分钟有效）
 - Refresh Token 通过 HttpOnly Cookie 传递（防 XSS）
 - 请求速率限制
-- 账户锁定（5次失败登录后锁定30分钟）
+- 账户锁定（5 次失败登录后锁定 30 分钟）
 - Token 版本化（改密时可立即吊销令牌）
 
 ### 🎨 主题定制
@@ -125,44 +125,61 @@
 
 ### 后端
 
-| 技术                  | 版本    | 用途           |
-| --------------------- | ------- | -------------- |
-| **FastAPI**     | 0.109.2 | Web框架        |
-| **SQLAlchemy**  | 2.0.27  | ORM（异步）    |
-| **SQLite**      | -       | 本地默认数据库 |
-| **PostgreSQL**  | 15      | 可选部署数据库 |
-| **Alembic**     | 1.13.1  | 数据库迁移     |
-| **MinIO**       | latest  | 对象存储       |
-| **Redis**       | 7       | 缓存           |
-| **Pydantic**    | 2.6.1   | 数据验证       |
-| **PyJWT**       | 2.8.0   | JWT认证        |
-| **httpx**       | 0.26.0  | 异步HTTP客户端 |
-| **aiohttp**     | 3.9.3   | 异步HTTP客户端 |
-| **WeasyPrint**  | 59.0    | PDF导出        |
-| **python-docx** | 0.8.11  | Word导出       |
-| **cryptography** | >=44.0.0 | API密钥加密    |
-| **orjson**      | 3.9.13  | JSON序列化     |
-| **bcrypt**      | 4.2.1   | 密码哈希       |
-| **Pytest**      | 7.4.4   | 测试框架       |
+**核心框架与依赖**（以 `backend/requirements.txt` 为准）
+
+| 技术                        | 版本    | 用途                 |
+| --------------------------- | ------- | -------------------- |
+| **FastAPI**           | 0.109.2 | Web 框架             |
+| **Uvicorn**           | 0.27.1  | ASGI 服务器          |
+| **SQLAlchemy**        | 2.0.40  | ORM（异步）          |
+| **Alembic**           | 1.15.2  | 数据库迁移           |
+| **Pydantic**          | 2.10.4  | 数据验证             |
+| **Pydantic Settings** | 2.7.0   | 配置管理             |
+| **PyJWT**             | 2.8.0   | JWT 认证             |
+| **bcrypt**            | 4.2.1   | 密码哈希             |
+| **httpx**             | 0.26.0  | 异步 HTTP 客户端     |
+| **aiohttp**           | 3.10.11 | 异步 HTTP 客户端     |
+| **orjson**            | 3.10.12 | JSON 序列化          |
+| **cryptography**      | 44.0.0  | API 密钥加密         |
+| **WeasyPrint**        | 59.0    | PDF 导出             |
+| **python-docx**       | 0.8.11  | Word 导出            |
+| **minio**             | 7.2.4   | MinIO 客户端         |
+| **redis**             | 5.0.1   | Redis 客户端         |
+| **aiosmtplib**        | 3.0.1   | SMTP 邮件发送        |
+| **python-multipart**  | 0.0.20  | 表单解析（文件上传） |
+| **python-dotenv**     | 1.0.1   | 环境变量加载         |
+| **Pytest**            | 7.4.4   | 测试框架（dev）      |
+
+**基础设施**
+
+| 技术                 | 版本                     | 用途              |
+| -------------------- | ------------------------ | ----------------- |
+| **SQLite**     | -（aiosqlite 0.19.0）    | 本地默认数据库    |
+| **PostgreSQL** | 15（postgres:15-alpine） | Docker 部署数据库 |
+| **MinIO**      | RELEASE.2025-06-13       | 对象存储（可选）  |
+| **Redis**      | 7（redis:7-alpine）      | 缓存（可选）      |
 
 ### 前端
 
-| 技术                      | 版本   | 用途           |
-| ------------------------- | ------ | -------------- |
-| **React**           | 18.2.0 | UI框架         |
-| **TypeScript**      | 5.2.2  | 类型系统       |
-| **Ant Design**      | 5.12.0 | UI组件库       |
-| **Vite**            | 5.0.8  | 构建工具       |
-| **Zustand**         | 4.4.0  | 状态管理       |
-| **ECharts**         | 5.4.0  | 图表库         |
-| **Axios**           | 1.6.0  | HTTP客户端     |
-| **React Router**    | 6.21.0 | 路由           |
-| **react-md-editor** | 4.0.0  | Markdown编辑器 |
-| **react-dropzone**  | 14.2.0 | 文件拖拽上传   |
-| **dayjs**           | 1.11.0 | 日期处理       |
-| **Vitest**          | 4.1.7  | 前端测试框架   |
-| **Playwright**      | 1.52.0 | E2E测试框架    |
-| **Testing Library** | 16.3.2 | 组件测试       |
+| 技术                        | 版本   | 用途            |
+| --------------------------- | ------ | --------------- |
+| **React**             | 18.2.0 | UI 框架         |
+| **React DOM**         | 18.2.0 | DOM 渲染        |
+| **TypeScript**        | 5.2.2  | 类型系统        |
+| **Ant Design**        | 5.12.0 | UI 组件库       |
+| **@ant-design/icons** | 5.2.0  | 图标库          |
+| **Vite**              | 5.0.8  | 构建工具        |
+| **Zustand**           | 4.4.0  | 状态管理        |
+| **ECharts**           | 5.4.0  | 图表库          |
+| **echarts-for-react** | 3.0.0  | React 图表封装  |
+| **Axios**             | 1.6.0  | HTTP 客户端     |
+| **React Router**      | 6.21.0 | 路由            |
+| **react-md-editor**   | 4.0.0  | Markdown 编辑器 |
+| **react-dropzone**    | 14.2.0 | 文件拖拽上传    |
+| **dayjs**             | 1.11.0 | 日期处理        |
+| **Vitest**            | 4.1.7  | 前端测试框架    |
+| **Playwright**        | 1.52.0 | E2E 测试框架    |
+| **Testing Library**   | 16.3.2 | 组件测试        |
 
 ---
 
@@ -170,8 +187,8 @@
 
 ### 环境要求
 
-- **Docker** & **Docker Compose** (推荐)
-- 或 **Python 3.11+** 和 **Node.js 18+**
+- **Docker** 与 **Docker Compose**（推荐）
+- 或 **Python 3.11+** 与 **Node.js 18+**
 
 ### Docker部署（推荐）
 
@@ -186,7 +203,7 @@
    ```bash
    cp .env.docker.example .env
    cp backend/.env.example backend/.env
-   # 按需修改 .env 与 backend/.env
+   # 按需修改 .env 与 backend/.env（至少修改所有 SECRET_KEY / PASSWORD）
    ```
 3. **启动服务**
 
@@ -200,15 +217,12 @@
    ```
 5. **访问服务**
 
-   - 前端页面: http://localhost
-   - 后端API: http://localhost:8000
-   - API文档: http://localhost:8000/docs
-   - MinIO控制台: http://localhost:9001
+   - 前端页面：http://localhost
+   - 后端 API：http://localhost:8000
+   - API 文档：http://localhost:8000/docs
+   - MinIO 控制台：http://localhost:9001
 
-说明：
-
-- Docker Compose 会同时启动前端（Nginx 托管）、后端及所有依赖服务
-- 生产环境请使用 `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` 合并覆盖配置
+说明：Docker Compose 会同时启动前端（Nginx 托管）、后端及所有依赖服务（PostgreSQL / MinIO / Redis）。
 
 ### 本地开发
 
@@ -227,10 +241,12 @@ venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
-# 安装依赖
+# 安装运行依赖
 pip install -r requirements.txt
+# 如需运行测试与代码检查，额外安装开发依赖
+pip install -r requirements-dev.txt
 
-# 安装系统依赖（PDF导出功能需要，WeasyPrint依赖）
+# 安装系统依赖（PDF 导出需要，WeasyPrint 依赖）
 # Windows: 下载安装 GTK3 Runtime https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer
 # macOS: brew install cairo pango gdk-pixbuf libffi
 # Linux (Debian/Ubuntu): sudo apt-get install libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
@@ -259,7 +275,7 @@ npm install
 npm run dev
 ```
 
-前端服务将在 http://localhost:5173 启动
+前端服务将在 http://localhost:5173 启动。
 
 ### 一键本地启动
 
@@ -270,10 +286,9 @@ npm run dev
 
 脚本会自动：
 
-- 创建虚拟环境
-- 安装依赖
+- 创建虚拟环境并安装依赖
 - 执行数据库迁移
-- 初始化教师账号、标签、教案模板、下拉选项
+- 初始化标签、教案模板、下拉选项及种子数据
 - 启动前后端开发服务
 
 首次初始化默认教师账号：
@@ -286,343 +301,14 @@ npm run dev
 
 ---
 
-## 📁 项目结构
-
-```
-ai-teaching-platform/
-├── .github/
-│   └── workflows/
-│       └── ci.yml                  # CI/CD 工作流
-├── backend/                        # 后端代码
-│   ├── app/
-│   │   ├── api/                   # API路由
-│   │   │   └── v1/                # API版本1（14个模块，80+端点）
-│   │   │       ├── ai.py          # AI助手对话
-│   │   │       ├── ai_config.py   # AI配置管理
-│   │   │       ├── auth.py        # 认证（登录/注册/刷新/改密/重置）
-│   │   │       ├── courses.py     # 课程管理
-│   │   │       ├── dropdown_options.py  # 动态下拉选项
-│   │   │       ├── lesson_plans.py # 教案管理
-│   │   │       ├── lesson_templates.py  # 教案模板
-│   │   │       ├── notifications.py  # 通知管理
-│   │   │       ├── portfolios.py   # 成长档案
-│   │   │       ├── reports.py      # 数据报告
-│   │   │       ├── resources.py    # 资源管理
-│   │   │       ├── students.py     # 学生管理
-│   │   │       ├── tags.py         # 标签管理
-│   │   │       └── users.py        # 用户管理
-│   │   ├── core/                  # 核心配置
-│   │   │   ├── config.py          # 应用配置（Settings）
-│   │   │   ├── config_validator.py # 配置验证
-│   │   │   ├── database.py        # 数据库连接（异步引擎）
-│   │   │   ├── exceptions.py      # 业务异常体系 + ErrorCode
-│   │   │   ├── logging.py         # 日志配置
-│   │   │   ├── performance.py     # 内存缓存
-│   │   │   ├── query_filters.py   # 软删除过滤器
-│   │   │   ├── rate_limiter.py    # 请求限流
-│   │   │   └── security.py        # 安全工具（JWT/bcrypt/Fernet）
-│   │   ├── models/                # 数据模型（SQLAlchemy ORM）
-│   │   │   ├── base.py            # 基础模型（UUID/时间戳/软删除/乐观锁）
-│   │   │   ├── ai.py              # AI对话模型
-│   │   │   ├── ai_config.py       # AI配置模型
-│   │   │   ├── audit_log.py       # 审计日志
-│   │   │   ├── course.py          # 课程模型
-│   │   │   ├── dropdown_option.py # 下拉选项模型
-│   │   │   ├── lesson_plan.py     # 教案模型
-│   │   │   ├── lesson_template.py # 教案模板模型
-│   │   │   ├── notification.py    # 通知模型
-│   │   │   ├── portfolio.py       # 成长档案模型
-│   │   │   ├── resource.py        # 资源模型
-│   │   │   ├── student.py         # 学生模型
-│   │   │   ├── tag.py             # 标签模型
-│   │   │   └── user.py            # 用户模型
-│   │   ├── schemas/               # Pydantic模式
-│   │   │   ├── base.py            # 基础响应模式
-│   │   │   ├── ai.py / ai_config.py  # AI模式
-│   │   │   ├── auth.py            # 认证模式
-│   │   │   ├── course.py          # 课程模式
-│   │   │   ├── dropdown_option.py # 下拉选项模式
-│   │   │   ├── lesson_plan.py     # 教案模式
-│   │   │   ├── lesson_template.py # 教案模板模式
-│   │   │   ├── notification.py    # 通知模式
-│   │   │   ├── portfolio.py       # 成长档案模式
-│   │   │   ├── resource.py        # 资源模式
-│   │   │   ├── student.py         # 学生模式
-│   │   │   ├── tag.py             # 标签模式
-│   │   │   └── user.py            # 用户模式
-│   │   ├── services/              # 业务逻辑层
-│   │   │   ├── ai.py              # AI对话服务（SSE流式）
-│   │   │   ├── ai_config.py       # AI配置服务
-│   │   │   ├── courses.py         # 课程服务
-│   │   │   ├── dropdown_options.py # 下拉选项服务
-│   │   │   ├── export.py          # 导出服务（PDF/Word）
-│   │   │   ├── lesson_plans.py    # 教案服务
-│   │   │   ├── notifications.py   # 通知服务
-│   │   │   ├── portfolios.py      # 成长档案服务
-│   │   │   ├── reports.py         # 报告服务
-│   │   │   ├── resources.py       # 资源服务
-│   │   │   ├── storage.py         # 存储服务（本地/MinIO）
-│   │   │   ├── students.py        # 学生服务
-│   │   │   ├── tags.py            # 标签服务
-│   │   │   └── users.py           # 用户服务
-│   │   └── utils/                 # 工具函数
-│   │       └── pagination.py      # 分页工具
-│   ├── alembic/                   # 数据库迁移
-│   ├── scripts/                   # 实用脚本
-│   │   ├── create_user.py         # 创建用户
-│   │   ├── full_acceptance.py     # 完整验收
-│   │   ├── init_data.py           # 初始化数据
-│   │   ├── init_dropdown_options.py  # 初始化下拉选项
-│   │   ├── init_tags.py           # 初始化标签
-│   │   └── init_templates.py      # 初始化教案模板
-│   ├── tests/                     # 后端测试（api / core / services 子目录）
-│   ├── .env.example               # 后端环境变量示例
-│   ├── alembic.ini                # Alembic配置
-│   ├── Dockerfile                 # 后端Docker配置
-│   ├── pyproject.toml             # Python项目配置
-│   └── requirements.txt           # Python依赖
-│
-├── frontend/                       # 前端代码
-│   ├── e2e/                       # E2E测试（Playwright）
-│   │   ├── fixtures/              # 测试夹具
-│   │   ├── specs/                 # 测试规格（10个）
-│   │   │   ├── access-control.spec.ts
-│   │   │   ├── ai-assistant.spec.ts
-│   │   │   ├── auth.spec.ts
-│   │   │   ├── courses.spec.ts
-│   │   │   ├── dashboard-reports.spec.ts
-│   │   │   ├── lesson-plans.spec.ts
-│   │   │   ├── notifications.spec.ts
-│   │   │   ├── portfolio.spec.ts
-│   │   │   ├── resources.spec.ts
-│   │   │   └── students.spec.ts
-│   │   └── utils/                 # 测试工具
-│   ├── src/
-│   │   ├── components/            # 可复用组件
-│   │   │   ├── AIAssistant/       # AI助手组件
-│   │   │   ├── Common/            # 通用组件
-│   │   │   ├── Courses/           # 课程组件
-│   │   │   ├── Header/            # 头部组件
-│   │   │   ├── Layout/            # 布局组件
-│   │   │   ├── Portfolio/         # 成长档案组件
-│   │   │   ├── ResourceCenter/    # 资源中心组件
-│   │   │   ├── Sidebar/           # 侧边栏组件
-│   │   │   ├── Students/          # 学生组件
-│   │   │   └── Theme/             # 主题组件
-│   │   ├── constants/             # 全局常量
-│   │   ├── hooks/                 # 自定义Hooks
-│   │   ├── pages/                 # 页面组件（13个页面）
-│   │   │   ├── AIAssistant/       # AI助手页面
-│   │   │   ├── Courses/           # 课程页面
-│   │   │   ├── Dashboard/         # 仪表盘
-│   │   │   ├── LessonPlanner/     # 教案页面
-│   │   │   ├── Login/             # 登录
-│   │   │   ├── Register/          # 注册
-│   │   │   ├── Notifications/     # 通知页面
-│   │   │   ├── Portfolio/         # 成长档案页面
-│   │   │   ├── Profile/           # 个人中心
-│   │   │   ├── Reports/           # 报告页面
-│   │   │   ├── ResourceCenter/    # 资源中心页面
-│   │   │   ├── Settings/          # 设置页面
-│   │   │   └── Students/          # 学生页面
-│   │   ├── router/                # 路由配置（21个路由）
-│   │   ├── services/              # API服务（17个服务模块）
-│   │   ├── stores/                # Zustand状态管理（6个stores）
-│   │   ├── styles/                # 全局样式
-│   │   ├── test/                  # 测试配置
-│   │   ├── types/                 # TypeScript类型
-│   │   └── utils/                 # 工具函数
-│   ├── .eslintrc.cjs              # ESLint配置
-│   ├── .prettierrc                # Prettier配置
-│   ├── Dockerfile                 # 前端Docker配置
-│   ├── index.html                 # HTML入口
-│   ├── nginx.conf                 # Nginx配置
-│   ├── package.json               # Node依赖
-│   ├── playwright.config.ts       # Playwright配置
-│   ├── tsconfig.json              # TypeScript配置
-│   ├── tsconfig.build.json        # 构建用TypeScript配置
-│   ├── tsconfig.node.json         # Node环境TypeScript配置
-│   └── vite.config.ts             # Vite构建配置
-│
-├── docs/                           # 项目文档
-│   ├── architecture.md             # 系统架构文档
-│   └── API.md                      # API参考文档
-├── .editorconfig                   # 编辑器配置
-├── .env.docker.example             # Docker环境变量示例
-├── .gitignore                      # Git忽略规则
-├── .pre-commit-config.yaml         # Pre-commit钩子配置
-├── LICENSE                         # MIT许可证
-├── README.md                       # 项目文档
-├── docker-compose.yml              # Docker编排
-├── docker-compose.prod.yml         # 生产环境覆盖配置
-├── docker-compose.e2e.yml          # E2E测试环境配置
-├── start.bat                       # Windows一键启动
-└── start.sh                        # macOS/Linux一键启动
-```
-
----
-
 ## 📚 API文档
 
-启动后端服务后，可以通过以下地址访问API文档：
+启动后端服务（需 `DEBUG=True`）后可访问交互式文档：
 
-- **Swagger UI**: http://localhost:8000/docs（需 `DEBUG=True`）
-- **ReDoc**: http://localhost:8000/redoc（需 `DEBUG=True`）
+- **Swagger UI**：http://localhost:8000/docs
+- **ReDoc**：http://localhost:8000/redoc
 
-### 主要API端点
-
-#### 认证
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/auth/login` | POST | 用户登录 | 否 |
-| `/api/v1/auth/register` | POST | 用户注册 | 否 |
-| `/api/v1/auth/refresh` | POST | 刷新Access Token | 否（Cookie） |
-| `/api/v1/auth/me` | GET | 获取当前用户 | 是 |
-| `/api/v1/auth/logout` | POST | 用户退出 | 是 |
-| `/api/v1/auth/password/change` | POST | 修改密码 | 是 |
-| `/api/v1/auth/password/reset/question` | POST | 获取密保问题 | 否 |
-| `/api/v1/auth/password/reset` | POST | 重置密码（密保验证） | 否 |
-
-#### 用户
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/users/{id}` | GET | 获取用户资料 | 是 |
-| `/api/v1/users/{id}` | PUT | 更新用户资料 | 是 |
-
-#### 课程
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/courses` | POST | 创建课程 | 是 |
-| `/api/v1/courses` | GET | 课程列表 | 是 |
-| `/api/v1/courses/{id}` | GET | 课程详情 | 是 |
-| `/api/v1/courses/{id}` | PUT | 更新课程 | 是 |
-| `/api/v1/courses/{id}` | DELETE | 删除课程 | 是 |
-| `/api/v1/courses/{id}/students` | GET | 获取课程学生列表 | 是 |
-| `/api/v1/courses/{id}/students/{sid}` | POST | 关联学生到课程 | 是 |
-| `/api/v1/courses/{id}/students/{sid}` | DELETE | 移除课程学生关联 | 是 |
-
-#### 学生
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/students` | POST | 创建学生 | 是 |
-| `/api/v1/students` | GET | 学生列表 | 是 |
-| `/api/v1/students/{id}` | GET | 学生详情 | 是 |
-| `/api/v1/students/{id}` | PUT | 更新学生 | 是 |
-| `/api/v1/students/{id}` | DELETE | 删除学生 | 是 |
-| `/api/v1/students/{id}/export` | GET | 导出学生成长报告 | 是 |
-| `/api/v1/students/{id}/courses` | GET | 获取学生课程列表 | 是 |
-
-#### 教案
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/lesson-plans` | POST | 创建教案 | 是 |
-| `/api/v1/lesson-plans` | GET | 教案列表 | 是 |
-| `/api/v1/lesson-plans/stats/monthly` | GET | 教案月度统计 | 是 |
-| `/api/v1/lesson-plans/{id}` | GET | 教案详情 | 是 |
-| `/api/v1/lesson-plans/{id}` | PUT | 更新教案 | 是 |
-| `/api/v1/lesson-plans/{id}` | DELETE | 删除教案 | 是 |
-| `/api/v1/lesson-plans/{id}/publish` | POST | 发布教案 | 是 |
-| `/api/v1/lesson-plans/{id}/unpublish` | POST | 取消发布教案 | 是 |
-| `/api/v1/lesson-plans/{id}/archive` | POST | 归档教案 | 是 |
-| `/api/v1/lesson-plans/{id}/restore` | POST | 恢复教案 | 是 |
-
-#### 教案模板
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/lesson-templates` | GET | 教案模板列表 | 是 |
-
-#### 成长档案
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/portfolios` | POST | 创建成长档案 | 是 |
-| `/api/v1/portfolios` | GET | 成长档案列表 | 是 |
-| `/api/v1/portfolios/{id}` | GET | 成长档案详情 | 是 |
-| `/api/v1/portfolios/{id}` | PUT | 更新成长档案 | 是 |
-| `/api/v1/portfolios/{id}` | DELETE | 删除成长档案 | 是 |
-
-#### 资源
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/resources` | POST | 上传资源 | 是 |
-| `/api/v1/resources` | GET | 资源列表 | 是 |
-| `/api/v1/resources/{id}` | GET | 资源详情 | 是 |
-| `/api/v1/resources/{id}` | PUT | 更新资源 | 是 |
-| `/api/v1/resources/{id}` | DELETE | 删除资源 | 是 |
-| `/api/v1/resources/{id}/file` | GET | 下载资源文件 | 是 |
-
-#### 标签
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/tags` | GET | 标签列表 | 否 |
-| `/api/v1/tags` | POST | 创建标签 | 是 |
-| `/api/v1/tags/{id}` | GET | 标签详情 | 是 |
-| `/api/v1/tags/{id}` | PUT | 更新标签 | 是 |
-| `/api/v1/tags/{id}` | DELETE | 删除标签 | 是 |
-
-#### 通知
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/notifications` | GET | 通知列表 | 是 |
-| `/api/v1/notifications/stats` | GET | 通知统计 | 是 |
-| `/api/v1/notifications/unread-count` | GET | 未读通知数量 | 是 |
-| `/api/v1/notifications/read-all` | PUT | 标记全部已读 | 是 |
-| `/api/v1/notifications/read-batch` | PUT | 批量标记已读 | 是 |
-| `/api/v1/notifications/read/all` | DELETE | 删除全部已读通知 | 是 |
-| `/api/v1/notifications/{id}` | GET | 通知详情 | 是 |
-| `/api/v1/notifications/{id}` | PUT | 更新通知 | 是 |
-| `/api/v1/notifications/{id}` | DELETE | 删除通知 | 是 |
-| `/api/v1/notifications/{id}/read` | PUT | 标记通知已读 | 是 |
-
-#### 报告
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/reports/dashboard` | GET | 仪表盘统计 | 是 |
-| `/api/v1/reports/courses` | GET | 课程统计报告 | 是 |
-| `/api/v1/reports/students` | GET | 学生统计报告 | 是 |
-| `/api/v1/reports/trends` | GET | 月度趋势数据 | 是 |
-
-#### 下拉选项
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/dropdown-options` | GET | 下拉选项列表 | 是 |
-| `/api/v1/dropdown-options` | POST | 创建下拉选项 | 是 |
-| `/api/v1/dropdown-options/{id}` | PUT | 更新下拉选项 | 是 |
-| `/api/v1/dropdown-options/{id}` | DELETE | 删除下拉选项 | 是 |
-
-#### AI助手
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/api/v1/ai/chat` | POST | AI对话（SSE流式） | 是 |
-| `/api/v1/ai/conversations` | GET | 对话列表 | 是 |
-| `/api/v1/ai/conversations/{id}` | GET | 对话消息 | 是 |
-| `/api/v1/ai/conversations/{id}` | DELETE | 删除对话 | 是 |
-| `/api/v1/ai/conversations/{id}` | PATCH | 重命名对话 | 是 |
-| `/api/v1/ai/config` | GET | 获取AI配置 | 是 |
-| `/api/v1/ai/config` | PUT | 更新AI配置 | 是 |
-| `/api/v1/ai/config/test` | POST | 测试API连接 | 是 |
-| `/api/v1/ai/config` | DELETE | 重置AI配置 | 是 |
-
-#### 健康检查
-
-| 端点 | 方法 | 描述 | 认证 |
-| ---- | ---- | ---- | ---- |
-| `/health` | GET | 健康检查 | 否 |
-| `/health/detailed` | GET | 详细健康检查（内网） | 否 |
-
-> 完整API参考文档请查看 [docs/API.md](docs/API.md)
+完整接口清单、统一响应格式及请求/响应示例见 [docs/API.md](docs/API.md)。接口以 `/api/v1` 为 Base URL，除登录、注册、健康检查外均需 Bearer Token（JWT）认证。
 
 ---
 
@@ -633,6 +319,9 @@ ai-teaching-platform/
 ```bash
 cd backend
 
+# 安装开发依赖（首次）
+pip install -r requirements-dev.txt
+
 # 运行所有测试
 pytest
 
@@ -642,7 +331,7 @@ pytest --cov=app --cov-report=html
 # 运行特定测试文件
 pytest tests/api/test_auth_api.py
 
-# 运行测试并生成HTML报告
+# 运行测试并生成 HTML 报告
 pytest --html=reports/test_report.html
 ```
 
@@ -666,34 +355,37 @@ npm run test:watch
 ```bash
 cd frontend
 
-# 运行所有E2E测试
+# 运行所有 E2E 测试
 npm run test:e2e
 
-# 运行E2E测试（UI模式）
+# 运行 E2E 测试（UI 模式）
 npm run test:e2e:ui
 
-# 查看E2E测试报告
+# 查看 E2E 测试报告
 npm run test:e2e:report
 ```
 
 ### 测试覆盖率
 
-- 后端覆盖率阈值：**90%**（配置于 `pyproject.toml`）
-- 前端覆盖率阈值：**70%**（配置于 `vite.config.ts`）
-- E2E测试覆盖：认证、课程、学生、教案、资源、通知、成长档案、报告、AI助手等核心功能
+- 后端覆盖率阈值：**90%**（配置于 `pyproject.toml` 与 CI）
+- 前端覆盖率阈值：**70%**（lines / functions / statements，branches 60%，配置于 `vite.config.ts`）
+- E2E 测试覆盖：认证、课程、学生、教案、资源、通知、成长档案、报告、AI 助手、个人中心、设置等核心功能
 
 ---
 
 ## 🔄 CI/CD
 
-项目使用 GitHub Actions 进行持续集成，配置文件位于 `.github/workflows/ci.yml`。
+项目使用 GitHub Actions 进行持续集成，配置文件位于 `.github/workflows/ci.yml`，在 push / PR 到 `main`、`develop` 分支时触发。
 
 ### CI 工作流
 
-- **后端测试**：运行 pytest，检查覆盖率
-- **前端测试**：运行 vitest，检查覆盖率
-- **代码检查**：ESLint + Prettier（前端）、Black + Flake8（后端）
-- **E2E测试**：Playwright 端到端测试
+- **后端代码检查**：Black + isort + Flake8 + mypy + pip-audit（依赖安全扫描）
+- **后端测试**：pytest（Python 3.11 / 3.12 / 3.13 矩阵，覆盖率 ≥ 90%）
+- **前端代码检查**：ESLint + TypeScript 类型检查 + npm audit
+- **前端测试**：Vitest 单元测试（检查覆盖率阈值）
+- **前端构建**：tsc + vite 构建验证
+- **Docker 构建验证**：构建前后端镜像并验证后端容器健康检查
+- **E2E 测试**：Playwright 端到端测试（基于 `docker-compose.e2e.yml`）
 
 ### 手动运行CI检查
 
@@ -701,7 +393,8 @@ npm run test:e2e:report
 # 后端代码检查
 cd backend
 black . --check
-flake8
+isort . --check
+flake8 app/ tests/ scripts/
 mypy app
 
 # 前端代码检查
@@ -713,79 +406,25 @@ npm run lint
 
 ## 🚢 部署
 
-### 生产环境部署
-
-1. **更新环境变量**
-
-   - 修改 `SECRET_KEY`（至少32字符随机串）
-   - 修改数据库与对象存储口令
-   - 设置正确的 `BACKEND_CORS_ORIGINS`
-2. **构建生产镜像**
-
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-   ```
-3. **配置Nginx**
-
-   - 启用HTTPS
-   - 配置反向代理
-4. **监控与日志**
-
-   - 配置日志收集
-   - 设置健康检查
-
-### 环境变量说明
-
-| 变量名 | 说明 | 默认值 |
-| ------ | ---- | ------ |
-| `DEBUG` | 调试模式 | `true`（开发）/ `false`（生产） |
-| `SECRET_KEY` | JWT密钥 | 必须修改（≥32字符） |
-| `DATABASE_URL` | 数据库连接 | `sqlite+aiosqlite:///./ai_teaching.db` |
-| `DATABASE_POOL_SIZE` | 数据库连接池大小 | `20` |
-| `DATABASE_MAX_OVERFLOW` | 连接池最大溢出 | `10` |
-| `BACKEND_CORS_ORIGINS` | 允许的前端地址 | `http://localhost:5173` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access Token有效期 | `30`（分钟） |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | Refresh Token有效期 | `7`（天） |
-| `ALGORITHM` | JWT算法 | `HS256` |
-| `MINIO_ENDPOINT` | MinIO地址 | `localhost:9000` |
-| `MINIO_ACCESS_KEY` | MinIO访问密钥 | `aiteachingminio` |
-| `MINIO_SECRET_KEY` | MinIO秘密密钥 | `MinioLocal@2026Store` |
-| `MINIO_BUCKET_NAME` | MinIO存储桶 | `ai-teaching` |
-| `MINIO_SECURE` | MinIO是否使用HTTPS | `false` |
-| `MAX_UPLOAD_SIZE` | 最大上传大小 | `104857600`（100MB） |
-| `ALLOWED_EXTENSIONS` | 允许的文件扩展名 | `.pdf,.doc,.docx,.txt,.md,.jpg,.jpeg,.png,.gif,.mp4,.mp3` |
-| `BIGMODEL_API_KEY` | 智谱AI API密钥 | - |
-| `BIGMODEL_API_BASE` | 智谱AI API地址 | `https://open.bigmodel.cn/api/paas/v4` |
-| `BIGMODEL_MODEL` | AI模型名称 | `glm-4.7-flash` |
-| `AI_MAX_CONTEXT_MESSAGES` | AI上下文消息数 | `20` |
-| `LOG_LEVEL` | 日志级别 | `INFO` |
-| `REDIS_URL` | Redis连接 | `redis://localhost:6379/0`（可选） |
-
-生成安全的 SECRET_KEY：
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
+生产环境通过合并 `docker-compose.prod.yml` 覆盖配置启动（资源限制、日志轮转等），详细的部署步骤、环境变量说明、数据备份恢复与故障排查请参见 [docs/operations.md](docs/operations.md)。
 
 ---
 
 ## 📝 更新日志
 
+### v1.1.0 (2026-07)
+
+- 🤖 AI 助手：对话归档/取消归档、批量删除、前端会话筛选
+- 🔐 用户认证：新增邮箱验证码（注册/密码重置）
+- 🧪 E2E 测试扩充（认证、课程、教案、成长档案、资源、设置、学生）
+- ⚙️ 后端优化：存储服务重构、启动逻辑扩展、性能与稳定性提升
+- 🎨 前端优化：课程/学生表单、仪表盘、通知、个人中心、报告
+- 🐍 支持 Python 3.13
+- 🧹 依赖与格式整理、类型提示修复、测试补充
+
 ### v1.0.0 (2026-06)
 
-- ✨ 初始版本发布
-- 📚 完整的课程管理（CRUD + 学生关联）
-- 📝 教案设计（模板库 + 发布/归档工作流 + 导出）
-- 👨‍🎓 学生管理 + 成长档案（能力雷达图）
-- 📂 资源中心（文件上传/下载 + 本地/MinIO存储）
-- 🤖 AI助手（多服务商 + Function Calling + SSE流式）
-- 🔔 通知系统（批量操作 + 统计）
-- 📊 报告统计（仪表盘 + 趋势分析）
-- 🔐 用户认证（JWT + 密保 + 速率限制）
-- 🎨 主题定制（预设 + 自定义 + 对比度检查）
-- 🛡️ 安全防护（CSP/HSTS + 软删除 + 错误码体系）
-- 🧪 测试覆盖（后端90%+，前端70%+，E2E核心功能）
-- 🐳 Docker部署（开发 + 生产 + E2E环境）
+- ✨ 初始版本发布（完整功能见上文「功能特性」）
 
 ---
 
@@ -799,7 +438,7 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 ### 开发规范
 
-- 后端：遵循 Black + Flake8 代码风格，所有新功能需附带测试
+- 后端：遵循 Black + isort + Flake8 代码风格，所有新功能需附带测试
 - 前端：遵循 ESLint + Prettier 规范，TypeScript 严格模式
 - 提交信息：使用 [Conventional Commits](https://www.conventionalcommits.org/) 格式
 
@@ -810,7 +449,6 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 如有问题或建议，欢迎通过以下方式联系：
 
 - **GitHub Issues**: [提交问题](https://github.com/tu-MOLO/ai-teaching-platform/issues)
-- **邮箱**: 2570055126@qq.com
 
 ---
 

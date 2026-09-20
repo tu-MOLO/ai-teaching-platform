@@ -5,6 +5,23 @@ All notable changes to the AI教学平台 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-11
+
+### Added
+- AI 助手：对话归档/取消归档、批量删除、前端会话筛选
+- 用户认证：邮箱验证码注册与密码重置（SMTP 发送、10 分钟有效）
+- E2E 测试：新增认证、课程、教案、成长档案、资源、设置、学生等测试规格
+- 支持 Python 3.13 运行时
+
+### Changed
+- 后端：存储服务重构、启动逻辑与路由注册扩展、性能与稳定性优化
+- 前端：课程/学生表单、仪表盘、通知、个人中心、报告等多页面优化
+- 资源中心详情页增强
+- 依赖与代码格式整理、类型提示修复、测试用例补充
+
+### Fixed
+- 修复多项功能缺陷与类型提示问题
+
 ## [1.0.0] - 2026-06-15
 
 ### Added

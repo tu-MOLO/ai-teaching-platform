@@ -57,10 +57,30 @@ class RegisterRequest(BaseSchema):
     full_name: Optional[str] = Field(default=None, max_length=100, description="真实姓名")
     security_question: str = Field(..., description="密保问题")
     security_answer: str = Field(..., min_length=1, max_length=100, description="密保答案")
+    verification_code: Optional[str] = Field(default=None, description="邮箱验证码（可选）")
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
+        return validate_password_strength(value)
+
+
+class SendCodeRequest(BaseSchema):
+    """发送验证码请求"""
+
+    email: EmailStr = Field(..., description="邮箱地址")
+
+
+class ResetPasswordByCodeRequest(BaseSchema):
+    """通过验证码重置密码请求"""
+
+    email: EmailStr = Field(..., description="邮箱地址")
+    code: str = Field(..., min_length=6, max_length=6, description="验证码")
+    new_password: str = Field(..., min_length=8, max_length=100, description="新密码")
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
         return validate_password_strength(value)
 
 

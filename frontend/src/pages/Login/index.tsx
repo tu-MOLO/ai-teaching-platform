@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Button, Checkbox, Form, Input, Modal, message } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Button, Checkbox, Form, Input, Modal, message, Radio } from 'antd'
 import { UserOutlined, LockOutlined, BookOutlined, TeamOutlined, RocketOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth'
@@ -13,12 +13,22 @@ const Login: React.FC = () => {
   const [resetVisible, setResetVisible] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
   const [resetStep, setResetStep] = useState(1)
+  const [resetMethod, setResetMethod] = useState<'security' | 'email'>('email')
   const [securityQuestion, setSecurityQuestion] = useState('')
   const [getQuestionLoading, setGetQuestionLoading] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
+  const [codeCountdown, setCodeCountdown] = useState(0)
   const navigate = useNavigate()
   const { login } = useAuthStore()
   const { setUser } = useUserStore()
   const [resetForm] = Form.useForm()
+
+  useEffect(() => {
+    if (codeCountdown > 0) {
+      const timer = setTimeout(() => setCodeCountdown(codeCountdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [codeCountdown])
 
   const onFinish = async (values: { username: string; password: string; remember?: boolean }) => {
     try {
@@ -102,9 +112,44 @@ const Login: React.FC = () => {
   const handleResetModalClose = () => {
     setResetVisible(false)
     setResetStep(1)
+    setResetMethod('email')
     setSecurityQuestion('')
     setIsLegacy(false)
     resetForm.resetFields()
+  }
+
+  const handleSendResetCode = async () => {
+    try {
+      const values = await resetForm.validateFields(['username'])
+      setSendingCode(true)
+      await authService.sendResetCode({ email: values.username })
+      message.success('验证码已发送，请查收邮件')
+      setCodeCountdown(60)
+    } catch (error: any) {
+      if (error?.errorFields) return
+      message.error(error?.message || '发送验证码失败')
+    } finally {
+      setSendingCode(false)
+    }
+  }
+
+  const handleResetByCode = async () => {
+    try {
+      const values = await resetForm.validateFields(['username', 'verification_code', 'new_password', 'confirm_password'])
+      setResetLoading(true)
+      await authService.resetPasswordByCode({
+        email: values.username,
+        code: values.verification_code,
+        new_password: values.new_password,
+      })
+      message.success('密码重置成功')
+      handleResetModalClose()
+    } catch (error: any) {
+      if (error?.errorFields) return
+      message.error(error?.message || '密码重置失败')
+    } finally {
+      setResetLoading(false)
+    }
   }
 
   return (
@@ -190,27 +235,37 @@ const Login: React.FC = () => {
         forceRender
         footer={
           resetStep === 1
-            ? [
-                <Button key="cancel" onClick={handleResetModalClose}>
-                  取消
-                </Button>,
-                <Button key="next" type="primary" loading={getQuestionLoading} onClick={handleGetSecurityQuestion}>
-                  获取密保问题
-                </Button>,
-              ]
-            : [
-                <Button key="back" onClick={() => { setResetStep(1); setIsLegacy(false) }}>
-                  返回
-                </Button>,
-                <Button key="cancel" onClick={handleResetModalClose}>
-                  取消
-                </Button>,
-                ...(!isLegacy ? [
-                  <Button key="submit" type="primary" loading={resetLoading} onClick={handleResetPassword}>
+            ? (resetMethod === 'email'
+                ? [
+                    <Button key="cancel" onClick={handleResetModalClose}>取消</Button>,
+                    <Button key="next" type="primary" loading={sendingCode} disabled={codeCountdown > 0} onClick={handleSendResetCode}>
+                      {codeCountdown > 0 ? `重新发送(${codeCountdown}s)` : '发送验证码'}
+                    </Button>,
+                  ]
+                : [
+                    <Button key="cancel" onClick={handleResetModalClose}>取消</Button>,
+                    <Button key="next" type="primary" loading={getQuestionLoading} onClick={handleGetSecurityQuestion}>
+                      获取密保问题
+                    </Button>,
+                  ]
+            )
+            : resetMethod === 'email'
+              ? [
+                  <Button key="back" onClick={() => setResetStep(1)}>返回</Button>,
+                  <Button key="cancel" onClick={handleResetModalClose}>取消</Button>,
+                  <Button key="submit" type="primary" loading={resetLoading} onClick={handleResetByCode}>
                     重置密码
                   </Button>,
-                ] : []),
-              ]
+                ]
+              : [
+                  <Button key="back" onClick={() => setResetStep(1)}>返回</Button>,
+                  <Button key="cancel" onClick={handleResetModalClose}>取消</Button>,
+                  ...(!isLegacy ? [
+                    <Button key="submit" type="primary" loading={resetLoading} onClick={handleResetPassword}>
+                      重置密码
+                    </Button>,
+                  ] : []),
+                ]
         }
       >
         <Form
@@ -220,15 +275,30 @@ const Login: React.FC = () => {
           style={{ marginTop: 16 }}
         >
           {resetStep === 1 && (
-            <Form.Item
-              name="username"
-              label="用户名或邮箱"
-              rules={[{ required: true, message: '请输入用户名或邮箱' }]}
-            >
-              <Input placeholder="请输入用户名或邮箱" />
-            </Form.Item>
+            <>
+              <Radio.Group
+                value={resetMethod}
+                onChange={(e) => setResetMethod(e.target.value)}
+                style={{ marginBottom: 16, width: '100%' }}
+                buttonStyle="solid"
+              >
+                <Radio.Button value="email" style={{ width: '50%', textAlign: 'center' }}>
+                  邮箱验证码
+                </Radio.Button>
+                <Radio.Button value="security" style={{ width: '50%', textAlign: 'center' }}>
+                  密保问题
+                </Radio.Button>
+              </Radio.Group>
+              <Form.Item
+                name="username"
+                label={resetMethod === 'email' ? '注册邮箱' : '用户名或邮箱'}
+                rules={[{ required: true, message: resetMethod === 'email' ? '请输入注册邮箱' : '请输入用户名或邮箱' }]}
+              >
+                <Input placeholder={resetMethod === 'email' ? '请输入注册邮箱' : '请输入用户名或邮箱'} />
+              </Form.Item>
+            </>
           )}
-          {resetStep === 2 && (
+          {resetStep === 2 && resetMethod === 'security' && (
             <>
               <Form.Item label="密保问题">
                 <Input value={securityQuestion} readOnly />
@@ -280,6 +350,52 @@ const Login: React.FC = () => {
                   </Form.Item>
                 </>
               )}
+            </>
+          )}
+          {resetStep === 2 && resetMethod === 'email' && (
+            <>
+              <Form.Item
+                name="verification_code"
+                label="验证码"
+                rules={[
+                  { required: true, message: '请输入验证码' },
+                  { pattern: /^\d{6}$/, message: '请输入6位数字验证码' },
+                ]}
+              >
+                <Input placeholder="请输入邮箱验证码" maxLength={6} />
+              </Form.Item>
+              <Form.Item
+                name="new_password"
+                label="新密码"
+                rules={[
+                  { required: true, message: '请输入新密码' },
+                  { min: 8, message: '密码至少8位' },
+                  {
+                    pattern: /^(?=.*[A-Za-z])(?=.*\d).+$/,
+                    message: '需同时包含字母和数字',
+                  },
+                ]}
+              >
+                <Input.Password placeholder="请输入新密码" />
+              </Form.Item>
+              <Form.Item
+                name="confirm_password"
+                label="确认新密码"
+                dependencies={['new_password']}
+                rules={[
+                  { required: true, message: '请再次输入新密码' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('new_password') === value) {
+                        return Promise.resolve()
+                      }
+                      return Promise.reject(new Error('两次输入的密码不一致'))
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password placeholder="请再次输入新密码" />
+              </Form.Item>
             </>
           )}
         </Form>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Button, Form, Input, Select, message, Typography } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../../services/auth'
 import './index.css'
@@ -23,12 +23,48 @@ interface RegisterFormData {
   full_name?: string
   security_question: string
   security_answer: string
+  verification_code?: string
 }
 
 const Register: React.FC = () => {
   const [loading, setLoading] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const navigate = useNavigate()
   const [form] = Form.useForm()
+
+  // 倒计时效果
+  React.useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [countdown])
+
+  const handleSendCode = async () => {
+    try {
+      const email = form.getFieldValue('email')
+      if (!email) {
+        message.warning('请先输入邮箱地址')
+        return
+      }
+      // 检查邮箱格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email)) {
+        message.warning('请输入有效的邮箱地址')
+        return
+      }
+      setSendingCode(true)
+      await authService.sendRegisterCode({ email })
+      message.success('验证码已发送，请查收邮件')
+      setCountdown(60)
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.detail || '发送验证码失败'
+      message.error(errorMsg)
+    } finally {
+      setSendingCode(false)
+    }
+  }
 
   const onFinish = async (values: RegisterFormData) => {
     try {
@@ -141,6 +177,35 @@ const Register: React.FC = () => {
                 placeholder="请输入邮箱地址"
                 size="large"
               />
+            </Form.Item>
+
+            <Form.Item>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Form.Item
+                  name="verification_code"
+                  noStyle
+                  rules={[
+                    { pattern: /^\d{6}$/, message: '请输入6位数字验证码' },
+                  ]}
+                >
+                  <Input
+                    prefix={<SafetyCertificateOutlined />}
+                    placeholder="邮箱验证码"
+                    size="large"
+                    maxLength={6}
+                    style={{ flex: 1 }}
+                  />
+                </Form.Item>
+                <Button
+                  size="large"
+                  disabled={countdown > 0}
+                  loading={sendingCode}
+                  onClick={handleSendCode}
+                  style={{ minWidth: 120 }}
+                >
+                  {countdown > 0 ? `${countdown}s后重发` : '发送验证码'}
+                </Button>
+              </div>
             </Form.Item>
 
             <Form.Item

@@ -113,6 +113,15 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+    # SMTP邮件配置
+    SMTP_HOST: str = "smtp.qq.com"
+    SMTP_PORT: int = 465
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_USE_SSL: bool = True
+    VERIFICATION_CODE_EXPIRE_MINUTES: int = 10
+
     # 分页配置
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100

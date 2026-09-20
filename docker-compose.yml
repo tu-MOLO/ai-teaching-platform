@@ -76,7 +76,7 @@ services:
       # 应用配置（生产环境必须关闭DEBUG）
       DEBUG: "false"
       APP_NAME: "AI Teaching Platform"
-      APP_VERSION: "1.0.0"
+      APP_VERSION: "1.1.0"
       
       # 数据库配置
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-CHANGE_ME_DB_PASSWORD}@db:5432/${DB_NAME:-ai_teaching}
@@ -99,6 +99,15 @@ services:
       
       # Redis 配置
       REDIS_URL: redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS_PASSWORD}@redis:6379/0
+      
+      # SMTP 邮件配置（用于邮箱验证码，留空则禁用发信）
+      SMTP_HOST: ${SMTP_HOST:-smtp.qq.com}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_USE_SSL: ${SMTP_USE_SSL:-true}
+      VERIFICATION_CODE_EXPIRE_MINUTES: ${VERIFICATION_CODE_EXPIRE_MINUTES:-10}
       
       # 日志配置
       LOG_LEVEL: "INFO"

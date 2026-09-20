@@ -14,12 +14,15 @@ from app.models.resource import Resource, resource_tag_association
 from app.models.student import Gender, Student
 from app.models.tag import Tag
 from app.models.user import User, UserRole, UserStatus
+from app.models.verification_code import VerificationCode, VerificationCodeType
 
 __all__ = [
     "Base",
     "User",
     "UserRole",
     "UserStatus",
+    "VerificationCode",
+    "VerificationCodeType",
     "Tag",
     "Resource",
     "resource_tag_association",
