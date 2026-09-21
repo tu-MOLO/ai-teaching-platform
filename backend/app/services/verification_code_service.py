@@ -63,12 +63,16 @@ class VerificationCodeService:
         code_type: VerificationCodeType,
     ) -> None:
         """校验验证码，通过后标记为已使用"""
-        stmt = select(VerificationCode).where(
-            VerificationCode.email == email,
-            VerificationCode.code == code,
-            VerificationCode.type == code_type,
-            VerificationCode.used == False,  # noqa: E712
-        ).order_by(VerificationCode.created_at.desc())
+        stmt = (
+            select(VerificationCode)
+            .where(
+                VerificationCode.email == email,
+                VerificationCode.code == code,
+                VerificationCode.type == code_type,
+                VerificationCode.used == False,  # noqa: E712
+            )
+            .order_by(VerificationCode.created_at.desc())
+        )
 
         result = await db.execute(stmt)
         vc = result.scalars().first()

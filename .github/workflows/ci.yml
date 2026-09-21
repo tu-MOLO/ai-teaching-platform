@@ -40,7 +40,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install black isort flake8 mypy
+          pip install -r requirements-dev.txt
 
       - name: Black (format check)
         run: black --check --diff app/ tests/ scripts/

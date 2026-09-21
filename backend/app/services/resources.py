@@ -324,6 +324,7 @@ class ResourceService:
             raise ValueError("Resource not found")
 
         file_bytes = await get_storage().download_file_async(resource.file_path)
+        assert isinstance(file_bytes, bytes)
         filename = resource.file_name or Path(resource.file_path).name
         return resource, file_bytes, filename
 

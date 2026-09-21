@@ -29,11 +29,11 @@ T = TypeVar("T")
 _UNSET = object()
 
 
-def storage_fallback(
+def storage_fallback(  # noqa: C901
     fallback_enabled: bool = True,
     fallback_method_name: Optional[str] = None,
     fallback_value: Any = _UNSET,
-):
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     MinIO 操作降级装饰器
 
@@ -60,10 +60,12 @@ def storage_fallback(
                 if fallback_enabled:
                     logger.info(f"Using local storage fallback for {func.__name__}")
                     fallback_method = getattr(self._get_fallback_storage(), method_name)
-                    return fallback_method(*args, **kwargs)
+                    return fallback_method(*args, **kwargs)  # type: ignore[no-any-return]
                 if fallback_value is not _UNSET:
-                    logger.warning(f"MinIO unavailable for {func.__name__}, returning fallback value")
-                    return fallback_value  # type: ignore[return-value]
+                    logger.warning(
+                        f"MinIO unavailable for {func.__name__}, returning fallback value"
+                    )
+                    return fallback_value  # type: ignore[no-any-return]
                 raise RuntimeError(f"MinIO is not available for {func.__name__}")
 
             if self.client is None:
@@ -80,10 +82,12 @@ def storage_fallback(
                         "Falling back to local storage."
                     )
                     fallback_method = getattr(self._get_fallback_storage(), method_name)
-                    return fallback_method(*args, **kwargs)
+                    return fallback_method(*args, **kwargs)  # type: ignore[no-any-return]
                 if fallback_value is not _UNSET:
-                    logger.error(f"MinIO operation failed in {func.__name__}: {e}, returning fallback value")
-                    return fallback_value  # type: ignore[return-value]
+                    logger.error(
+                        f"MinIO operation failed in {func.__name__}: {e}, returning fallback value"
+                    )
+                    return fallback_value  # type: ignore[no-any-return]
                 raise
             except Exception as e:
                 if fallback_enabled:
@@ -92,10 +96,12 @@ def storage_fallback(
                         "Falling back to local storage."
                     )
                     fallback_method = getattr(self._get_fallback_storage(), method_name)
-                    return fallback_method(*args, **kwargs)
+                    return fallback_method(*args, **kwargs)  # type: ignore[no-any-return]
                 if fallback_value is not _UNSET:
-                    logger.error(f"Unexpected error in {func.__name__}: {e}, returning fallback value")
-                    return fallback_value  # type: ignore[return-value]
+                    logger.error(
+                        f"Unexpected error in {func.__name__}: {e}, returning fallback value"
+                    )
+                    return fallback_value  # type: ignore[no-any-return]
                 raise
 
         return wrapper
@@ -444,6 +450,8 @@ class MinIOStorage:
             S3Error: MinIO操作错误
             FileNotFoundError: 文件不存在
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         if file_path:
             # 下载到文件
             self.client.fget_object(
@@ -453,9 +461,7 @@ class MinIOStorage:
             return Path(file_path)
 
         # 下载到内存
-        response = self.client.get_object(
-            bucket_name=self.bucket_name, object_name=object_name
-        )
+        response = self.client.get_object(bucket_name=self.bucket_name, object_name=object_name)
         try:
             data = response.read()
             logger.info(f"Downloaded file: {object_name}, size: {len(data)} bytes")
@@ -475,6 +481,8 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         self.client.remove_object(bucket_name=self.bucket_name, object_name=object_name)
         logger.info(f"Deleted file from MinIO: {object_name}")
 
@@ -525,6 +533,8 @@ class MinIOStorage:
         Raises:
             S3Error: MinIO操作错误
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         return self.client.presigned_get_object(
             bucket_name=self.bucket_name, object_name=object_name, expires=expires
         )
@@ -551,6 +561,8 @@ class MinIOStorage:
             RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         return self.client.presigned_put_object(
             bucket_name=self.bucket_name, object_name=object_name, expires=expires
         )
@@ -566,6 +578,8 @@ class MinIOStorage:
         Returns:
             文件是否存在
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
         return True
 
@@ -584,6 +598,8 @@ class MinIOStorage:
             RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         stat = self.client.stat_object(bucket_name=self.bucket_name, object_name=object_name)
         return {
             "object_name": stat.object_name,
@@ -606,6 +622,8 @@ class MinIOStorage:
         Returns:
             文件信息列表
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         objects = self.client.list_objects(
             bucket_name=self.bucket_name, prefix=prefix, recursive=recursive
         )
@@ -637,6 +655,8 @@ class MinIOStorage:
             RuntimeError: MinIO 不可用时抛出
             S3Error: MinIO操作错误
         """
+        assert self.client is not None
+        assert self.bucket_name is not None
         result = self.client.copy_object(
             bucket_name=self.bucket_name,
             object_name=dest_object,
@@ -650,7 +670,7 @@ class MinIOStorage:
 _storage_instance: Optional[Union[MinIOStorage, LocalFileStorage]] = None
 
 
-def get_storage():
+def get_storage() -> Union[MinIOStorage, LocalFileStorage]:
     """
     获取存储服务实例（延迟初始化）
 

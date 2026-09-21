@@ -91,7 +91,11 @@ async def batch_delete_conversations(
     deleted_count = await AIService.batch_delete_conversations(
         db, request.conversation_ids, user_id
     )
-    return {"message": f"成功删除 {deleted_count} 条对话", "code": "success", "count": deleted_count}
+    return {
+        "message": f"成功删除 {deleted_count} 条对话",
+        "code": "success",
+        "count": deleted_count,
+    }
 
 
 @router.patch("/conversations/{conversation_id}", summary="重命名对话")

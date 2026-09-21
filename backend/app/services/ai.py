@@ -1081,13 +1081,14 @@ class AIService:
     async def _get_next_session_number(db: AsyncSession, user_id: str) -> int:
         """获取今天会话的序号"""
         from datetime import datetime
+
         today = datetime.now().strftime("%Y-%m-%d")
-        
+
         result = await db.execute(
             select(AIConversation.title).where(
                 AIConversation.user_id == user_id,
                 AIConversation.is_deleted == False,  # noqa: E712
-                AIConversation.title.like(f"{today}%")
+                AIConversation.title.like(f"{today}%"),
             )
         )
         existing_titles = result.scalars().all()
@@ -1494,13 +1495,12 @@ class AIService:
     @staticmethod
     async def get_conversations(db: AsyncSession, user_id: str, archived: Optional[bool] = None):
         query = select(AIConversation).where(
-            AIConversation.user_id == user_id,
-            AIConversation.is_deleted == False  # noqa: E712
+            AIConversation.user_id == user_id, AIConversation.is_deleted == False  # noqa: E712
         )
-        
+
         if archived is not None:
             query = query.where(AIConversation.is_archived == archived)
-        
+
         query = query.order_by(AIConversation.updated_at.desc())
         result = await db.execute(query)
         conversations = result.scalars().all()

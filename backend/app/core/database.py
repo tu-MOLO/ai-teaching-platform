@@ -78,7 +78,11 @@ sync_engine = create_engine(
     pool_pre_ping=True,
     echo=settings.DEBUG,
     future=True,
-    connect_args={"timeout": 30, "check_same_thread": False} if "sqlite" in settings.sync_database_url else {},
+    connect_args=(
+        {"timeout": 30, "check_same_thread": False}
+        if "sqlite" in settings.sync_database_url
+        else {}
+    ),
 )
 if "sqlite" in settings.sync_database_url:
     event.listen(sync_engine, "connect", _sqlite_pragma_on_connect)

@@ -6,7 +6,7 @@ pytest-asyncio==0.23.4
 pytest-cov==4.1.0
 pytest-html==4.1.1
 factory-boy==3.3.0
-black==24.1.1
-isort==5.13.2
-flake8==7.0.0
-mypy==1.8.0
+black==26.5.1
+isort==7.0.0
+flake8==7.3.0
+mypy==2.1.0
