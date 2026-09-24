@@ -4,22 +4,22 @@
 
 ### 1.1 Python
 
-| 版本 | 支持状态 | CI测试 | 备注 |
-|------|----------|--------|------|
-| Python 3.11 | ✅ 完全支持 | ✅ CI Matrix | 推荐版本，Dockerfile 基准 |
-| Python 3.12 | ✅ 完全支持 | ✅ CI Matrix | — |
-| Python 3.13 | ✅ 完全支持 | ✅ CI Matrix | — |
-| Python 3.10 | ❌ 不支持 | ❌ | `requires-python >= 3.11` |
-| Python 3.9 | ❌ 不支持 | ❌ | 类型注解语法不兼容 |
+| 版本 | 支持状态 | 备注 |
+|------|----------|------|
+| Python 3.11 | ✅ 完全支持 | 推荐版本，Dockerfile 基准 |
+| Python 3.12 | ✅ 完全支持 | — |
+| Python 3.13 | ✅ 完全支持 | — |
+| Python 3.10 | ❌ 不支持 | `requires-python >= 3.11` |
+| Python 3.9 | ❌ 不支持 | 类型注解语法不兼容 |
 
 ### 1.2 Node.js
 
-| 版本 | 支持状态 | CI测试 | 备注 |
-|------|----------|--------|------|
-| Node.js 18 | ✅ 完全支持 | ✅ CI基准 | Dockerfile 使用 `node:18-alpine` |
-| Node.js 20 | ✅ 推荐支持 | ⚠️ | 建议验证 |
-| Node.js 22 | ⚠️ 未验证 | ❌ | 理论兼容 |
-| Node.js 16 | ❌ 不支持 | ❌ | Vite 5 需要 18+ |
+| 版本 | 支持状态 | 备注 |
+|------|----------|------|
+| Node.js 18 | ✅ 完全支持 | Dockerfile 使用 `node:18-alpine` |
+| Node.js 20 | ✅ 推荐支持 | 建议验证 |
+| Node.js 22 | ⚠️ 未验证 | 理论兼容 |
+| Node.js 16 | ❌ 不支持 | Vite 5 需要 18+ |
 
 ### 1.3 Docker
 
@@ -27,7 +27,7 @@
 |------|----------|----------|------|
 | Docker Engine | 20.10+ | 24.0+ | 需 BuildKit 支持 |
 | Docker Compose | 2.0+ | 2.20+ | 需 `profiles` 功能支持 |
-| Docker Buildx | 0.10+ | 0.12+ | CI 中用于 GHA 缓存 |
+| Docker Buildx | 0.10+ | 0.12+ | 需 BuildKit 支持多平台构建 |
 
 ---
 
@@ -201,20 +201,6 @@
 
 ---
 
-## 8. CI/CD 环境矩阵
-
-| 组件 | CI 版本 | 说明 |
-|------|---------|------|
-| GitHub Actions Runner | `ubuntu-latest` | Linux x64 |
-| Python | 3.11, 3.12, 3.13 (matrix) | backend-test job |
-| Node.js | 18 | frontend 各 job |
-| PostgreSQL | 15 Alpine | E2E 测试环境 |
-| Redis | 7 Alpine | E2E 测试环境 |
-| MinIO | latest | E2E 测试环境 |
-| Playwright | Chromium/Firefox/WebKit | E2E 多浏览器测试 |
-
----
-
 ## 9. 升级路径建议
 
 ### 9.1 短期（v1.0.x）
@@ -231,7 +217,7 @@
 
 | 依赖 | 建议升级 | 风险评估 |
 |------|----------|----------|
-| Python 3.13 | 添加CI验证 | 中 — `requires-python` 需更新 |
+| Python 3.13 | 补充版本验证 | 中 — `requires-python` 需更新 |
 | `zustand` 5.x | 评估API变化 | 中 — 破坏性变更 |
 | `vite` 6.x | 评估新特性 | 低 — 构建工具 |
 | `@testing-library/react` 16+ | 保持更新 | 低 — 测试工具 |

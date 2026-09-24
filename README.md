@@ -1,4 +1,4 @@
-# AI教学平台
+﻿# AI教学平台
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python" alt="Python 3.11+">
@@ -25,7 +25,6 @@
   - [一键本地启动](#一键本地启动)
 - [API文档](#-api文档)
 - [测试](#-测试)
-- [CI/CD](#-cicd)
 - [部署](#-部署)
 - [更新日志](#-更新日志)
 - [贡献指南](#-贡献指南)
@@ -367,40 +366,9 @@ npm run test:e2e:report
 
 ### 测试覆盖率
 
-- 后端覆盖率阈值：**90%**（配置于 `pyproject.toml` 与 CI）
+- 后端覆盖率阈值：**90%**（配置于 `pyproject.toml`）
 - 前端覆盖率阈值：**70%**（lines / functions / statements，branches 60%，配置于 `vite.config.ts`）
 - E2E 测试覆盖：认证、课程、学生、教案、资源、通知、成长档案、报告、AI 助手、个人中心、设置等核心功能
-
----
-
-## 🔄 CI/CD
-
-项目使用 GitHub Actions 进行持续集成，配置文件位于 `.github/workflows/ci.yml`，在 push / PR 到 `main`、`develop` 分支时触发。
-
-### CI 工作流
-
-- **后端代码检查**：Black + isort + Flake8 + mypy + pip-audit（依赖安全扫描）
-- **后端测试**：pytest（Python 3.11 / 3.12 / 3.13 矩阵，覆盖率 ≥ 90%）
-- **前端代码检查**：ESLint + TypeScript 类型检查 + npm audit
-- **前端测试**：Vitest 单元测试（检查覆盖率阈值）
-- **前端构建**：tsc + vite 构建验证
-- **Docker 构建验证**：构建前后端镜像并验证后端容器健康检查
-- **E2E 测试**：Playwright 端到端测试（基于 `docker-compose.e2e.yml`）
-
-### 手动运行CI检查
-
-```bash
-# 后端代码检查
-cd backend
-black . --check
-isort . --check
-flake8 app/ tests/ scripts/
-mypy app
-
-# 前端代码检查
-cd frontend
-npm run lint
-```
 
 ---
 

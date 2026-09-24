@@ -38,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 主题定制：自定义主题色、预设管理、对比度警告、颜色历史
 - 下拉选项：可配置学科/年级等下拉项管理
 - Docker部署：开发+生产+E2E三套docker-compose、多阶段构建、健康检查
-- CI/CD：GitHub Actions 7阶段流水线（lint→test→build→docker→e2e）
 - 测试：后端90%+覆盖率、前端70%+覆盖率、Playwright E2E 10个规格
 - 数据迁移：Alembic 8个迁移版本、SQLite/PostgreSQL双数据库支持
 - 文档：README、API参考、系统架构文档、运维手册、数据字典、版本兼容性矩阵、CHANGELOG
