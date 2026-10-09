@@ -322,7 +322,9 @@ class TestGetOrCreateConversation:
                 MockConvClass.assert_called_once()
                 call_kwargs = MockConvClass.call_args
                 assert call_kwargs.kwargs["user_id"] == "user-1"
-                assert "新会话" in call_kwargs.kwargs["title"]
+                # 默认标题采用 "日期 会话 N" 格式（见 _get_next_session_number 标题解析）
+                assert " 会话 " in call_kwargs.kwargs["title"]
+                assert call_kwargs.kwargs["title"].endswith("会话 1")
 
     @pytest.mark.asyncio
     async def test_no_conversation_id_creates_new(self):

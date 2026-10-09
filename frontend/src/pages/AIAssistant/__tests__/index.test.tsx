@@ -125,7 +125,7 @@ describe('AIAssistant page', () => {
   it('should show no config prompt when no api key', () => {
     mockStore = createMockStore({ aiConfig: { api_key: '' } })
     render(React.createElement(AIAssistant))
-    expect(screen.getByText('请先配置 API 密钥以启用 AI 助手功能')).toBeInTheDocument()
+    expect(screen.getByText('AI 助手尚未启用')).toBeInTheDocument()
     fireEvent.click(screen.getByText('前往设置'))
     expect(mockNavigate).toHaveBeenCalledWith('/settings?tab=ai')
   })

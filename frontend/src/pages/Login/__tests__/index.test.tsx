@@ -55,6 +55,35 @@ vi.mock('antd', () => ({
     { Password: (props: any) => React.createElement('input', { type: 'password', ...props, 'data-testid': 'input-password' }) }
   ),
   Checkbox: ({ children }: any) => React.createElement('label', null, React.createElement('input', { type: 'checkbox' }), children),
+  Radio: Object.assign(
+    ({ children }: any) => React.createElement('input', { type: 'radio', 'data-testid': 'radio' }, children),
+    {
+      Group: ({ value, onChange, children }: any) =>
+        React.createElement(
+          'div',
+          { 'data-testid': 'radio-group' },
+          React.Children.toArray(children).map((child: any) =>
+            React.createElement(
+              'label',
+              {
+                'data-testid': `radio-button-${child.props?.value}`,
+                onClick: () => onChange?.({ target: { value: child.props?.value } }),
+              },
+              [
+                React.createElement('input', {
+                  type: 'radio',
+                  key: 'input',
+                  checked: value === child.props?.value,
+                  readOnly: true,
+                }),
+                child,
+              ]
+            )
+          )
+        ),
+      Button: ({ children }: any) => React.createElement('span', null, children),
+    }
+  ),
   Modal: Object.assign(
     ({ children, open, title, footer }: any) =>
       open ? React.createElement('div', { 'data-testid': 'modal' }, title, children, footer) : null,
@@ -125,6 +154,7 @@ describe('Login', () => {
   it('handles reset password step 1 to step 2', async () => {
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(mockGetSecurityQuestion).toHaveBeenCalled())
@@ -135,6 +165,7 @@ describe('Login', () => {
     mockGetSecurityQuestion.mockResolvedValueOnce({ security_question: '', is_legacy: true })
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(screen.getByText(/未设置密保问题/)).toBeInTheDocument())
@@ -143,6 +174,7 @@ describe('Login', () => {
   it('handles reset password submit', async () => {
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(screen.getByTestId('form-item-security_answer')).toBeInTheDocument())
@@ -162,6 +194,7 @@ describe('Login', () => {
     mockGetSecurityQuestion.mockRejectedValueOnce({ errorFields: [{ name: 'username' }] })
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(mockGetSecurityQuestion).toHaveBeenCalled())
@@ -171,6 +204,7 @@ describe('Login', () => {
     mockGetSecurityQuestion.mockRejectedValueOnce(new Error('fail'))
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(mockGetSecurityQuestion).toHaveBeenCalled())
@@ -180,6 +214,7 @@ describe('Login', () => {
     mockResetPassword.mockRejectedValueOnce({ errorFields: [{ name: 'new_password' }] })
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(screen.getByTestId('form-item-security_answer')).toBeInTheDocument())
@@ -192,6 +227,7 @@ describe('Login', () => {
     mockResetPassword.mockRejectedValueOnce(new Error('fail'))
     render(React.createElement(Login))
     fireEvent.click(screen.getByText('重置密码'))
+    fireEvent.click(screen.getByTestId('radio-button-security'))
     const nextBtn = screen.getByTestId('btn-获取密保问题')
     fireEvent.click(nextBtn)
     await waitFor(() => expect(screen.getByTestId('form-item-security_answer')).toBeInTheDocument())

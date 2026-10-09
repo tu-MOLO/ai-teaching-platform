@@ -70,6 +70,8 @@ vi.mock('antd', () => {
       }),
     Tooltip: ({ children }: any) =>
       React.createElement('span', { 'data-testid': 'tooltip' }, children),
+    Checkbox: ({ checked, onChange, children }: any) =>
+      React.createElement('label', null, React.createElement('input', { type: 'checkbox', checked, onChange: onChange ? (e: any) => onChange(e) : undefined }), children),
     message: {
       success: vi.fn(),
       error: vi.fn(),

@@ -130,7 +130,6 @@ class TestInitDb:
                     "app.models.resource": MagicMock(),
                     "app.models.tag": MagicMock(),
                     "app.models.notification": MagicMock(),
-                    "app.models.audit_log": MagicMock(),
                     "app.models.lesson_plan": MagicMock(),
                     "app.models.dropdown_option": MagicMock(),
                     "app.models.ai": MagicMock(),

@@ -23,7 +23,6 @@ from app.models.portfolio import Portfolio
 from app.models.resource import Resource
 from app.models.tag import Tag
 from app.models.notification import Notification
-from app.models.audit_log import AuditLog
 from app.models.lesson_plan import LessonPlan
 from app.models.lesson_template import LessonTemplate
 from app.models.dropdown_option import DropdownOption

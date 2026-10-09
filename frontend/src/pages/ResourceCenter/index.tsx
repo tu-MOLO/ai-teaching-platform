@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { getResources, type ResourceListItem } from '../../services/resource'
 import { getTags } from '../../services/tag'
 import { BusinessError } from '../../types/error'
+import useDebouncedValue from '../../hooks/useDebouncedValue'
 import './index.css'
 
 const { Search } = Input
@@ -48,10 +49,11 @@ const ResourceCenter: React.FC = () => {
   const [resources, setResources] = useState<ResourceRow[]>([])
   const [loading, setLoading] = useState(true)
   const [searchText, setSearchText] = useState('')
+  const debouncedSearch = useDebouncedValue(searchText)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [tagOptions, setTagOptions] = useState<TagFilterOption[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(8)
+  const [pageSize, setPageSize] = useState(10)
   const [total, setTotal] = useState(0)
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const ResourceCenter: React.FC = () => {
           getResources({
             page: currentPage,
             page_size: pageSize,
-            keyword: searchText || undefined,
+            keyword: debouncedSearch || undefined,
             tag_ids: selectedTags.length > 0 ? selectedTags : undefined,
           }),
           getTags(),
@@ -85,7 +87,7 @@ const ResourceCenter: React.FC = () => {
     }
 
     fetchResources()
-  }, [currentPage, pageSize, searchText, selectedTags])
+  }, [currentPage, pageSize, debouncedSearch, selectedTags])
 
   const tags = useMemo(
     () => [{ id: 'all', name: '全部' }, ...tagOptions],
@@ -218,8 +220,13 @@ const ResourceCenter: React.FC = () => {
               pageSize={pageSize}
               total={total}
               onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
+              showSizeChanger
               showQuickJumper
+              pageSizeOptions={['10', '20', '50', '100']}
+              onShowSizeChange={(_current, size) => {
+                setPageSize(size)
+                setCurrentPage(1)
+              }}
             />
           </div>
         </>

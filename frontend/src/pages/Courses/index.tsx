@@ -5,6 +5,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, BookOutline
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { deleteCourse, getCourses, type Course as ApiCourse } from '../../services/course'
 import { refreshDashboardStats } from '../../stores/dashboard'
+import useDebouncedValue from '../../hooks/useDebouncedValue'
 
 const { Search } = Input
 
@@ -28,6 +29,7 @@ const Courses: React.FC = () => {
   const [courses, setCourses] = useState<CourseRow[]>([])
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState(() => searchParams.get('search') || '')
+  const debouncedSearch = useDebouncedValue(searchText)
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 })
 
   const fetchCourses = async (page = 1, pageSize = pagination.pageSize) => {
@@ -36,7 +38,7 @@ const Courses: React.FC = () => {
       const response = await getCourses({
         page,
         page_size: pageSize,
-        keyword: searchText || undefined,
+        keyword: debouncedSearch || undefined,
       })
       setCourses(response.data || [])
       setPagination({
@@ -54,7 +56,7 @@ const Courses: React.FC = () => {
 
   useEffect(() => {
     fetchCourses(1)
-  }, [searchText])
+  }, [debouncedSearch])
 
   useEffect(() => {
     const nextSearch = searchParams.get('search') || ''
@@ -148,7 +150,8 @@ const Courses: React.FC = () => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            showSizeChanger: false,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
             onChange: (page, pageSize) => fetchCourses(page, pageSize),
           }}
         />

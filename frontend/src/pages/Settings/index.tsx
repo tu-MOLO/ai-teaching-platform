@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons'
 import {
   Alert,
+  AutoComplete,
   Button,
   Card,
   Form,
@@ -247,17 +248,16 @@ const AIConfigSection: React.FC = () => {
           label="模型版本" 
           name="model" 
           rules={[{ required: true, message: '请选择或输入模型' }]}
-          extra={isCustomProvider || modelOptions.length === 0 ? '请输入模型名称' : '选择预设模型或手动输入'}
+          extra="选择预设模型，或直接输入模型名称后回车确认"
         >
-          {isCustomProvider || modelOptions.length === 0 ? (
-            <Input placeholder="请输入模型名称，如 gpt-4o" />
-          ) : (
-            <Select showSearch allowClear optionFilterProp="children">
-              {modelOptions.map(m => (
-                <Select.Option key={m} value={m}>{m}</Select.Option>
-              ))}
-            </Select>
-          )}
+          <AutoComplete
+            allowClear
+            placeholder="请选择或输入模型名称，如 gpt-4o"
+            options={modelOptions.map((m) => ({ value: m }))}
+            filterOption={(inputValue, option) =>
+              (option?.value ?? '').toLowerCase().includes(inputValue.toLowerCase())
+            }
+          />
         </Form.Item>
 
         <Form.Item label="API 密钥" name="api_key" extra="首次使用请输入您的 API 密钥并保存；留空提交则保持已有密钥不变">

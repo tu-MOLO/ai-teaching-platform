@@ -1,5 +1,7 @@
 import pytest
 
+from app.core.config import settings
+
 
 class TestAIAPI:
     @pytest.mark.asyncio
@@ -11,7 +13,8 @@ class TestAIAPI:
         assert data["data"] == []
 
     @pytest.mark.asyncio
-    async def test_chat_without_api_key(self, client, test_user, auth_headers):
+    async def test_chat_without_api_key(self, client, test_user, auth_headers, monkeypatch):
+        monkeypatch.setattr(settings, "BIGMODEL_API_KEY", None)
         response = await client.post(
             "/api/v1/ai/chat",
             json={"message": "你好", "stream": False},

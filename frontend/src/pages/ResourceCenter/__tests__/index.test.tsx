@@ -22,11 +22,21 @@ vi.mock('react-router-dom', () => ({
 vi.mock('antd', () => {
   const EmptyComp = ({ description }: any) =>
     React.createElement('div', { 'data-testid': 'empty' }, typeof description === 'object' ? '' : description)
-  const SearchComp = ({ placeholder, onSearch, onChange }: any) =>
-    React.createElement('div', null,
-      React.createElement('input', { placeholder, 'data-testid': 'search-input', onChange: (e: any) => onChange?.(e) }),
-      React.createElement('button', { onClick: () => onSearch?.(''), 'data-testid': 'search-btn' }, 'Search')
+  const SearchComp = ({ placeholder, onSearch, onChange }: any) => {
+    const [value, setValue] = React.useState('')
+    return React.createElement('div', null,
+      React.createElement('input', {
+        placeholder,
+        'data-testid': 'search-input',
+        value,
+        onChange: (e: any) => {
+          setValue(e.target.value)
+          onChange?.(e)
+        },
+      }),
+      React.createElement('button', { onClick: () => onSearch?.(value), 'data-testid': 'search-btn' }, 'Search')
     )
+  }
   const PaginationComp = ({ current, total, pageSize, onChange }: any) =>
     React.createElement('div', { 'data-testid': 'pagination' }, `Page ${current} of ${Math.ceil(total / pageSize)}`,
       React.createElement('button', { onClick: () => onChange?.(current + 1), 'data-testid': 'page-next' }, 'Next')

@@ -330,7 +330,6 @@ class TestReportToolExecutors:
         result = await _get_student_statistics(db_session, test_user.id)
         assert "gradeDistribution" in result
         assert "genderDistribution" in result
-        assert "progressDistribution" in result
 
     @pytest.mark.asyncio
     async def test_get_monthly_trends(self, db_session, test_user):

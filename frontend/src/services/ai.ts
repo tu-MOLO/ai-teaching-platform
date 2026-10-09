@@ -91,7 +91,7 @@ export const updateAIConfig = async (data: AIConfigUpdate): Promise<AIConfigResp
 }
 
 export const testAIConfig = async (data?: AIConfigTestRequest): Promise<AIConfigTestResponse> => {
-  const response = await api.post('/ai/config/test', data || {}, { timeout: 30000 })
+  const response = await api.post('/ai/config/test', data || {}, { timeout: 65000 })
   return toItem<AIConfigTestResponse>(response)
 }
 
@@ -158,6 +158,11 @@ export const PROVIDER_DEFAULTS: Record<string, { api_base: string; models: strin
     name: '通义千问 (阿里云)',
     api_base: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     models: ['qwen-turbo', 'qwen-plus', 'qwen-max'],
+  },
+  ollama: {
+    name: 'Ollama (本地)',
+    api_base: 'http://localhost:11434/v1',
+    models: ['llama3.2', 'qwen2.5', 'deepseek-r1'],
   },
   custom: {
     name: '自定义服务商',

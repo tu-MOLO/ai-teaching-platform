@@ -50,7 +50,6 @@ for name in [
     "test_config_validator.py",
     "test_exceptions.py",
     "test_main_app.py",
-    "test_performance.py",
     "test_query_filters.py",
     "test_rate_limiter.py",
     "test_security.py",

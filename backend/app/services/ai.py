@@ -1331,7 +1331,7 @@ class AIService:
         for iteration in range(max_iterations):
             state: dict[str, Any] = {"response_content": "", "tool_calls_list": []}
 
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=settings.AI_REQUEST_TIMEOUT) as client:
                 async with client.stream(
                     "POST",
                     f"{effective_config['api_base']}/chat/completions",
@@ -1421,7 +1421,7 @@ class AIService:
         module_tag = None
 
         for iteration in range(max_iterations):
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=settings.AI_REQUEST_TIMEOUT) as client:
                 response = await client.post(
                     f"{effective_config['api_base']}/chat/completions",
                     headers={

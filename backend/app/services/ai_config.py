@@ -29,12 +29,14 @@ ALLOWED_API_DOMAINS = {
 }
 
 
-def _validate_api_base_url(api_base: str) -> None:
+def _validate_api_base_url(api_base: str, allow_local: bool = False) -> None:
     parsed = urlparse(api_base)
     hostname = parsed.hostname
     if not hostname:
         raise BadRequestException("API地址格式无效")
     if hostname in ALLOWED_API_DOMAINS:
+        return
+    if allow_local and hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
         return
     try:
         resolved = ipaddress.ip_address(hostname)
@@ -76,6 +78,11 @@ PROVIDER_DEFAULTS = {
         "name": "通义千问 (阿里云)",
         "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
         "models": ["qwen-turbo", "qwen-plus", "qwen-max"],
+    },
+    "ollama": {
+        "name": "Ollama (本地)",
+        "api_base": "http://localhost:11434/v1",
+        "models": ["llama3.2", "qwen2.5", "deepseek-r1"],
     },
     "custom": {
         "name": "自定义服务商",
@@ -169,6 +176,7 @@ class AIConfigService:
             api_key = test_request.api_key
             api_base = test_request.api_base or settings.BIGMODEL_API_BASE
             model = test_request.model or settings.BIGMODEL_MODEL
+            provider = test_request.provider
         else:
             effective = await AIConfigService.get_effective_config(db, user_id)
             if not effective:
@@ -178,10 +186,11 @@ class AIConfigService:
             api_key = effective["api_key"]
             api_base = effective["api_base"]
             model = effective["model"]
+            provider = effective.get("provider")
 
         try:
-            _validate_api_base_url(api_base)
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            _validate_api_base_url(api_base, allow_local=(provider == "ollama"))
+            async with httpx.AsyncClient(timeout=settings.AI_CONNECT_TIMEOUT) as client:
                 response = await client.post(
                     f"{api_base}/chat/completions",
                     headers={
@@ -229,13 +238,24 @@ class AIConfigService:
         if config and config.api_key_encrypted:
             api_key = decrypt_api_key(config.api_key_encrypted)
             return {
+                "provider": config.provider,
                 "api_key": api_key,
+                "api_base": config.api_base,
+                "model": config.model,
+            }
+
+        # 本地 Ollama 服务无需 API 密钥
+        if config and config.provider == "ollama" and config.api_base:
+            return {
+                "provider": config.provider,
+                "api_key": "",
                 "api_base": config.api_base,
                 "model": config.model,
             }
 
         if settings.BIGMODEL_API_KEY:
             return {
+                "provider": "zhipu",
                 "api_key": settings.BIGMODEL_API_KEY,
                 "api_base": settings.BIGMODEL_API_BASE,
                 "model": settings.BIGMODEL_MODEL,

@@ -39,7 +39,7 @@ def main() -> None:
         user = db.execute(
             select(User).where(
                 (User.username == args.username) | (User.email == args.email),
-                User.is_deleted is False,
+                User.is_deleted.is_(False),
             )
         ).scalar_one_or_none()
 

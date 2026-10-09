@@ -344,7 +344,6 @@ class TestGetStudentStatistics:
         result = await ReportService.get_student_statistics(db_session)
         assert result["gradeDistribution"] == []
         assert result["genderDistribution"] == []
-        assert len(result["progressDistribution"]) == 4
 
     @pytest.mark.asyncio
     async def test_grade_and_gender_distribution(self, db_session):

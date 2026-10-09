@@ -40,12 +40,6 @@ class TestHealthEndpoint:
         data = response.json()
         assert "database" in data["checks"]
 
-    @pytest.mark.asyncio
-    async def test_health_cache_check(self, client):
-        response = await client.get("/health")
-        data = response.json()
-        assert "cache" in data["checks"]
-
 
 class TestRootEndpoint:
     @pytest.mark.asyncio

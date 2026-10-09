@@ -2,7 +2,6 @@
 
 from app.models.ai import AIConversation, AIMessage
 from app.models.ai_config import AIConfig
-from app.models.audit_log import AuditAction, AuditLog, AuditLogBuilder, log_audit_action
 from app.models.base import Base
 from app.models.course import Course, course_student
 from app.models.dropdown_option import DropdownOption
@@ -33,10 +32,6 @@ __all__ = [
     "course_student",
     "Notification",
     "NotificationType",
-    "AuditLog",
-    "AuditAction",
-    "AuditLogBuilder",
-    "log_audit_action",
     "LessonPlan",
     "LessonPlanStatus",
     "LessonTemplate",

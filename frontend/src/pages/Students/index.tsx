@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
 import { refreshDashboardStats } from '../../stores/dashboard';
 import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 
 const { Search } = Input;
 interface Student {
@@ -28,6 +29,7 @@ const Students: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
+  const debouncedSearch = useDebouncedValue(searchText);
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 });
 
   const fetchStudents = async (page = 1, pageSize = pagination.pageSize) => {
@@ -36,7 +38,7 @@ const Students: React.FC = () => {
       const response = await studentService.getStudents({
         page,
         page_size: pageSize,
-        keyword: searchText || undefined,
+        keyword: debouncedSearch || undefined,
         grade: gradeFilter || undefined,
       });
       const items = response.data || [];
@@ -59,7 +61,7 @@ const Students: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchStudents(1); }, [searchText, gradeFilter]);
+  useEffect(() => { fetchStudents(1); }, [debouncedSearch, gradeFilter]);
 
   const handleDelete = (id: string, name: string) => {
     Modal.confirm({
@@ -143,7 +145,8 @@ const Students: React.FC = () => {
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
-            showSizeChanger: false,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
             onChange: (page, pageSize) => fetchStudents(page, pageSize),
           }}
         />

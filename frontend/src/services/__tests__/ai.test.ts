@@ -90,7 +90,7 @@ describe('ai service', () => {
 
       await testAIConfig(data)
 
-      expect(mockPost).toHaveBeenCalledWith('/ai/config/test', data, { timeout: 30000 })
+      expect(mockPost).toHaveBeenCalledWith('/ai/config/test', data, { timeout: 65000 })
     })
 
     it('calls api.post with empty object when no data provided', async () => {
@@ -100,7 +100,7 @@ describe('ai service', () => {
 
       await testAIConfig()
 
-      expect(mockPost).toHaveBeenCalledWith('/ai/config/test', {}, { timeout: 30000 })
+      expect(mockPost).toHaveBeenCalledWith('/ai/config/test', {}, { timeout: 65000 })
     })
 
     it('returns test response', async () => {

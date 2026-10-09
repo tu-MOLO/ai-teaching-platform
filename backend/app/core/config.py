@@ -108,6 +108,10 @@ class Settings(BaseSettings):
     BIGMODEL_API_BASE: str = "https://open.bigmodel.cn/api/paas/v4"
     BIGMODEL_MODEL: str = "glm-4.7-flash"
     AI_MAX_CONTEXT_MESSAGES: int = 20
+    # AI 对话请求超时（秒）。本地推理/思考模型响应较慢，可调大
+    AI_REQUEST_TIMEOUT: int = 600
+    # AI 连接测试超时（秒）
+    AI_CONNECT_TIMEOUT: int = 60
 
     # 日志配置
     LOG_LEVEL: str = "INFO"

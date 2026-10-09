@@ -27,6 +27,7 @@ import {
   type LessonPlan 
 } from '../../services/lessonPlan';
 import { refreshDashboardStats } from '../../stores/dashboard';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 import './index.css';
 
 const { Search } = Input;
@@ -44,25 +45,27 @@ const LessonPlanList: React.FC = () => {
   const [lessonPlans, setLessonPlans] = useState<LessonPlan[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const debouncedSearch = useDebouncedValue(searchText);
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 });
 
   const currentStatus = statusConfig[status] || statusConfig.draft;
 
   // 获取教案列表
-  const fetchLessonPlans = useCallback(async (page = 1) => {
+  const fetchLessonPlans = useCallback(async (page = 1, pageSize?: number) => {
     setLoading(true);
     try {
       const response = await getLessonPlans({
         status,
-        search: searchText || undefined,
+        search: debouncedSearch || undefined,
         page,
-        page_size: pagination.pageSize,
+        page_size: pageSize ?? pagination.pageSize,
       });
       setLessonPlans(response.data || []);
       setPagination(prev => ({
         ...prev,
         current: page,
+        pageSize: pageSize ?? prev.pageSize,
         total: response.total || 0,
       }));
     } catch (error) {
@@ -71,7 +74,7 @@ const LessonPlanList: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [status, searchText, pagination.pageSize]);
+  }, [status, debouncedSearch, pagination.pageSize]);
 
   useEffect(() => {
     fetchLessonPlans(1);
@@ -183,8 +186,8 @@ const LessonPlanList: React.FC = () => {
     });
   };
 
-  const handlePageChange = (page: number) => {
-    fetchLessonPlans(page);
+  const handlePageChange = (page: number, pageSize?: number) => {
+    fetchLessonPlans(page, pageSize);
   };
 
   // 渲染草稿箱操作按钮
@@ -484,7 +487,8 @@ const LessonPlanList: React.FC = () => {
                 current: pagination.current,
                 pageSize: pagination.pageSize,
                 total: pagination.total,
-                showSizeChanger: false,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
                 showTotal: (total) => `共 ${total} 条记录`,
                 onChange: handlePageChange,
               }}

@@ -369,14 +369,13 @@ def register_routers(app: FastAPI) -> None:
         app: FastAPI应用实例
     """
     from app.core.database import async_engine
-    from app.core.performance import get_cache
 
     # 健康检查端点
     @app.get("/health", tags=["健康检查"], summary="健康检查")
     async def health_check():
         """
         API健康检查端点
-        检查数据库连接和缓存状态
+        检查数据库连接状态
         """
         health_status = {
             "status": "healthy",
@@ -402,17 +401,6 @@ def register_routers(app: FastAPI) -> None:
             health_status["checks"]["database"] = {
                 "status": "unhealthy",
                 "message": "Database connection failed",
-            }
-
-        # 检查缓存状态
-        try:
-            cache = get_cache()
-            cache.cleanup_expired()
-            health_status["checks"]["cache"] = {"status": "healthy", "message": "Cache OK"}
-        except Exception as e:
-            health_status["checks"]["cache"] = {
-                "status": "warning",
-                "message": f"Cache check failed: {str(e)}",
             }
 
         return health_status

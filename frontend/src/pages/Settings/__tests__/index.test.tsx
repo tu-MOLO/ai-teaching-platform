@@ -123,6 +123,8 @@ vi.mock('antd', () => {
     Button: ({ children, onClick, loading, icon, ...props }: any) =>
       React.createElement('button', { onClick, disabled: loading, 'data-testid': `btn-${children}`, ...props }, icon, children),
     Select: SelectComp,
+    AutoComplete: ({ placeholder, options: _options, value, onChange, ...props }: any) =>
+      React.createElement('input', { 'data-testid': `autocomplete-${placeholder || 'default'}`, value, onChange: (e: any) => onChange?.(e.target.value), ...props }),
     Space: ({ children }: any) =>
       React.createElement('div', { 'data-testid': 'space' }, children),
     Row: ({ children, ...props }: any) =>

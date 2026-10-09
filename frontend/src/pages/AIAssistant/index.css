@@ -221,6 +221,35 @@
   width: 100%;
 }
 
+.ai-no-config-guide {
+  max-width: 340px;
+  text-align: left;
+  margin: 0 auto;
+}
+
+.ai-no-config-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-primary, #333);
+  text-align: center;
+}
+
+.ai-no-config-desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-text-secondary, #666);
+}
+
+.ai-no-config-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--color-text-secondary, #666);
+}
+
 @media (max-width: 768px) {
   .ai-assistant-sidebar {
     display: none;

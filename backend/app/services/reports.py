@@ -29,6 +29,7 @@ class ReportService:
     async def get_dashboard_stats(
         db: AsyncSession, user_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        # 手写 is_deleted 过滤与全局软删除过滤器互为冗余，保留以确保聚合查询不泄露已删除数据
         course_filters = [Course.is_deleted == False]  # noqa: E712
         student_filters = [Student.is_deleted == False]  # noqa: E712
         lesson_plan_filters = [LessonPlan.is_deleted == False]  # noqa: E712
@@ -294,6 +295,7 @@ class ReportService:
     async def get_course_statistics(
         db: AsyncSession, user_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        # 手写 is_deleted 过滤与全局软删除过滤器互为冗余，保留以确保聚合查询不泄露已删除数据
         course_filters = [Course.is_deleted == False]  # noqa: E712
         if user_id is not None:
             course_filters.append(Course.user_id == user_id)
@@ -306,6 +308,7 @@ class ReportService:
             )
         ).all()
         total_courses = sum(item.count for item in subject_stats)
+        # UI 常量：前端图表配色与此数组同源，修改时需同步前端
         colors = ["#c9a87c", "#6b9b7a", "#7a9ab8", "#d4a574", "#9b8b7a", "#b8a07a", "#7ab8a0"]
 
         category_stats = [
@@ -361,7 +364,6 @@ class ReportService:
                     "id": course.id,
                     "name": course.name,
                     "studentCount": student_count,
-                    "completionRate": 0,
                 }
             )
 
@@ -375,6 +377,7 @@ class ReportService:
     async def get_student_statistics(
         db: AsyncSession, user_id: Optional[str] = None
     ) -> Dict[str, Any]:
+        # 手写 is_deleted 过滤与全局软删除过滤器互为冗余，保留以确保聚合查询不泄露已删除数据
         student_filters = [Student.is_deleted == False]  # noqa: E712
         if user_id is not None:
             student_filters.append(Student.user_id == user_id)
@@ -415,17 +418,9 @@ class ReportService:
             for item in gender_stats
         ]
 
-        progress_distribution = [
-            {"range": "优秀(90-100%)", "count": 0, "percent": 0},
-            {"range": "良好(80-89%)", "count": 0, "percent": 0},
-            {"range": "中等(60-79%)", "count": 0, "percent": 0},
-            {"range": "需努力(<60%)", "count": 0, "percent": 0},
-        ]
-
         return {
             "gradeDistribution": grade_distribution,
             "genderDistribution": gender_distribution,
-            "progressDistribution": progress_distribution,
         }
 
     @staticmethod
@@ -434,6 +429,7 @@ class ReportService:
         months: int = 6,
         user_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
+        # 手写 is_deleted 过滤与全局软删除过滤器互为冗余，保留以确保聚合查询不泄露已删除数据
         course_filters = [Course.is_deleted == False]  # noqa: E712
         student_filters = [Student.is_deleted == False]  # noqa: E712
         lesson_plan_filters = [LessonPlan.is_deleted == False]  # noqa: E712

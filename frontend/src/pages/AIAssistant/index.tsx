@@ -158,7 +158,19 @@ const AIAssistant: React.FC = () => {
       <div className="ai-assistant-page">
         <div className="ai-assistant-no-config">
           <Empty
-            description="请先配置 API 密钥以启用 AI 助手功能"
+            description={
+              <div className="ai-no-config-guide">
+                <p className="ai-no-config-title">AI 助手尚未启用</p>
+                <p className="ai-no-config-desc">
+                  AI 助手使用您自己的模型 API 密钥，密钥仅保存在本地，用于直接调用模型服务。
+                </p>
+                <ol className="ai-no-config-steps">
+                  <li>点击下方按钮前往「设置」</li>
+                  <li>在「AI 助手」中填写服务商与 API 密钥</li>
+                  <li>返回本页即可开始对话</li>
+                </ol>
+              </div>
+            }
           >
             <Button type="primary" onClick={() => navigate('/settings?tab=ai')}>
               前往设置

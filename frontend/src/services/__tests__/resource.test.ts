@@ -77,6 +77,7 @@ describe('resource service', () => {
           'Content-Type': 'multipart/form-data'
         },
         onUploadProgress: onProgress,
+        timeout: 5 * 60 * 1000,
       })
       expect(result).toEqual({ id: '1', name: 'uploaded.pdf' })
     })

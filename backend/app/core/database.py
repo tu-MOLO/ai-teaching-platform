@@ -137,7 +137,6 @@ async def init_db() -> None:
         from app.models import (  # noqa: F401
             ai,
             ai_config,
-            audit_log,
             course,
             dropdown_option,
             lesson_plan,

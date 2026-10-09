@@ -350,7 +350,8 @@ const Portfolio: React.FC = () => {
                 current: pagination.current,
                 pageSize: pagination.pageSize,
                 total: pagination.total,
-                showSizeChanger: false,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
                 showTotal: (total) => `共 ${total} 名学生`,
                 onChange: (page, pageSize) => fetchStudents(page, pageSize),
               }}
