@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import {
-  Button,
-  Card,
-  Col,
-  Divider,
-  Input,
-  Modal,
-  Popconfirm,
-  Row,
-  Space,
-  Typography,
-  message,
-} from 'antd'
+import { Button, Card, Col, Divider, Input, Modal, Popconfirm, Row, Space, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import {
   DeleteOutlined,
   EditOutlined,

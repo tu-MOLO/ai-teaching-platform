@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Card, Button, Table, Space, Tag, message, Input, Empty, Modal } from 'antd';
+import { Card, Button, Table, Space, Tag, Input, Empty } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import { 
   PlusOutlined, 
   EditOutlined, 
@@ -82,7 +83,7 @@ const LessonPlanList: React.FC = () => {
 
   // 处理删除
   const handleDelete = (id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除教案 "${title}" 吗？此操作不可恢复。`,
       okText: '确认删除',
@@ -104,7 +105,7 @@ const LessonPlanList: React.FC = () => {
 
   // 处理标记完成
   const handlePublish = async (id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认完成',
       content: `确定要完成教案 "${title}" 吗？完成后将标记为已定稿状态。`,
       okText: '确认完成',
@@ -125,7 +126,7 @@ const LessonPlanList: React.FC = () => {
 
   // 处理取消完成
   const handleUnpublish = (id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认取消完成',
       content: `确定要取消完成教案 "${title}" 吗？取消后将回到草稿箱继续编辑。`,
       okText: '确认取消',
@@ -146,7 +147,7 @@ const LessonPlanList: React.FC = () => {
 
   // 处理归档
   const handleArchive = (id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认归档',
       content: `确定要归档教案 "${title}" 吗？归档后可以在已归档列表中查看。`,
       okText: '确认归档',
@@ -167,7 +168,7 @@ const LessonPlanList: React.FC = () => {
 
   // 处理恢复
   const handleRestore = (id: string, title: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认恢复',
       content: `确定要恢复教案 "${title}" 吗？恢复后将回到草稿箱。`,
       okText: '确认恢复',

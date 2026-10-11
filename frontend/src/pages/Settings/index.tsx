@@ -13,22 +13,8 @@ import {
   UnorderedListOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import {
-  Alert,
-  AutoComplete,
-  Button,
-  Card,
-  Form,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Select,
-  Space,
-  Table,
-  Tabs,
-  Typography,
-  message,
-} from 'antd'
+import { Alert, AutoComplete, Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { useLocation, useNavigate } from 'react-router-dom'
 import ThemeSettings from '../../components/Theme/ThemeSettings'
 import { DROPDOWN_GROUPS, DROPDOWN_GROUP_MAP } from '../../constants/dropdownOptions'

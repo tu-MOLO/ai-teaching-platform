@@ -5,6 +5,21 @@ All notable changes to the AI教学平台 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - Unreleased
+
+### Added
+- 个别化教育计划（IEP / 一人一案）：自研六领域发展评估（感知 / 认知 / 语言与沟通 / 运动 / 生活自理 / 社会适应）、0–3 级掌握度评级、可配置评估模板与快照存档
+- IEP 长短期目标管理（条件 + 可观察行为 + 达成标准 + 辅助等级）、计划状态机（草稿 / 待审定 / 已锁定）与修订版本链
+- 目标达成率统计、期初 / 期末双快照对比雷达
+- AI 起草 IEP 与学期成长报告（仅出草稿、教师人在回路逐条采纳、全程留痕、禁止杜撰医学诊断）
+- IEP 一键导出 PDF
+- 演示数据种子脚本 `scripts/seed_demo.py`（全虚构、幂等可重复）
+- GitHub Actions CI/CD 流水线、Issue 模板与贡献指南
+
+### Changed
+- 报表口径诚实化：移除名不副实的平均进度与 AI 助手占位，热门课程改为真按选课人数排序
+- 能力雷达：分母按各维度实际评分数，未评估维度留空不计 0
+
 ## [1.1.0] - 2026-07-11
 
 ### Added
@@ -34,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 通知系统：站内通知、已读/未读管理、批量操作、未读数量统计
 - 报告统计：仪表盘数据、课程/学生统计、月度趋势分析
 - 用户认证：JWT双Token（Access 30分钟+Refresh 7天）、HttpOnly Cookie、bcrypt密码哈希、密保问题重置、账户锁定、Token版本化
-- 安全防护：CSP/HSTS/X-Frame-Options安全头、滑动窗口速率限制、软删除、审计日志、配置启动验证
+- 安全防护：CSP/HSTS/X-Frame-Options安全头、滑动窗口速率限制、软删除、配置启动验证
 - 主题定制：自定义主题色、预设管理、对比度警告、颜色历史
 - 下拉选项：可配置学科/年级等下拉项管理
 - Docker部署：开发+生产+E2E三套docker-compose、多阶段构建、健康检查

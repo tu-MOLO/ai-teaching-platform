@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Empty, Popconfirm, Select, Spin, Tag, Typography, message } from 'antd'
+import { Button, Empty, Popconfirm, Select, Spin, Tag, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { BellOutlined, DeleteOutlined, ReadOutlined } from '@ant-design/icons'
 import {
   deleteAllRead,

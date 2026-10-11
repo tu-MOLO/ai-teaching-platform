@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Button, Card, Typography, Timeline, Space, message, Empty, Input, Select } from 'antd'
+import { Button, Card, Typography, Timeline, Space, Empty, Input, Select } from 'antd';
+import { message } from '@/utils/feedback';
 import { EditOutlined, FileTextOutlined, PlusOutlined, ClockCircleOutlined, SearchOutlined } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { studentService } from '@/services/student'

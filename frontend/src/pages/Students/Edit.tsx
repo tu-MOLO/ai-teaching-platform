@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Spin, Typography, message } from 'antd'
+import { Card, Spin, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import dayjs from 'dayjs'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { StudentForm, type StudentFormData } from '@/components'

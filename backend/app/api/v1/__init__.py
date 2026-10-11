@@ -11,6 +11,7 @@ from app.api.v1 import (
     auth,
     courses,
     dropdown_options,
+    iep,
     lesson_plans,
     lesson_templates,
     notifications,
@@ -62,3 +63,7 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(dropdown_options.router)
 api_router.include_router(ai.router, prefix="/ai", tags=["AI助手"])
 api_router.include_router(ai_config.router, prefix="/ai", tags=["AI配置"])
+
+# 注册个别化教育计划（IEP）与发展领域评估模板路由
+api_router.include_router(iep.templates_router, prefix="/iep-templates", tags=["IEP评估模板"])
+api_router.include_router(iep.iep_router, prefix="/ieps", tags=["个别化教育计划"])

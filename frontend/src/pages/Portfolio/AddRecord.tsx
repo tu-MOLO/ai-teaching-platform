@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Button, Card, Form, Input, Space, Typography, Upload, message } from 'antd'
+import { Button, Card, Form, Input, Space, Typography, Upload } from 'antd';
+import { message } from '@/utils/feedback';
 import { UploadOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { EvaluationForm } from '@/components'

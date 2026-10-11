@@ -298,7 +298,7 @@ class TestReportToolExecutors:
         assert "totalCourses" in result
         assert "totalStudents" in result
         assert "activeCourses" in result
-        assert "averageProgress" in result
+        assert "completionRate" in result
         assert "recentActivities" in result
 
     @pytest.mark.asyncio

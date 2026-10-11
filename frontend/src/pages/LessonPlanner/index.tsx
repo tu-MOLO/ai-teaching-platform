@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Spin, message } from 'antd';
+import { Card, Spin } from 'antd';
+import { message } from '@/utils/feedback';
 import { PlusOutlined, FileTextOutlined, CheckCircleOutlined, InboxOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { getLessonPlans } from '../../services/lessonPlan';

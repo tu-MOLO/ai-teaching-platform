@@ -1,0 +1,61 @@
+.iep-page {
+  padding: 4px 2px;
+}
+
+.iep-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.iep-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--color-text-primary, #1f2937);
+}
+
+.iep-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.iep-filters {
+  margin-bottom: 8px;
+}
+
+.iep-editor-step {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.iep-assessment-domain {
+  margin-bottom: 16px;
+}
+
+.iep-level-radio .ant-radio-button-wrapper {
+  min-width: 64px;
+  text-align: center;
+}
+
+.iep-footer-actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.iep-detail-section {
+  margin-bottom: 24px;
+}
+
+.iep-goal-block {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Empty, Input, Pagination, Spin, message } from 'antd'
+import { Empty, Input, Pagination, Spin } from 'antd';
+import { message } from '@/utils/feedback';
 import { FileOutlined, FileImageOutlined, FilePdfOutlined, SearchOutlined, UploadOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { getResources, type ResourceListItem } from '../../services/resource'

@@ -5,6 +5,19 @@ from app.models.ai_config import AIConfig
 from app.models.base import Base
 from app.models.course import Course, course_student
 from app.models.dropdown_option import DropdownOption
+from app.models.iep import (
+    AssessmentDomain,
+    AssessmentItem,
+    AssessmentTemplate,
+    GoalStatus,
+    IEPAssessmentSnapshotItem,
+    IEPDomainAssessment,
+    IEPGenerationLog,
+    IEPLongTermGoal,
+    IEPPlan,
+    IEPShortTermGoal,
+    IEPStatus,
+)
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus
 from app.models.lesson_template import LessonTemplate
 from app.models.notification import Notification, NotificationType
@@ -39,4 +52,15 @@ __all__ = [
     "AIConversation",
     "AIMessage",
     "AIConfig",
+    "AssessmentTemplate",
+    "AssessmentDomain",
+    "AssessmentItem",
+    "IEPPlan",
+    "IEPStatus",
+    "IEPDomainAssessment",
+    "IEPAssessmentSnapshotItem",
+    "IEPLongTermGoal",
+    "IEPShortTermGoal",
+    "GoalStatus",
+    "IEPGenerationLog",
 ]

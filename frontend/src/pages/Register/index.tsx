@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Button, Form, Input, Select, message, Typography } from 'antd'
+import { Button, Form, Input, Select, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../../services/auth'

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Checkbox, Form, Input, Modal, message, Radio } from 'antd'
+import { Button, Checkbox, Form, Input, Modal, Radio } from 'antd';
+import { message } from '@/utils/feedback';
 import { UserOutlined, LockOutlined, BookOutlined, TeamOutlined, RocketOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../stores/auth'

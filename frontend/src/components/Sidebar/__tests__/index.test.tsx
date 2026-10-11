@@ -35,6 +35,7 @@ vi.mock('@ant-design/icons', () => ({
   LogoutOutlined: () => React.createElement('span', null, 'LogoutIcon'),
   FolderOutlined: () => React.createElement('span', null, 'FolderIcon'),
   FileTextOutlined: () => React.createElement('span', null, 'FileTextIcon'),
+  FileProtectOutlined: () => React.createElement('span', null, 'FileProtectIcon'),
   TeamOutlined: () => React.createElement('span', null, 'TeamIcon'),
   MenuFoldOutlined: () => React.createElement('span', null, 'MenuFoldIcon'),
   MenuUnfoldOutlined: () => React.createElement('span', null, 'MenuUnfoldIcon'),
@@ -78,10 +79,10 @@ describe('Sidebar', () => {
     expect(screen.getByText('AI教学平台')).toBeInTheDocument()
   })
 
-  it('renders all 10 menu item labels', () => {
+  it('renders all 11 menu item labels', () => {
     render(React.createElement(Sidebar))
     const labels = [
-      '工作台', '课程管理', '学生管理', '数据报告', '学生档案',
+      '工作台', '课程管理', '学生管理', '个别化计划', '数据报告', '学生档案',
       '教案中心', '资源中心', 'AI助手', '通知中心', '系统设置',
     ]
     labels.forEach((label) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Descriptions, Tag, Space, Typography, message, Modal, Spin } from 'antd';
+import { Card, Button, Descriptions, Tag, Space, Typography, Spin } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -54,7 +55,7 @@ const LessonPlanDetail: React.FC = () => {
 
   const handleDelete = () => {
     if (!id) return;
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除教案 "${lessonPlan?.title}" 吗？此操作不可恢复。`,
       okText: '确认删除',
@@ -93,7 +94,7 @@ const LessonPlanDetail: React.FC = () => {
 
   const handleUnpublish = async () => {
     if (!id || !lessonPlan) return;
-    Modal.confirm({
+    modal.confirm({
       title: '确认取消完成',
       content: `确定要取消完成教案 "${lessonPlan.title}" 吗？取消后教案将变为草稿状态，可继续编辑。`,
       okText: '确认取消完成',
@@ -117,7 +118,7 @@ const LessonPlanDetail: React.FC = () => {
 
   const handleArchive = async () => {
     if (!id || !lessonPlan) return;
-    Modal.confirm({
+    modal.confirm({
       title: '确认归档',
       content: `确定要归档教案 "${lessonPlan.title}" 吗？归档后教案将不再显示在列表中。`,
       okText: '确认归档',
@@ -140,7 +141,7 @@ const LessonPlanDetail: React.FC = () => {
 
   const handleRestore = async () => {
     if (!id || !lessonPlan) return;
-    Modal.confirm({
+    modal.confirm({
       title: '确认恢复',
       content: `确定要恢复教案 "${lessonPlan.title}" 吗？恢复后教案将变为草稿状态。`,
       okText: '确认恢复',

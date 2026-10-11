@@ -187,7 +187,6 @@ class ReportService:
             "totalCourses": total_courses,
             "totalStudents": total_students,
             "activeCourses": active_courses,
-            "averageProgress": completion_rate,
             "courseTrend": ReportService._format_growth(last_month_courses, two_months_ago_courses),
             "studentTrend": ReportService._format_growth(
                 last_month_students, two_months_ago_students
@@ -198,7 +197,6 @@ class ReportService:
             "monthlyLessonPlans": monthly_lesson_plans,
             "draftLessonPlans": draft_lesson_plans,
             "completionRate": completion_rate,
-            "aiAssistants": 0,
             "totalResources": total_resources,
         }
 
@@ -338,20 +336,23 @@ class ReportService:
             for item in status_stats
         ]
 
+        # 真"热门课程"：取近期候选，按实际选课人数降序（同数按创建时间），
+        # 而非简单取最新5门；无选课数据时自然退化为最新课程
         hot_courses = []
-        hot_course_rows = (
+        candidate_rows = (
             (
                 await db.execute(
                     select(Course)
                     .where(*course_filters)
                     .order_by(Course.created_at.desc())
-                    .limit(5)
+                    .limit(30)
                 )
             )
             .scalars()
             .all()
         )
-        for course in hot_course_rows:
+        counted_courses = []
+        for course in candidate_rows:
             student_count = (
                 await db.execute(
                     select(func.count())
@@ -359,6 +360,9 @@ class ReportService:
                     .where(course_student.c.course_id == course.id)
                 )
             ).scalar() or 0
+            counted_courses.append((student_count, course))
+        counted_courses.sort(key=lambda pair: (pair[0], pair[1].created_at), reverse=True)
+        for student_count, course in counted_courses[:5]:
             hot_courses.append(
                 {
                     "id": course.id,

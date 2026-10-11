@@ -95,6 +95,7 @@ describe('ConversationList', () => {
   const mockOnRename = vi.fn().mockResolvedValue(undefined)
   const mockOnArchive = vi.fn().mockResolvedValue(undefined)
   const mockOnToggleShowArchived = vi.fn()
+  const mockOnBatchDelete = vi.fn().mockResolvedValue(undefined)
 
   const conversations = [
     { id: '1', title: 'Conversation 1', updated_at: '2024-01-01T00:00:00Z', module: null, created_at: '2024-01-01T00:00:00Z', is_archived: false },
@@ -117,6 +118,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     expect(screen.getByText('新建对话')).toBeInTheDocument()
@@ -134,6 +136,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     expect(screen.getByText('Conversation 1')).toBeInTheDocument()
@@ -152,6 +155,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     const items = screen.getAllByTestId('list-item')
@@ -171,6 +175,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     await user.click(screen.getByText('新建对话'))
@@ -190,6 +195,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     const items = screen.getAllByTestId('list-item')
@@ -209,6 +215,7 @@ describe('ConversationList', () => {
         onArchive: mockOnArchive,
         showArchived: false,
         onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
       })
     )
     expect(screen.getByText('新建对话')).toBeInTheDocument()

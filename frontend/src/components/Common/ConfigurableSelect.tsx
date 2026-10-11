@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
-import { Button, Divider, Input, Select, Space, message } from 'antd'
+import { Button, Divider, Input, Select, Space } from 'antd';
+import { message } from '@/utils/feedback';
 import type { SelectProps } from 'antd'
 import { PlusOutlined, SettingOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate } from 'react-router-dom'

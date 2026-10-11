@@ -102,28 +102,42 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
         return;
       }
 
-      // 计算各项能力的平均分
-      const avgScores: AbilityData = {
+      // 各维度分别累加与计数：分母为该维度"实际有评分"的记录数，
+      // 而非全部评价数（避免某维度缺评时被稀释）
+      const scoreFields: { key: keyof AbilityData; field: keyof PortfolioItem }[] = [
+        { key: 'cognitive', field: 'cognitive_score' },
+        { key: 'skill', field: 'skill_score' },
+        { key: 'creativity', field: 'creativity_score' },
+        { key: 'cooperation', field: 'cooperation_score' },
+        { key: 'attention', field: 'attention_score' },
+      ];
+      const sums: AbilityData = {
         cognitive: 0,
         skill: 0,
         creativity: 0,
         cooperation: 0,
         attention: 0,
       };
-
-      // 累加各项评分
+      const counts: AbilityData = {
+        cognitive: 0,
+        skill: 0,
+        creativity: 0,
+        cooperation: 0,
+        attention: 0,
+      };
       filteredItems.forEach((item: PortfolioItem) => {
-        if (item.cognitive_score !== undefined) avgScores.cognitive += item.cognitive_score;
-        if (item.skill_score !== undefined) avgScores.skill += item.skill_score;
-        if (item.creativity_score !== undefined) avgScores.creativity += item.creativity_score;
-        if (item.cooperation_score !== undefined) avgScores.cooperation += item.cooperation_score;
-        if (item.attention_score !== undefined) avgScores.attention += item.attention_score;
+        scoreFields.forEach(({ key, field }) => {
+          const v = item[field];
+          if (typeof v === 'number') {
+            sums[key] += v as number;
+            counts[key] += 1;
+          }
+        });
       });
-
-      // 计算平均值
-      Object.keys(avgScores).forEach((key) => {
-        (avgScores as any)[key] = ((avgScores as any)[key] / filteredItems.length) / 20;
-      });
+      // 原始分 0–100 → 雷达 0–5；某维度无任何评分 → null（留空，不计 0）
+      const radarValues = scoreFields.map(({ key }) =>
+        counts[key] > 0 ? sums[key] / counts[key] / 20 : null
+      );
 
       // 设置图表数据
       setChartData({
@@ -155,13 +169,7 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
             type: 'radar',
             data: [
               {
-                value: [
-                  avgScores.cognitive || 0,
-                  avgScores.skill || 0,
-                  avgScores.creativity || 0,
-                  avgScores.cooperation || 0,
-                  avgScores.attention || 0,
-                ],
+                value: radarValues,
                 name: '当前水平',
                 areaStyle: {
                   color: 'rgba(24, 144, 255, 0.3)',
@@ -219,6 +227,9 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
   return (
     <Card className="ability-radar-card">
       <ReactECharts option={chartData} style={{ height: 400 }} />
+      <p style={{ color: '#999', margin: '8px 0 0' }}>
+        注：数值为该维度全部评价的平均分；未评价的维度留空，不计为 0。
+      </p>
     </Card>
   );
 };

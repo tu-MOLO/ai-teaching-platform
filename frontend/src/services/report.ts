@@ -21,14 +21,12 @@ export interface DashboardReport {
   totalCourses: number
   totalStudents: number
   activeCourses: number
-  averageProgress: number
   courseTrend: string
   studentTrend: string
   recentActivities: ActivityItem[]
   monthlyCourses?: number
   monthlyStudents?: number
   completionRate?: number
-  aiAssistants?: number
   monthlyLessonPlans?: number
   draftLessonPlans?: number
   totalResources?: number

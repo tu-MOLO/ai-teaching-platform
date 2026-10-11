@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Button, Descriptions, Empty, Space, Tooltip, message } from 'antd'
+import { Button, Descriptions, Empty, Space, Tooltip } from 'antd';
+import { message } from '@/utils/feedback';
 import {
   DownloadOutlined,
   FileExcelOutlined,

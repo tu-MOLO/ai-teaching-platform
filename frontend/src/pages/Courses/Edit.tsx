@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, message, Typography, Spin } from 'antd';
+import { Card, Typography, Spin } from 'antd';
+import { message } from '@/utils/feedback';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CourseForm, CourseFormData } from '@/components';
 import { getCourse, updateCourse } from '../../services/course';

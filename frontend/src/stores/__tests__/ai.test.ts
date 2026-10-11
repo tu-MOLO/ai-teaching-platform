@@ -4,12 +4,16 @@ const mockGetConversations = vi.fn()
 const mockGetConversationMessages = vi.fn()
 const mockGetAIConfig = vi.fn()
 const mockRenameConversationApi = vi.fn()
+const mockArchiveConversationApi = vi.fn()
+const mockBatchDeleteConversationsApi = vi.fn()
 
 vi.mock('../../services/ai', () => ({
   getConversations: (...args: any[]) => mockGetConversations(...args),
   getConversationMessages: (...args: any[]) => mockGetConversationMessages(...args),
   getAIConfig: (...args: any[]) => mockGetAIConfig(...args),
   renameConversation: (...args: any[]) => mockRenameConversationApi(...args),
+  archiveConversation: (...args: any[]) => mockArchiveConversationApi(...args),
+  batchDeleteConversations: (...args: any[]) => mockBatchDeleteConversationsApi(...args),
 }))
 
 import { useAIStore } from '../ai'
@@ -263,6 +267,133 @@ describe('useAIStore', () => {
       await useAIStore.getState().renameConversation('1', 'New Title')
 
       expect(useAIStore.getState().conversations[0].title).toBe('Old Title')
+    })
+  })
+
+  describe('archiveConversation', () => {
+    it('归档当前会话且不显示归档视图时，清空当前会话与消息', async () => {
+      mockArchiveConversationApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+        showArchived: false,
+      })
+
+      await useAIStore.getState().archiveConversation('1', true)
+
+      expect(mockArchiveConversationApi).toHaveBeenCalledWith('1', true)
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBeNull()
+      expect(state.messages).toEqual([])
+    })
+
+    it('归档的不是当前会话时，保留当前会话', async () => {
+      mockArchiveConversationApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '2',
+        messages: [{ id: 'm2' }],
+        showArchived: false,
+      })
+
+      await useAIStore.getState().archiveConversation('1', true)
+
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBe('2')
+      expect(state.messages).toEqual([{ id: 'm2' }])
+    })
+
+    it('处于归档视图时取消归档不清空当前会话', async () => {
+      mockArchiveConversationApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+        showArchived: true,
+      })
+
+      await useAIStore.getState().archiveConversation('1', false)
+
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBe('1')
+      expect(state.messages).toEqual([{ id: 'm1' }])
+    })
+
+    it('API 失败时静默处理且不清空', async () => {
+      mockArchiveConversationApi.mockRejectedValueOnce(new Error('fail'))
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+        showArchived: false,
+      })
+
+      await useAIStore.getState().archiveConversation('1', true)
+
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBe('1')
+      expect(state.messages).toEqual([{ id: 'm1' }])
+    })
+  })
+
+  describe('batchDeleteConversations', () => {
+    it('空 id 列表直接返回，不调用 API', async () => {
+      await useAIStore.getState().batchDeleteConversations([])
+      expect(mockBatchDeleteConversationsApi).not.toHaveBeenCalled()
+    })
+
+    it('批量删除包含当前会话时清空当前会话', async () => {
+      mockBatchDeleteConversationsApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+      })
+
+      await useAIStore.getState().batchDeleteConversations(['1', '2'])
+
+      expect(mockBatchDeleteConversationsApi).toHaveBeenCalledWith(['1', '2'])
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBeNull()
+      expect(state.messages).toEqual([])
+    })
+
+    it('批量删除不含当前会话时保留状态', async () => {
+      mockBatchDeleteConversationsApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '9',
+        messages: [{ id: 'm9' }],
+      })
+
+      await useAIStore.getState().batchDeleteConversations(['1', '2'])
+
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBe('9')
+      expect(state.messages).toEqual([{ id: 'm9' }])
+    })
+
+    it('API 失败时静默处理', async () => {
+      mockBatchDeleteConversationsApi.mockRejectedValueOnce(new Error('fail'))
+      useAIStore.setState({ currentConversationId: '1', messages: [{ id: 'm1' }] })
+
+      await useAIStore.getState().batchDeleteConversations(['1'])
+
+      expect(useAIStore.getState().currentConversationId).toBe('1')
+    })
+  })
+
+  describe('toggleShowArchived', () => {
+    it('在归档/常规视图间切换并重新加载会话', async () => {
+      mockGetConversations.mockResolvedValue({ data: [] })
+      expect(useAIStore.getState().showArchived).toBe(false)
+
+      useAIStore.getState().toggleShowArchived()
+      expect(useAIStore.getState().showArchived).toBe(true)
+
+      useAIStore.getState().toggleShowArchived()
+      expect(useAIStore.getState().showArchived).toBe(false)
+      expect(mockGetConversations).toHaveBeenCalledTimes(2)
     })
   })
 

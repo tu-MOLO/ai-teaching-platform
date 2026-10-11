@@ -31,6 +31,9 @@ const CreateStudent = React.lazy(() => import('../pages/Students/Create'));
 const EditStudent = React.lazy(() => import('../pages/Students/Edit'));
 const EditRecord = React.lazy(() => import('../pages/Portfolio/EditRecord'));
 const AIAssistant = React.lazy(() => import('../pages/AIAssistant'));
+const IEPList = React.lazy(() => import('../pages/IEP'));
+const IEPEditor = React.lazy(() => import('../pages/IEP/Editor'));
+const IEPDetail = React.lazy(() => import('../pages/IEP/Detail'));
 
 const PageLoading = () => (
   <div style={{
@@ -179,6 +182,22 @@ const router: RouteObject[] = [
       {
         path: 'ai-assistant',
         element: withSuspense(AIAssistant)
+      },
+      {
+        path: 'iep',
+        element: withSuspense(IEPList)
+      },
+      {
+        path: 'iep/create',
+        element: withSuspense(IEPEditor)
+      },
+      {
+        path: 'iep/:id',
+        element: withSuspense(IEPDetail)
+      },
+      {
+        path: 'iep/:id/edit',
+        element: withSuspense(IEPEditor)
       }
     ]
   },

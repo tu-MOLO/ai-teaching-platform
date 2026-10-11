@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, message, Typography } from 'antd';
+import { Card, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { StudentForm, StudentFormData } from '@/components';
 import { studentService } from '../../services/student';

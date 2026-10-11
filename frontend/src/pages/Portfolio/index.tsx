@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Card, Input, Table, Space, message, Empty, Modal } from 'antd';
+import { Card, Input, Table, Space, Empty } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import {
   PlusOutlined,
   SearchOutlined,
@@ -107,7 +108,7 @@ const Portfolio: React.FC = () => {
   }, [searchText, gradeFilter]);
 
   const handleDelete = async (id: string, name: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除学生 "${name}" 吗？此操作不可恢复。`,
       okText: '确认删除',

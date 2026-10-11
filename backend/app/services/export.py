@@ -492,6 +492,53 @@ class ExportService:
         return lines
 
     def _render_simple_pdf(self, lines: list[str]) -> bytes:
+        # 优先使用 reportlab（纯 Python、跨平台、内置中文 CID 字体）；
+        # 仅当 reportlab 不可用时才退回手写极简 PDF。
+        try:
+            return self._render_simple_pdf_reportlab(lines)
+        except Exception:
+            return self._render_simple_pdf_legacy(lines)
+
+    def _render_simple_pdf_reportlab(self, lines: list[str]) -> bytes:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.utils import simpleSplit
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+        from reportlab.pdfgen import canvas
+
+        pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
+
+        buffer = BytesIO()
+        page_width, page_height = A4
+        margin = 50
+        font_size = 11
+        line_height = 18
+        c = canvas.Canvas(buffer, pagesize=A4)
+        c.setTitle("个别化教育计划 IEP")
+
+        usable_width = page_width - 2 * margin
+        max_lines = int((page_height - 2 * margin) // line_height)
+
+        def start_page():
+            c.setFont("STSong-Light", font_size)
+            return page_height - margin, 0
+
+        y, count = start_page()
+        for raw in lines:
+            line = (raw or "").replace("\r", " ").replace("\n", " ")
+            wrapped = simpleSplit(line, "STSong-Light", font_size, usable_width) or [""]
+            for piece in wrapped:
+                if count >= max_lines:
+                    c.showPage()
+                    y, count = start_page()
+                c.drawString(margin, y, piece)
+                y -= line_height
+                count += 1
+        c.showPage()
+        c.save()
+        return buffer.getvalue()
+
+    def _render_simple_pdf_legacy(self, lines: list[str]) -> bytes:
         page_width = 595
         page_height = 842
         margin_left = 50
@@ -569,3 +616,195 @@ class ExportService:
             ).encode("utf-8")
         )
         return bytes(pdf)
+
+    # ==================================================
+    # IEP 个别化教育计划导出
+    # ==================================================
+
+    _IEP_LEVEL_TEXT = {
+        0: "不能完成",
+        1: "大量辅助",
+        2: "少量辅助",
+        3: "独立完成",
+    }
+    _IEP_STATUS_TEXT = {"draft": "草稿", "review": "待审定", "locked": "已定稿"}
+    _GOAL_STATUS_TEXT = {
+        "not_started": "未开始",
+        "in_progress": "进行中",
+        "achieved": "已达成",
+        "maintain": "维持",
+    }
+
+    def _iep_level(self, value: Any) -> str:
+        if value is None:
+            return "未评估"
+        return f"{value} {self._IEP_LEVEL_TEXT.get(value, '')}".strip()
+
+    def export_iep_to_pdf(self, iep: Any) -> bytes:
+        """导出个别化教育计划（IEP）为 PDF；无 WeasyPrint 时回退内置简单 PDF。"""
+        try:
+            from weasyprint import CSS, HTML
+        except (ImportError, OSError):
+            return self._render_simple_pdf(self._build_iep_lines(iep))
+
+        html_content = self._generate_iep_html(iep)
+        css = CSS(string="""
+            body {
+                font-family: SimSun, SimHei, Arial, sans-serif;
+                margin: 22px; color:#222; font-size: 12px;
+            }
+            h1 { text-align:center; font-size: 20px; margin-bottom: 4px; }
+            .meta-sub { text-align:center; color:#666; margin-bottom: 18px; }
+            h2 {
+                font-size: 15px; border-bottom: 2px solid #548ca8;
+                padding-bottom:4px; margin-top: 22px;
+            }
+            table { width:100%; border-collapse: collapse; margin: 8px 0 14px; }
+            th, td {
+                border:1px solid #bbb; padding:5px 7px; text-align:left;
+                vertical-align: top;
+            }
+            th { background:#f0f4f7; }
+            .domain-title { font-weight:bold; margin:12px 0 4px; }
+            .overall { color:#548ca8; font-weight:bold; }
+            .profile {
+                background:#fafafa; border:1px solid #e5e5e5; padding:10px;
+                border-radius:4px; white-space:pre-wrap;
+            }
+            .note { color:#777; }
+        """)
+        html_doc = HTML(string=html_content)
+        pdf_bytes: bytes = html_doc.write_pdf(stylesheets=[css])  # type: ignore[no-any-return]
+        return pdf_bytes
+
+    def _iep_student_name(self, iep: Any) -> str:
+        name = getattr(iep, "student_name", None)
+        if name:
+            return str(name)
+        student = getattr(iep, "student", None)
+        return str(getattr(student, "name", "") or "")
+
+    def _generate_iep_html(self, iep: Any) -> str:
+        name = escape(self._iep_student_name(iep))
+        status = self._IEP_STATUS_TEXT.get(getattr(iep, "status", ""), "")
+        reviewed = ""
+        if getattr(iep, "reviewed_at", None):
+            reviewed = getattr(iep.reviewed_at, "strftime", lambda _f: "")("%Y-%m-%d %H:%M")
+
+        parts = [
+            "<!DOCTYPE html><html><head><meta charset='UTF-8'>",
+            f"<title>{name} 个别化教育计划</title></head><body>",
+            "<h1>个别化教育计划（IEP）</h1>",
+            f"<div class='meta-sub'>{name}　{escape(iep.term or '')}　"
+            f"第 {iep.revision_no} 版　{escape(status)}</div>",
+            "<table>",
+            f"<tr><th style='width:120px'>学生</th><td>{name}</td>"
+            f"<th style='width:120px'>学期</th><td>{escape(iep.term or '')}</td></tr>",
+            f"<tr><th>状态</th><td>{escape(status)}</td>"
+            f"<th>审定时间</th><td>{escape(reviewed) or '—'}</td></tr>",
+            "</table>",
+            "<h2>一、学生基本情况</h2>",
+            f"<div class='profile'>{escape(iep.student_profile or '—')}</div>",
+            "<h2>二、发展领域评估</h2>",
+        ]
+
+        if not iep.domain_assessments:
+            parts.append("<p class='note'>暂无评估</p>")
+        for d in iep.domain_assessments:
+            parts.append(
+                f"<div class='domain-title'>{escape(d.domain_name)}　"
+                f"<span class='overall'>领域整体："
+                f"{escape(self._iep_level(d.overall_level))}</span></div>"
+            )
+            rows = [
+                "".join(
+                    [
+                        "<table><tr><th style='width:40%'>观察条目</th>"
+                        "<th style='width:22%'>水平</th><th>备注</th></tr>",
+                    ]
+                )
+            ]
+            for it in d.items:
+                rows.append(
+                    "<tr>"
+                    f"<td>{escape(it.item_name)}</td>"
+                    f"<td>{escape(self._iep_level(it.level))}</td>"
+                    f"<td>{escape(it.note or '') or '—'}</td>"
+                    "</tr>"
+                )
+            rows.append("</table>")
+            if d.summary:
+                rows.append(f"<p class='note'>小结：{escape(d.summary)}</p>")
+            parts.append("".join(rows))
+
+        parts.append("<h2>三、长短期目标</h2>")
+        if not iep.long_term_goals:
+            parts.append("<p class='note'>暂无目标</p>")
+        for g in iep.long_term_goals:
+            parts.append(
+                f"<div class='domain-title'>[{escape(g.domain_name or '未分领域')}] "
+                f"长期目标：{escape(g.goal)}</div>"
+            )
+            table = [
+                "<table><tr><th>条件</th><th>行为</th><th>标准</th>"
+                "<th>支持级别</th><th>状态</th><th>教学方法</th></tr>"
+            ]
+            for s in g.short_term_goals:
+                methods = "、".join(s.teaching_methods or [])
+                table.append(
+                    "<tr>"
+                    f"<td>{escape(s.condition or '') or '—'}</td>"
+                    f"<td>{escape(s.behavior)}</td>"
+                    f"<td>{escape(s.criterion or '') or '—'}</td>"
+                    f"<td>{escape(self._iep_level(s.support_level))}</td>"
+                    f"<td>{escape(self._GOAL_STATUS_TEXT.get(s.status, s.status))}</td>"
+                    f"<td>{escape(methods) or '—'}</td>"
+                    "</tr>"
+                )
+            table.append("</table>")
+            parts.append("".join(table))
+
+        parts.append("<h2>四、支持措施</h2><table>")
+        supports = iep.supports or {}
+        for label, key in [("教学支持", "teaching"), ("康复支持", "rehab"), ("家庭支持", "family")]:
+            value = "；".join(supports.get(key, []) or [])
+            parts.append(
+                f"<tr><th style='width:120px'>{label}</th><td>{escape(value) or '—'}</td></tr>"
+            )
+        parts.append("</table>")
+
+        parts.append("<h2>五、评价方式</h2>")
+        parts.append(f"<div class='profile'>{escape(iep.evaluation_plan or '—')}</div>")
+        parts.append("</body></html>")
+        return "".join(parts)
+
+    def _build_iep_lines(self, iep: Any) -> list[str]:
+        """无 WeasyPrint 时的纯文本回退。"""
+        name = self._iep_student_name(iep)
+        lines = [
+            "个别化教育计划（IEP）",
+            f"学生：{name}    学期：{iep.term}",
+            f"版本：第 {iep.revision_no} 版    状态：{self._IEP_STATUS_TEXT.get(iep.status, '')}",
+            "",
+            "一、学生基本情况",
+            iep.student_profile or "—",
+            "",
+            "二、发展领域评估",
+        ]
+        for d in iep.domain_assessments:
+            lines.append(f"[{d.domain_name}] 整体：{self._iep_level(d.overall_level)}")
+            for it in d.items:
+                lines.append(f"  - {it.item_name}：{self._iep_level(it.level)}")
+        lines.append("")
+        lines.append("三、长短期目标")
+        for g in iep.long_term_goals:
+            lines.append(f"[{g.domain_name or '未分领域'}] 长期：{g.goal}")
+            for s in g.short_term_goals:
+                lines.append(
+                    f"  · {s.condition or ''}{s.behavior}（{s.criterion or ''}）"
+                    f" 支持：{self._iep_level(s.support_level)}"
+                )
+        lines.append("")
+        lines.append("四、评价方式")
+        lines.append(iep.evaluation_plan or "—")
+        return lines

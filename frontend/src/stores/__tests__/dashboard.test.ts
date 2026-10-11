@@ -86,7 +86,6 @@ describe('useDashboardStore', () => {
         monthlyLessonPlans: 20,
         totalResources: 100,
         activeCourses: 8,
-        averageProgress: 0.75,
         recentActivities: [],
       }
       mockedReportService.getDashboardReport.mockResolvedValueOnce(mockData)
@@ -122,7 +121,6 @@ describe('useDashboardStore', () => {
         monthlyLessonPlans: 0,
         totalResources: 0,
         activeCourses: 1,
-        averageProgress: 0,
         recentActivities: [],
       })
 
@@ -176,7 +174,6 @@ describe('useDashboardStore', () => {
         monthlyLessonPlans: 10,
         totalResources: 50,
         activeCourses: 5,
-        averageProgress: 0.8,
         recentActivities: [],
       })
 
@@ -198,7 +195,6 @@ describe('useDashboardStore', () => {
         monthlyLessonPlans: 10,
         totalResources: 50,
         activeCourses: 5,
-        averageProgress: 0.8,
         recentActivities: [],
       })
 
@@ -220,7 +216,6 @@ describe('useDashboardStore', () => {
         monthlyLessonPlans: 10,
         totalResources: 50,
         activeCourses: 5,
-        averageProgress: 0.8,
         recentActivities: [],
       })
 

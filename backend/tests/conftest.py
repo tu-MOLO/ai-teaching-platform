@@ -64,6 +64,18 @@ def event_loop():
     asyncio.set_event_loop(None)
 
 
+@pytest.fixture(autouse=True)
+def _restore_session_event_loop(event_loop):
+    # asyncio.run()（如 test_storage_service 的同步用例）结束时会把主线程
+    # current event loop 置为 None。Python 3.13 起 get_event_loop() 不再
+    # 隐式创建循环，会使其后收集执行的异步测试报
+    # "There is no current event loop in thread 'MainThread'"。
+    # 每个测试前后都恢复 session 级循环，保证执行顺序无关性。
+    asyncio.set_event_loop(event_loop)
+    yield
+    asyncio.set_event_loop(event_loop)
+
+
 @pytest_asyncio.fixture(scope="function")
 async def db_session():
     async with test_engine.begin() as conn:

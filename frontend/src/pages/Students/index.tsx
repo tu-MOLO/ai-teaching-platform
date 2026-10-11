@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Button, Table, Space, Tag, message, Input, Modal } from 'antd';
+import { Button, Table, Space, Tag, Input } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, TeamOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
@@ -64,7 +65,7 @@ const Students: React.FC = () => {
   useEffect(() => { fetchStudents(1); }, [debouncedSearch, gradeFilter]);
 
   const handleDelete = (id: string, name: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除学生 "${name}" 吗？此操作不可恢复。`,
       okText: '确认删除', okType: 'danger', cancelText: '取消',

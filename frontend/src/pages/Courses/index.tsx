@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination'
-import { Button, Input, Modal, Space, Table, Tag, message } from 'antd'
+import { Button, Input, Space, Table, Tag } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import { DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined, BookOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { deleteCourse, getCourses, type Course as ApiCourse } from '../../services/course'
@@ -66,7 +67,7 @@ const Courses: React.FC = () => {
   }, [searchParams])
 
   const handleDelete = async (id: string, name: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除课程"${name}"吗？此操作不可恢复。`,
       okText: '确认删除',

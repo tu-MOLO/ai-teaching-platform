@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-    { name = "AI Teaching Platform Team", email = "example@example.com" },
+    { name = "tu-MOLO" },
 ]
 keywords = ["education", "teaching", "ai", "fastapi", "course-management"]
 classifiers = [
@@ -41,6 +41,7 @@ dependencies = [
     "orjson==3.10.12",
     "cryptography>=44.0.0",
     "weasyprint==59.0",
+    "reportlab==5.0.1",
     "python-docx==0.8.11",
 ]
 

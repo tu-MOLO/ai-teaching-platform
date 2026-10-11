@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { Layout, Button, Dropdown, Badge, Tooltip, Modal, List, message } from 'antd'
+import { Layout, Button, Dropdown, Badge, Tooltip, Modal, List } from 'antd';
+import { message } from '@/utils/feedback';
 import {
   BellOutlined,
   UserOutlined,

@@ -83,13 +83,11 @@ async def send_verification_email(
     msg.attach(part2)
 
     # 异步发送
-    smtp_kwargs = {
-        "hostname": settings.SMTP_HOST,
-        "port": settings.SMTP_PORT,
-        "use_tls": settings.SMTP_USE_SSL,
-        "username": settings.SMTP_USERNAME,
-        "password": settings.SMTP_PASSWORD,
-    }
-
-    async with aiosmtplib.SMTP(**smtp_kwargs) as smtp:
+    async with aiosmtplib.SMTP(
+        hostname=settings.SMTP_HOST,
+        port=settings.SMTP_PORT,
+        use_tls=settings.SMTP_USE_SSL,
+        username=settings.SMTP_USERNAME,
+        password=settings.SMTP_PASSWORD,
+    ) as smtp:
         await smtp.send_message(msg)

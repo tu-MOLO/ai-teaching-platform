@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Button, List, Popconfirm, Input, message, Switch, Tooltip, Checkbox } from 'antd'
+import { Button, List, Popconfirm, Input, Switch, Tooltip, Checkbox } from 'antd';
+import { message } from '@/utils/feedback';
 import { PlusOutlined, DeleteOutlined, EditOutlined, InboxOutlined } from '@ant-design/icons'
 import type { Conversation } from '../../services/ai'
 

@@ -1,20 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Card,
-  Avatar,
-  Form,
-  Input,
-  Button,
-  Row,
-  Col,
-  Statistic,
-  Tag,
-  Divider,
-  message,
-  Spin,
-  Descriptions,
-  Modal
-} from 'antd'
+import { Card, Avatar, Form, Input, Button, Row, Col, Statistic, Tag, Divider, Spin, Descriptions, Modal } from 'antd';
+import { message } from '@/utils/feedback';
 import {
   UserOutlined,
   EditOutlined,

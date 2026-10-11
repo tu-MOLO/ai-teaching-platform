@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Input, Button, Divider, message, Space, Select, Collapse } from 'antd';
+import { Form, Input, Button, Divider, Space, Select, Collapse } from 'antd';
+import { message } from '@/utils/feedback';
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import MDEditor from '@uiw/react-md-editor';

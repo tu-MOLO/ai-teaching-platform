@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Card, message, Typography } from 'antd';
+import { Card, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { useNavigate } from 'react-router-dom';
 import { CourseForm, CourseFormData } from '@/components';
 import { createCourse } from '../../services/course';

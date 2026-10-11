@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Card, Form, Input, InputNumber, Radio, Space, Spin, Typography, message } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Radio, Space, Spin, Typography } from 'antd';
+import { message } from '@/utils/feedback';
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfigurableSelect from '../../components/Common/ConfigurableSelect'
 import { refreshDashboardStats } from '../../stores/dashboard'

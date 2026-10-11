@@ -300,7 +300,7 @@ services:
 
 ### 8.2 功能扩展
 
-- **AI服务商热插拔**: 通过配置切换OpenRouter/DeepSeek/SiliconFlow，统一抽象接口
+- **AI服务商热插拔**: 通过配置切换智谱/OpenAI/DeepSeek/Moonshot/通义千问或自定义 OpenAI 兼容接口，统一抽象
 - **工具链扩展**: 新增Function Calling工具只需注册到 `TOOL_DEFINITIONS` + `TOOL_EXECUTOR`
 - **导出格式扩展**: ExportService支持PDF/Word，可扩展为PPT/Excel
 - **通知渠道扩展**: 当前支持站内信，可扩展邮件/短信/WebPush

@@ -23,7 +23,8 @@
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { message, Progress } from 'antd';
+import { Progress } from 'antd';
+import { message } from '@/utils/feedback';
 
 /** 最大文件大小：100MB（与后端配置保持一致） */
 const MAX_FILE_SIZE = 100 * 1024 * 1024;

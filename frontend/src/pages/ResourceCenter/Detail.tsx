@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { Button, message, Modal } from 'antd'
+import { Button } from 'antd';
+import { message, modal } from '@/utils/feedback';
 import { DeleteOutlined, DownloadOutlined, LeftOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourcePreview } from '@/components'
@@ -70,7 +71,7 @@ const ResourceDetail: React.FC = () => {
 
   const handleDelete = () => {
     if (!resource?.id) return
-    Modal.confirm({
+    modal.confirm({
       title: '确认删除',
       content: `确定要删除资源"${resource.name}"吗？此操作不可恢复。`,
       okText: '确认删除',
