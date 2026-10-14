@@ -43,14 +43,14 @@ class TestCourseToolExecutors:
             test_user.id,
             name="数学基础",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="testuser",
             description="数学基础课程",
         )
         assert "id" in result
         assert result["name"] == "数学基础"
         assert result["subject"] == "数学"
-        assert result["grade"] == "三年级"
+        assert result["grades"] == ["三年级"]
         assert result["status"] == "draft"
 
     @pytest.mark.asyncio
@@ -60,7 +60,7 @@ class TestCourseToolExecutors:
             test_user.id,
             name="语文阅读",
             subject="语文",
-            grade="二年级",
+            grades=["二年级"],
             teacher="testuser",
         )
         result = await _list_courses(db_session, test_user.id)
@@ -78,7 +78,7 @@ class TestCourseToolExecutors:
             test_user.id,
             name="课程A",
             subject="数学",
-            grade="一年级",
+            grades=["一年级"],
             teacher="testuser",
         )
         result = await _list_courses(db_session, test_user.id, page=1, page_size=5)
@@ -92,7 +92,7 @@ class TestCourseToolExecutors:
             test_user.id,
             name="英语口语",
             subject="英语",
-            grade="四年级",
+            grades=["四年级"],
             teacher="testuser",
         )
         result = await _get_course(db_session, test_user.id, course_id=created["id"])
@@ -115,7 +115,7 @@ class TestCourseToolExecutors:
             test_user.id,
             name="物理实验",
             subject="物理",
-            grade="五年级",
+            grades=["五年级"],
             teacher="testuser",
         )
         result = await _update_course(
@@ -144,7 +144,7 @@ class TestCourseToolExecutors:
             test_user.id,
             name="化学入门",
             subject="化学",
-            grade="六年级",
+            grades=["六年级"],
             teacher="testuser",
         )
         result = await _delete_course(db_session, test_user.id, course_id=created["id"])
@@ -291,7 +291,7 @@ class TestReportToolExecutors:
             test_user.id,
             name="统计课程",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="testuser",
         )
         result = await _get_dashboard_stats(db_session, test_user.id)
@@ -308,7 +308,7 @@ class TestReportToolExecutors:
             test_user.id,
             name="统计课程A",
             subject="语文",
-            grade="二年级",
+            grades=["二年级"],
             teacher="testuser",
         )
         result = await _get_course_statistics(db_session, test_user.id)
@@ -338,7 +338,7 @@ class TestReportToolExecutors:
             test_user.id,
             name="趋势课程",
             subject="英语",
-            grade="四年级",
+            grades=["四年级"],
             teacher="testuser",
         )
         result = await _get_monthly_trends(db_session, test_user.id, months=3)

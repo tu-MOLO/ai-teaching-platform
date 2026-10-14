@@ -2,7 +2,7 @@
 课程相关的 Pydantic schemas
 """
 
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import Field
 
@@ -14,7 +14,8 @@ class CourseBase(BaseSchema):
 
     name: str = Field(..., description="课程名称", max_length=200)
     subject: str = Field(..., description="学科", max_length=100)
-    grade: str = Field(..., description="年级", max_length=50)
+    grades: List[str] = Field(default_factory=list, description="年级（支持多选）")
+    class_names: List[str] = Field(default_factory=list, description="班级（支持多选）")
     teacher: Optional[str] = Field(None, description="授课教师（服务端自动填充）", max_length=100)
     schedule: Optional[str] = Field(None, description="课程安排", max_length=500)
     description: Optional[str] = Field(None, description="课程描述")
@@ -26,7 +27,8 @@ class CourseCreate(BaseSchema):
 
     name: str = Field(..., description="课程名称", max_length=200)
     subject: str = Field(..., description="学科", max_length=100)
-    grade: str = Field(..., description="年级", max_length=50)
+    grades: List[str] = Field(..., description="年级（支持多选）", min_length=1)
+    class_names: List[str] = Field(default_factory=list, description="班级（支持多选）")
     schedule: Optional[str] = Field(None, description="课程安排", max_length=500)
     description: Optional[str] = Field(None, description="课程描述")
     status: Literal["active", "inactive", "draft"] = Field(default="draft", description="课程状态")
@@ -37,7 +39,8 @@ class CourseUpdate(BaseSchema):
 
     name: Optional[str] = Field(None, description="课程名称", max_length=200)
     subject: Optional[str] = Field(None, description="学科", max_length=100)
-    grade: Optional[str] = Field(None, description="年级", max_length=50)
+    grades: Optional[List[str]] = Field(None, description="年级（支持多选）")
+    class_names: Optional[List[str]] = Field(None, description="班级（支持多选）")
     teacher: Optional[str] = Field(None, description="授课教师", max_length=100)
     schedule: Optional[str] = Field(None, description="课程安排", max_length=500)
     description: Optional[str] = Field(None, description="课程描述")

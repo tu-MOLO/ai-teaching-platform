@@ -37,7 +37,7 @@ async def send_verification_email(
     msg = MIMEMultipart("alternative")
     msg["From"] = settings.SMTP_FROM_EMAIL
     msg["To"] = email
-    msg["Subject"] = f"[AI教学平台] 邮箱验证码 - {type_label}"
+    msg["Subject"] = f"[AI培智教学平台] 邮箱验证码 - {type_label}"
 
     # 纯文本内容
     text_content = (
@@ -46,7 +46,7 @@ async def send_verification_email(
         f"    {code}\n\n"
         f"验证码有效期为 {settings.VERIFICATION_CODE_EXPIRE_MINUTES} 分钟，请尽快使用。\n"
         f"如非本人操作，请忽略此邮件。\n\n"
-        f"AI教学平台"
+        f"AI培智教学平台"
     )
 
     # HTML内容
@@ -55,7 +55,7 @@ async def send_verification_email(
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 background: #f9fafb; border-radius: 12px;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="color: #1f2937; margin: 0;">AI教学平台</h2>
+        <h2 style="color: #1f2937; margin: 0;">AI培智教学平台</h2>
       </div>
       <div style="background: white; padding: 32px 24px; border-radius: 8px;
                   box-shadow: 0 1px 3px rgba(0,0,0,0.1);">

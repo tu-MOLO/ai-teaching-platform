@@ -6,16 +6,22 @@ import React from 'react';
 vi.mock('antd', () => {
   const h = React.createElement;
   return {
-    Modal: ({ open, title, children, onCancel }: any) =>
+    Modal: ({ open, title, children, footer, zIndex }: any) =>
       open
         ? h(
             'div',
-            { 'data-testid': 'modal', role: 'dialog' },
-            h('button', { type: 'button', onClick: onCancel }, '关闭'),
+            {
+              'data-testid': 'modal',
+              role: 'dialog',
+              'data-zindex': String(zIndex),
+            },
             title,
-            children
+            children,
+            footer
           )
         : null,
+    Button: ({ children, onClick, disabled }: any) =>
+      h('button', { type: 'button', onClick, disabled }, children),
     Alert: ({ message, description }: any) =>
       h('div', { 'data-testid': 'alert' }, message, description),
     Tag: ({ children }: any) => h('span', null, children),
@@ -26,7 +32,7 @@ vi.mock('antd', () => {
   };
 });
 
-import ReportModal from '../ReportModal';
+import ReportModal, { buildReportMarkdown } from '../ReportModal';
 import type { GrowthReportAI } from '../../../services/iep';
 
 const fullReport: GrowthReportAI = {
@@ -105,10 +111,87 @@ describe('ReportModal', () => {
     expect(screen.getByText('每天亲子共读15分钟')).toBeInTheDocument();
   });
 
+  it('列表项被 AI 写成 {description, evidence_refs} 对象时也能安全渲染', () => {
+    const messy = {
+      ...fullReport,
+      needs_review: [{ description: '缺三月记录', evidence_refs: ['n1'] }],
+      highlights: [{ description: '能追视5秒', evidence_refs: ['obs-1'] }],
+      family_suggestions: [{ description: '在家练习追视' }],
+      goals_summary: {
+        achieved: [{ description: '追视达成', evidence_refs: ['stg-1'] }],
+        in_progress: [],
+        next_term_focus: [],
+      },
+      domain_progress: [
+        {
+          domain: '感知',
+          start_level: 1,
+          end_level: 2,
+          description: '追视延长',
+          evidence_refs: [{ description: 'obs-1' }],
+        },
+      ],
+    } as unknown as GrowthReportAI;
+
+    render(<ReportModal open report={messy} onClose={vi.fn()} />);
+
+    expect(screen.getByText('缺三月记录 （依据：n1）')).toBeInTheDocument();
+    expect(screen.getByText('能追视5秒 （依据：obs-1）')).toBeInTheDocument();
+    expect(screen.getByText('在家练习追视')).toBeInTheDocument();
+    expect(screen.getByText(/追视达成 （依据：stg-1）/)).toBeInTheDocument();
+    expect(screen.getByText('obs-1')).toBeInTheDocument();
+  });
+
   it('点击关闭按钮触发 onClose', () => {
     const onClose = vi.fn();
     render(<ReportModal open report={fullReport} onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: '关闭' }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('弹窗层级置于最上层（zIndex 1050），避免被侧边栏遮挡', () => {
+    render(<ReportModal open report={fullReport} onClose={vi.fn()} />);
+    expect(screen.getByTestId('modal')).toHaveAttribute('data-zindex', '1050');
+  });
+
+  it('导出 Markdown 覆盖概述、领域、目标、亮点与建议', () => {
+    const md = buildReportMarkdown(fullReport, '小明 2026 第一学期');
+    expect(md).toContain('# 小明 2026 第一学期 学期成长报告（草稿）');
+    expect(md).toContain('本报告由 AI 生成草稿');
+    expect(md).toContain('## 总体概述');
+    expect(md).toContain('## 领域变化');
+    expect(md).toContain('### 语言');
+    expect(md).toContain('- 证据：观察记录#12、课堂录像#3');
+    expect(md).toContain('## 目标小结');
+    expect(md).toContain('## 亮点事例');
+    expect(md).toContain('## 给家长的建议');
+  });
+
+  it('对象的列表项也能安全导出为可读文本', () => {
+    const messy = {
+      ...fullReport,
+      highlights: [{ description: '能追视5秒', evidence_refs: ['obs-1'] }],
+    } as unknown as GrowthReportAI;
+    const md = buildReportMarkdown(messy);
+    expect(md).toContain('能追视5秒 （依据：obs-1）');
+  });
+
+  it('点击「导出为 Markdown」触发文件下载', () => {
+    const createObjectURL = vi.fn(() => 'blob:mock');
+    const revokeObjectURL = vi.fn();
+    (URL as any).createObjectURL = createObjectURL;
+    (URL as any).revokeObjectURL = revokeObjectURL;
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => {});
+
+    render(<ReportModal open report={fullReport} onClose={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: '导出为 Markdown' }));
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+
+    clickSpy.mockRestore();
   });
 });

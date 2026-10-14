@@ -199,17 +199,41 @@
   background: var(--color-primary-lighter, #e6f7ff);
 }
 
+.conversation-item .ant-list-item-meta {
+  min-width: 0;
+  align-items: center;
+}
+
+.conversation-item .ant-list-item-meta-content {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .conversation-item .ant-list-item-meta-title {
   font-size: 13px;
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 150px;
+  max-width: 100%;
+  margin-bottom: 2px;
 }
 
 .conversation-item .ant-list-item-meta-description {
   font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 操作图标固定在右侧，避免正文（含日期）与图标重叠 */
+.conversation-item .ant-list-item-action {
+  flex: 0 0 auto;
+  margin-inline-start: 8px;
+}
+
+.conversation-item .ant-list-item-action > li {
+  padding: 0 2px;
 }
 
 .ai-assistant-loading,

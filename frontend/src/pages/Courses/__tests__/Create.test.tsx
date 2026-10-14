@@ -28,7 +28,7 @@ vi.mock('@/types/error', () => ({
 vi.mock('@/components', () => ({
   CourseForm: ({ onSubmit, onCancel }: any) =>
     React.createElement('div', { 'data-testid': 'course-form' },
-      React.createElement('button', { onClick: () => onSubmit({ name: 'Course', subject: 'Math', grade: '一年级', schedule: '', status: 'active' }), 'data-testid': 'btn-submit' }, '提交'),
+      React.createElement('button', { onClick: () => onSubmit({ name: 'Course', subject: 'Math', grades: ['一年级'], class_names: [], schedule: '', status: 'active' }), 'data-testid': 'btn-submit' }, '提交'),
       React.createElement('button', { onClick: onCancel, 'data-testid': 'btn-cancel' }, '取消')
     ),
 }))

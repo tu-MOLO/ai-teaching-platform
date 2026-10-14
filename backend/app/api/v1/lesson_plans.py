@@ -105,6 +105,14 @@ async def delete_lesson_plan(plan_id: str, db: DBSession, user_id: CurrentUser):
         raise NotFoundException("LessonPlan", plan_id)
 
 
+@router.delete("/{plan_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+async def permanent_delete_lesson_plan(plan_id: str, db: DBSession, user_id: CurrentUser):
+    service = LessonPlanService(db)
+    success = await service.permanent_delete(plan_id, user_id)
+    if not success:
+        raise NotFoundException("LessonPlan", plan_id)
+
+
 @router.post("/{plan_id}/publish", response_model=DataResponse[LessonPlanResponse])
 async def publish_lesson_plan(plan_id: str, db: DBSession, user_id: CurrentUser):
     service = LessonPlanService(db)

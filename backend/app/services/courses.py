@@ -14,6 +14,12 @@ from app.schemas.notification import NotificationCreate
 from app.services.notifications import NotificationService
 
 
+def _grade_member_clause(grade: str):
+    """构造「年级数组包含指定年级」的筛选条件（SQLite JSON1 json_each）。"""
+    grade_items = func.json_each(Course.grades).table_valued("value").alias("grade_item")
+    return select(1).select_from(grade_items).where(grade_items.c.value == grade).exists()
+
+
 class CourseService:
     """课程服务类"""
 
@@ -120,7 +126,7 @@ class CourseService:
             query = query.where(Course.subject == subject)
 
         if grade:
-            query = query.where(Course.grade == grade)
+            query = query.where(_grade_member_clause(grade))
 
         if status:
             query = query.where(Course.status == status)
@@ -174,7 +180,7 @@ class CourseService:
             query = query.where(Course.subject == subject)
 
         if grade:
-            query = query.where(Course.grade == grade)
+            query = query.where(_grade_member_clause(grade))
 
         if status:
             query = query.where(Course.status == status)

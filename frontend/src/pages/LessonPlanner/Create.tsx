@@ -170,7 +170,7 @@ const CreateLessonPlan: React.FC = () => {
                   <Radio value="published">
                     <span style={{ fontWeight: 500 }}>创建并标记完成</span>
                     <Text type="secondary" style={{ display: 'block', marginLeft: 24, fontSize: 13 }}>
-                      教案会直接创建为已发布状态，可立即投入使用。
+                      教案将直接标记为已完成状态。
                     </Text>
                   </Radio>
                 </Space>

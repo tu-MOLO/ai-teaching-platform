@@ -9,6 +9,7 @@ const mockPublishLessonPlan = vi.fn().mockResolvedValue({})
 const mockUnpublishLessonPlan = vi.fn().mockResolvedValue({})
 const mockArchiveLessonPlan = vi.fn().mockResolvedValue({})
 const mockRestoreLessonPlan = vi.fn().mockResolvedValue({})
+const mockPermanentDeleteLessonPlan = vi.fn().mockResolvedValue({})
 
 vi.mock('../../services/lessonPlan', () => ({
   getLessonPlans: (...args: any[]) => mockGetLessonPlans(...args),
@@ -17,6 +18,7 @@ vi.mock('../../services/lessonPlan', () => ({
   unpublishLessonPlan: (...args: any[]) => mockUnpublishLessonPlan(...args),
   archiveLessonPlan: (...args: any[]) => mockArchiveLessonPlan(...args),
   restoreLessonPlan: (...args: any[]) => mockRestoreLessonPlan(...args),
+  permanentDeleteLessonPlan: (...args: any[]) => mockPermanentDeleteLessonPlan(...args),
 }))
 
 vi.mock('../../stores/dashboard', () => ({

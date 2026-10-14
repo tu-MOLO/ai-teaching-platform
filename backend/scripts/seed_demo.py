@@ -275,7 +275,7 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
                 user_id=user.id,
                 name=cname,
                 subject=subject,
-                grade=grade,
+                grades=[grade],
                 teacher=user.full_name or "演示教师",
                 schedule="每周2课时",
                 description=f"{cname}课程（演示数据）。",

@@ -11,7 +11,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="数学基础",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="张老师",
             description="数学基础课程",
         )
@@ -31,7 +31,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="语文阅读",
             subject="语文",
-            grade="二年级",
+            grades=["二年级"],
             teacher="李老师",
         )
         course = await CourseService.create(db_session, course_in, test_user.id, "李老师")
@@ -51,7 +51,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="英语口语",
             subject="英语",
-            grade="四年级",
+            grades=["四年级"],
             teacher="王老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "王老师")
@@ -65,7 +65,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="物理实验",
             subject="物理",
-            grade="五年级",
+            grades=["五年级"],
             teacher="赵老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "赵老师")
@@ -79,7 +79,7 @@ class TestCourseServiceIntegration:
             course_in = CourseCreate(
                 name=f"课程{i}",
                 subject="化学",
-                grade="六年级",
+                grades=["六年级"],
                 teacher="孙老师",
             )
             await CourseService.create(db_session, course_in, test_user.id, "孙老师")
@@ -92,7 +92,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="独特课程名称",
             subject="生物",
-            grade="七年级",
+            grades=["七年级"],
             teacher="周老师",
         )
         await CourseService.create(db_session, course_in, test_user.id, "周老师")
@@ -106,7 +106,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="历史课",
             subject="历史",
-            grade="八年级",
+            grades=["八年级"],
             teacher="吴老师",
         )
         await CourseService.create(db_session, course_in, test_user.id, "吴老师")
@@ -122,7 +122,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="地理课",
             subject="地理",
-            grade="九年级",
+            grades=["九年级"],
             teacher="郑老师",
         )
         await CourseService.create(db_session, course_in, test_user.id, "郑老师")
@@ -135,7 +135,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="政治课",
             subject="政治",
-            grade="高一",
+            grades=["高一"],
             teacher="钱老师",
         )
         await CourseService.create(db_session, course_in, test_user.id, "钱老师")
@@ -148,25 +148,25 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="更新前课程",
             subject="音乐",
-            grade="高二",
+            grades=["高二"],
             teacher="冯老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "冯老师")
 
-        update_data = CourseUpdate(name="更新后课程", grade="高三")
+        update_data = CourseUpdate(name="更新后课程", grades=["高三"])
         updated = await CourseService.update(
             db_session, created.id, update_data, test_user.id, "冯老师"
         )
         assert updated is not None
         assert updated.name == "更新后课程"
-        assert updated.grade == "高三"
+        assert updated.grades == ["高三"]
 
     @pytest.mark.asyncio
     async def test_update_returns_none_for_wrong_user(self, db_session, test_user):
         course_in = CourseCreate(
             name="不可更新课程",
             subject="美术",
-            grade="高三",
+            grades=["高三"],
             teacher="陈老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "陈老师")
@@ -182,7 +182,7 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="待删除课程",
             subject="体育",
-            grade="四年级",
+            grades=["四年级"],
             teacher="韩老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "韩老师")
@@ -198,10 +198,31 @@ class TestCourseServiceIntegration:
         course_in = CourseCreate(
             name="不可删除课程",
             subject="信息技术",
-            grade="五年级",
+            grades=["五年级"],
             teacher="杨老师",
         )
         created = await CourseService.create(db_session, course_in, test_user.id, "杨老师")
 
         result = await CourseService.delete(db_session, created.id, "wrong-user-id")
         assert result is False
+
+    @pytest.mark.asyncio
+    async def test_grade_filter_matches_multi_value_course(self, db_session, test_user):
+        course_in = CourseCreate(
+            name="跨年级课程",
+            subject="生活适应",
+            grades=["低年级", "中年级"],
+            class_names=["培智一班", "培智二班"],
+            teacher="示例老师",
+        )
+        await CourseService.create(db_session, course_in, test_user.id, "示例老师")
+
+        matched = await CourseService.get_list(db_session, test_user.id, grade="中年级")
+        assert any(c.name == "跨年级课程" for c in matched)
+
+        count = await CourseService.count(db_session, test_user.id, grade="中年级")
+        assert count >= 1
+
+        # 未包含的年级不应命中
+        unmatched = await CourseService.get_list(db_session, test_user.id, grade="高年级")
+        assert all(c.name != "跨年级课程" for c in unmatched)

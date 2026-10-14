@@ -108,7 +108,7 @@ export const deleteLessonPlan = async (id: string): Promise<void> => {
 };
 
 /**
- * 发布教案
+ * 标记教案为完成
  * @param id 教案ID
  */
 export const publishLessonPlan = async (id: string): Promise<LessonPlan> => {
@@ -117,7 +117,7 @@ export const publishLessonPlan = async (id: string): Promise<LessonPlan> => {
 };
 
 /**
- * 取消发布教案
+ * 取消完成教案
  * @param id 教案ID
  */
 export const unpublishLessonPlan = async (id: string): Promise<LessonPlan> => {
@@ -141,6 +141,14 @@ export const archiveLessonPlan = async (id: string): Promise<LessonPlan> => {
 export const restoreLessonPlan = async (id: string): Promise<LessonPlan> => {
   const response = await api.post(`/lesson-plans/${id}/restore`);
   return toItem<LessonPlan>(response);
+};
+
+/**
+ * 彻底删除教案（不可恢复）
+ * @param id 教案ID
+ */
+export const permanentDeleteLessonPlan = async (id: string): Promise<void> => {
+  await api.delete(`/lesson-plans/${id}/permanent`);
 };
 
 /**

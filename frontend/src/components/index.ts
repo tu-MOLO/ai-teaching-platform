@@ -151,3 +151,10 @@ export { default as ContrastWarning } from './Theme/ContrastWarning';
 // ==================== Common 通用组件 ====================
 
 export { default as ErrorBoundary } from './Common/ErrorBoundary';
+
+/**
+ * 统一空状态组件 - 各页面资源为空时的占位提示
+ * @see {@link ./Common/EmptyState}
+ */
+export { default as EmptyState } from './Common/EmptyState';
+export type { EmptyStateProps } from './Common/EmptyState';

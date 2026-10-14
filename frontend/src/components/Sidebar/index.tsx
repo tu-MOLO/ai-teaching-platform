@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </svg>
             </div>
             <div className="logo-text">
-              <span className="logo-title">AI教学平台</span>
+              <span className="logo-title">AI培智教学平台</span>
               <span className="logo-subtitle">教学管理系统</span>
             </div>
           </div>
@@ -158,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </svg>
           </div>
           <div className="logo-text">
-            <span className="logo-title">AI教学平台</span>
+            <span className="logo-title">AI培智教学平台</span>
             <span className="logo-subtitle">教学管理系统</span>
           </div>
         </div>

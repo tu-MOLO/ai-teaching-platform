@@ -5,7 +5,7 @@
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Index, String, Table, Text, func
+from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Index, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, BaseModel
@@ -42,7 +42,13 @@ class Course(BaseModel):
 
     subject: Mapped[str] = mapped_column(String(100), nullable=False, index=True, comment="学科")
 
-    grade: Mapped[str] = mapped_column(String(50), nullable=False, index=True, comment="年级")
+    grades: Mapped[List[str]] = mapped_column(
+        JSON, nullable=False, default=list, comment="年级（支持多选）"
+    )
+
+    class_names: Mapped[List[str]] = mapped_column(
+        JSON, nullable=False, default=list, comment="班级（支持多选）"
+    )
 
     teacher: Mapped[str] = mapped_column(String(100), nullable=False, comment="授课教师")
 
@@ -74,7 +80,4 @@ class Course(BaseModel):
     )
 
     # 复合索引
-    __table_args__ = (
-        Index("ix_courses_subject_grade", "subject", "grade"),
-        Index("ix_courses_status", "status"),
-    )
+    __table_args__ = (Index("ix_courses_status", "status"),)

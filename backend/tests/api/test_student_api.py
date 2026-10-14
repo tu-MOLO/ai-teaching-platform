@@ -623,7 +623,7 @@ class TestStudentCoverageGaps:
             json={
                 "name": "Student Course",
                 "subject": "Math",
-                "grade": "Grade 5",
+                "grades": ["Grade 5"],
                 "teacher": "Test User",
             },
             headers=auth_headers,

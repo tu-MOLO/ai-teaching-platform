@@ -1,4 +1,4 @@
-# API Reference — AI 教学平台
+# API Reference — AI培智教学平台
 
 > 本文档为静态参考。交互式文档请启动后端（`DEBUG=True`），访问 `/docs`（Swagger UI）或 `/redoc`（ReDoc）。
 

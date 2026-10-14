@@ -249,7 +249,8 @@ class AcceptanceRunner:
         payload = {
             "name": f"验收课程{self.timestamp}",
             "subject": "语文",
-            "grade": "一年级",
+            "grades": ["一年级"],
+            "class_names": ["一班"],
             "teacher": "验收教师",
             "schedule": "周一第一节",
             "description": "课程验收",

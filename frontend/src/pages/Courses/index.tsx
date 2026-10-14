@@ -7,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { deleteCourse, getCourses, type Course as ApiCourse } from '../../services/course'
 import { refreshDashboardStats } from '../../stores/dashboard'
 import useDebouncedValue from '../../hooks/useDebouncedValue'
+import ConfigurableSelect from '../../components/Common/ConfigurableSelect'
 
 const { Search } = Input
 
@@ -31,6 +32,7 @@ const Courses: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [searchText, setSearchText] = useState(() => searchParams.get('search') || '')
   const debouncedSearch = useDebouncedValue(searchText)
+  const [gradeFilter, setGradeFilter] = useState<string | undefined>()
   const [pagination, setPagination] = useState({ current: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0 })
 
   const fetchCourses = async (page = 1, pageSize = pagination.pageSize) => {
@@ -40,6 +42,7 @@ const Courses: React.FC = () => {
         page,
         page_size: pageSize,
         keyword: debouncedSearch || undefined,
+        grade: gradeFilter || undefined,
       })
       setCourses(response.data || [])
       setPagination({
@@ -57,7 +60,7 @@ const Courses: React.FC = () => {
 
   useEffect(() => {
     fetchCourses(1)
-  }, [debouncedSearch])
+  }, [debouncedSearch, gradeFilter])
 
   useEffect(() => {
     const nextSearch = searchParams.get('search') || ''
@@ -90,7 +93,20 @@ const Courses: React.FC = () => {
   const columns = [
     { title: '课程名称', dataIndex: 'name', key: 'name' },
     { title: '学科', dataIndex: 'subject', key: 'subject' },
-    { title: '年级', dataIndex: 'grade', key: 'grade' },
+    {
+      title: '年级', dataIndex: 'grades', key: 'grades',
+      render: (grades?: string[]) =>
+        grades && grades.length
+          ? <Space size={4} wrap>{grades.map((g) => <Tag key={g}>{g}</Tag>)}</Space>
+          : '-',
+    },
+    {
+      title: '班级', dataIndex: 'class_names', key: 'class_names',
+      render: (classes?: string[]) =>
+        classes && classes.length
+          ? <Space size={4} wrap>{classes.map((c) => <Tag key={c}>{c}</Tag>)}</Space>
+          : '-',
+    },
     { title: '任课教师', dataIndex: 'teacher', key: 'teacher' },
     { title: '上课时间', dataIndex: 'schedule', key: 'schedule', render: (schedule?: string) => schedule || '-' },
     {
@@ -139,6 +155,15 @@ const Courses: React.FC = () => {
                 setSearchParams(value ? { search: value } : {})
               }}
               style={{ width: 300 }}
+            />
+            <ConfigurableSelect
+              groupKey="course_grade"
+              allowQuickCreate={false}
+              allowClear
+              placeholder="按年级筛选"
+              value={gradeFilter}
+              onChange={(value) => setGradeFilter(value as string | undefined)}
+              style={{ width: 180 }}
             />
           </div>
         </div>

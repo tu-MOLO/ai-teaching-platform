@@ -8,7 +8,8 @@ export interface Course {
   id: string;
   name: string;
   subject: string;
-  grade: string;
+  grades: string[];
+  class_names: string[];
   teacher: string;
   schedule?: string;
   description?: string;
@@ -23,7 +24,8 @@ export interface Course {
 export interface CreateCourseData {
   name: string;
   subject: string;
-  grade: string;
+  grades: string[];
+  class_names?: string[];
   teacher?: string;
   schedule?: string;
   description?: string;
@@ -36,7 +38,8 @@ export interface CreateCourseData {
 export interface UpdateCourseData {
   name?: string;
   subject?: string;
-  grade?: string;
+  grades?: string[];
+  class_names?: string[];
   teacher?: string;
   schedule?: string;
   description?: string;

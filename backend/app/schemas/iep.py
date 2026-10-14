@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import Field
 
@@ -235,6 +235,18 @@ class IEPUpdate(BaseSchema):
     evaluation_plan: Optional[str] = None
     domain_assessments: Optional[List[DomainAssessmentCreate]] = None
     long_term_goals: Optional[List[LongTermGoalCreate]] = None
+
+
+class IEPDraftGenerateRequest(BaseSchema):
+    """AI 初稿生成范围，对应编辑页三个步骤，用于只生成当前页内容。"""
+
+    section: Literal["all", "profile", "goals", "supports"] = Field(
+        default="all",
+        description=(
+            "profile=情况与评估页（基本情况+领域小结）；goals=长短期目标页；"
+            "supports=支持措施与评价页；all=全部"
+        ),
+    )
 
 
 class IEPResponse(IEPBase):

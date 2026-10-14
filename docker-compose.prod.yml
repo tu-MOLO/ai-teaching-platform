@@ -1,5 +1,5 @@
 # ============================================
-# AI教学平台 - 生产环境覆盖配置
+# AI培智教学平台 - 生产环境覆盖配置
 # 与 docker-compose.yml 合并使用:
 #   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # ============================================

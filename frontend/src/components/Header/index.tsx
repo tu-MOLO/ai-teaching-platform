@@ -339,11 +339,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
             关闭
           </Button>
         ]}
-        width={600}
+        width="min(600px, 92vw)"
         centered={isMobile}
+        /* 侧边栏为 fixed 且 z-index 较高，需将弹窗层级提升到其之上，避免被遮挡 */
+        zIndex={1050}
+        styles={{
+          body: { maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' },
+        }}
       >
           <div className="help-content">
-            <h4>欢迎使用AI教学平台</h4>
+            <h4>欢迎使用AI培智教学平台</h4>
             <p>本平台提供以下核心功能：</p>
           <ul>
             <li><strong>课程管理：</strong>创建、编辑和管理您的课程</li>

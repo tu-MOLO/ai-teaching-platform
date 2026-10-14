@@ -80,6 +80,40 @@
   padding: var(--space-md) 0;
 }
 
+.profile-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  border-radius: 50%;
+  cursor: pointer;
+  line-height: 0;
+  margin-bottom: var(--space-md);
+}
+
+.profile-avatar-wrapper .profile-avatar {
+  margin-bottom: 0;
+}
+
+.profile-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.profile-avatar-wrapper:hover .profile-avatar-overlay,
+.profile-avatar-wrapper:focus-visible .profile-avatar-overlay {
+  opacity: 1;
+}
+
 .profile-avatar {
   margin-bottom: var(--space-md);
   background: var(--color-primary);

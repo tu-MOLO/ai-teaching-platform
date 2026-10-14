@@ -5,7 +5,8 @@ import ConfigurableSelect from '../Common/ConfigurableSelect'
 export interface CourseFormData {
   name: string
   subject: string
-  grade: string
+  grades: string[]
+  class_names: string[]
   schedule: string
   status: 'active' | 'inactive' | 'draft'
 }
@@ -55,11 +56,23 @@ const CourseForm: React.FC<CourseFormProps> = ({
       </Form.Item>
 
       <Form.Item
-        name="grade"
+        name="grades"
         label="年级"
         rules={[{ required: true, message: '请选择年级' }]}
       >
-        <ConfigurableSelect groupKey="course_grade" placeholder="请选择年级" />
+        <ConfigurableSelect
+          groupKey="course_grade"
+          mode="multiple"
+          placeholder="请选择年级（可多选）"
+        />
+      </Form.Item>
+
+      <Form.Item name="class_names" label="班级">
+        <ConfigurableSelect
+          groupKey="student_class"
+          mode="multiple"
+          placeholder="请选择班级（可多选）"
+        />
       </Form.Item>
 
       <Form.Item label="任课教师">

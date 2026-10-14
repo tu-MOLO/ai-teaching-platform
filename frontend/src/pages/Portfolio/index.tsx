@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Card, Input, Table, Space, Empty } from 'antd';
+import { Card, Input, Table, Space } from 'antd';
 import { message, modal } from '@/utils/feedback';
 import {
   PlusOutlined,
@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { studentService } from '../../services/student';
 import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
+import EmptyState from '../../components/Common/EmptyState';
 import type { Student } from '../../types/student';
 import './index.css';
 
@@ -360,14 +361,10 @@ const Portfolio: React.FC = () => {
             />
           )
         ) : (
-          <Empty
-            image={<TeamOutlined style={{ fontSize: 64, color: 'var(--color-text-tertiary)' }} />}
-            description={
-              <div className="empty-state">
-                <div className="empty-state-title">暂无学生</div>
-                <div className="empty-state-desc">点击上方按钮添加您的第一个学生</div>
-              </div>
-            }
+          <EmptyState
+            icon={<TeamOutlined />}
+            title="暂无学生"
+            description="点击上方按钮添加您的第一个学生"
           />
         )}
       </Card>

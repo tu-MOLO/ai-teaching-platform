@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Empty, Popconfirm, Select, Spin, Tag, Typography } from 'antd';
+import { Button, Popconfirm, Select, Spin, Tag, Typography } from 'antd';
 import { message } from '@/utils/feedback';
 import { BellOutlined, DeleteOutlined, ReadOutlined } from '@ant-design/icons'
+import EmptyState from '../../components/Common/EmptyState'
 import {
   deleteAllRead,
   deleteNotification,
@@ -163,7 +164,7 @@ const NotificationsPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <Empty description="暂无通知" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <EmptyState icon={<BellOutlined />} title="暂无通知" description="您暂时没有收到任何通知" />
         )}
       </Spin>
     </div>

@@ -14,6 +14,11 @@ export const DROPDOWN_GROUPS: DropdownGroupMeta[] = [
   { key: 'course_status', label: '课程状态' },
   { key: 'lesson_plan_subject', label: '教案学科' },
   { key: 'lesson_plan_grade', label: '教案年级' },
+  { key: 'iep_teaching_method', label: '教学方法' },
+  { key: 'iep_material', label: '教具 / 材料' },
+  { key: 'iep_support_teaching', label: '教学支持' },
+  { key: 'iep_support_rehab', label: '康复支持' },
+  { key: 'iep_support_family', label: '家庭支持' },
   { key: 'portfolio_record_type', label: '档案记录类型' },
   { key: 'resource_tag', label: '资源标签' },
 ]

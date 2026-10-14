@@ -262,7 +262,7 @@ class TestTestConnection:
         mock_response = MagicMock()
         mock_response.status_code = 200
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -285,7 +285,7 @@ class TestTestConnection:
         mock_response = MagicMock()
         mock_response.status_code = 429
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -295,7 +295,7 @@ class TestTestConnection:
             result = await AIConfigService.test_connection(db, "user-1", test_request)
 
             assert result.success is True
-            assert "速率限制" in result.message
+            assert "受限" in result.message
 
     @pytest.mark.asyncio
     async def test_401_auth_failure(self):
@@ -308,7 +308,7 @@ class TestTestConnection:
         mock_response = MagicMock()
         mock_response.status_code = 401
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -318,7 +318,7 @@ class TestTestConnection:
             result = await AIConfigService.test_connection(db, "user-1", test_request)
 
             assert result.success is False
-            assert "认证失败" in result.message
+            assert "密钥无效" in result.message
 
     @pytest.mark.asyncio
     async def test_other_http_error(self):
@@ -333,7 +333,7 @@ class TestTestConnection:
         mock_response.headers = {"content-type": "application/json"}
         mock_response.json.return_value = {"error": {"message": "Internal Server Error"}}
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -343,7 +343,7 @@ class TestTestConnection:
             result = await AIConfigService.test_connection(db, "user-1", test_request)
 
             assert result.success is False
-            assert "连接失败" in result.message
+            assert "暂时不可用" in result.message
 
     @pytest.mark.asyncio
     async def test_timeout_exception(self):
@@ -353,7 +353,7 @@ class TestTestConnection:
         test_request.api_base = "https://api.test.com/v1"
         test_request.model = "test-model"
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -373,7 +373,7 @@ class TestTestConnection:
         test_request.api_base = "https://api.test.com/v1"
         test_request.model = "test-model"
 
-        with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client = AsyncMock()
             mock_client.post = AsyncMock(side_effect=Exception("connection refused"))
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
@@ -383,7 +383,7 @@ class TestTestConnection:
             result = await AIConfigService.test_connection(db, "user-1", test_request)
 
             assert result.success is False
-            assert "连接失败" in result.message
+            assert "未知错误" in result.message
 
     @pytest.mark.asyncio
     async def test_no_test_request_uses_effective_config(self):
@@ -401,7 +401,7 @@ class TestTestConnection:
             mock_response = MagicMock()
             mock_response.status_code = 200
 
-            with patch("app.services.ai_config.httpx.AsyncClient") as MockClient:
+            with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
                 mock_client = AsyncMock()
                 mock_client.post = AsyncMock(return_value=mock_response)
                 mock_client.__aenter__ = AsyncMock(return_value=mock_client)

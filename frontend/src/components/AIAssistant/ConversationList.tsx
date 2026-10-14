@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Empty, List, Popconfirm, Input, Switch, Tooltip, Checkbox, Spin } from 'antd';
+import { Button, Empty, List, Popconfirm, Input, Switch, Tooltip, Checkbox, Spin, Dropdown, Modal } from 'antd';
 import { message } from '@/utils/feedback';
-import { PlusOutlined, DeleteOutlined, EditOutlined, InboxOutlined } from '@ant-design/icons'
+import { PlusOutlined, DeleteOutlined, EditOutlined, InboxOutlined, MoreOutlined } from '@ant-design/icons'
 import type { Conversation } from '../../services/ai'
 
 interface ConversationListProps {
@@ -46,8 +46,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     })
   }, [conversations])
 
-  const startEditing = (e: React.MouseEvent, item: Conversation) => {
-    e.stopPropagation()
+  const startEditing = (item: Conversation) => {
     setEditingId(item.id)
     setEditingTitle(item.title)
   }
@@ -77,8 +76,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
     setEditingTitle('')
   }
 
-  const handleArchive = async (e: React.MouseEvent, item: Conversation) => {
-    e.stopPropagation()
+  const handleArchive = async (item: Conversation) => {
     const nextArchived = !item.is_archived
     const ok = await onArchive(item.id, nextArchived)
     if (!ok) {
@@ -88,14 +86,35 @@ const ConversationList: React.FC<ConversationListProps> = ({
     message.success(nextArchived ? '已归档' : '已取消归档')
   }
 
-  const handleDelete = async (e: React.MouseEvent | undefined, item: Conversation) => {
-    e?.stopPropagation()
-    const ok = await onDelete(item.id)
-    if (!ok) {
-      message.error('删除失败，请稍后重试')
-      return
+  const confirmDelete = (item: Conversation) => {
+    Modal.confirm({
+      title: '确定删除此对话？',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        const ok = await onDelete(item.id)
+        if (!ok) {
+          message.error('删除失败，请稍后重试')
+          return
+        }
+        message.success('已删除该对话')
+      },
+    })
+  }
+
+  const handleMoreAction = (
+    item: Conversation,
+    { key, domEvent }: { key: string; domEvent: React.MouseEvent | React.KeyboardEvent }
+  ) => {
+    domEvent.stopPropagation()
+    if (key === 'archive') {
+      handleArchive(item)
+    } else if (key === 'rename') {
+      startEditing(item)
+    } else if (key === 'delete') {
+      confirmDelete(item)
     }
-    message.success('已删除该对话')
   }
 
   const toggleSelect = (id: string, checked: boolean) => {
@@ -231,39 +250,29 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 if (editingId !== item.id) onSelect(item.id)
               }}
               actions={[
-                <Tooltip key="archive" title={item.is_archived ? '取消归档' : '归档'}>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={
-                      <InboxOutlined
-                        style={{ color: item.is_archived ? 'var(--color-primary)' : undefined }}
-                      />
-                    }
-                    onClick={(e) => handleArchive(e, item)}
-                  />
-                </Tooltip>,
-                <Button
-                  key="edit"
-                  type="text"
-                  size="small"
-                  icon={<EditOutlined />}
-                  onClick={(e) => startEditing(e, item)}
-                />,
-                <Popconfirm
-                  key="delete"
-                  title="确定删除此对话？"
-                  onConfirm={(e) => handleDelete(e, item)}
-                  onCancel={(e) => e?.stopPropagation()}
+                <Dropdown
+                  key="more"
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      {
+                        key: 'archive',
+                        icon: <InboxOutlined />,
+                        label: item.is_archived ? '取消归档' : '归档',
+                      },
+                      { key: 'rename', icon: <EditOutlined />, label: '重命名' },
+                      { key: 'delete', icon: <DeleteOutlined />, label: '删除', danger: true },
+                    ],
+                    onClick: (info) => handleMoreAction(item, info),
+                  }}
                 >
                   <Button
                     type="text"
                     size="small"
-                    icon={<DeleteOutlined />}
+                    icon={<MoreOutlined />}
                     onClick={(e) => e.stopPropagation()}
-                    danger
                   />
-                </Popconfirm>,
+                </Dropdown>,
               ]}
             >
               <List.Item.Meta

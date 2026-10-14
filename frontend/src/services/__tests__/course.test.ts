@@ -75,7 +75,7 @@ describe('course service', () => {
   describe('createCourse', () => {
     it('calls api.post with /courses and data', async () => {
       const { createCourse } = await import('../course')
-      const data = { name: 'New Course', subject: 'Math', grade: '5' }
+      const data = { name: 'New Course', subject: 'Math', grades: ['5'] }
 
       mockPost.mockResolvedValue({ data: { id: '1', ...data } })
 
@@ -90,7 +90,7 @@ describe('course service', () => {
 
       mockPost.mockResolvedValue(createdCourse)
 
-      const result = await createCourse({ name: 'New Course', subject: 'Math', grade: '5' })
+      const result = await createCourse({ name: 'New Course', subject: 'Math', grades: ['5'] })
 
       expect(result).toBe(createdCourse)
     })
@@ -144,7 +144,7 @@ describe('course service', () => {
     it('createCourse throws on network error', async () => {
       const { createCourse } = await import('../course')
       mockPost.mockRejectedValue(new Error('Network Error'))
-      await expect(createCourse({ name: 'New Course', subject: 'Math', grade: '5' })).rejects.toThrow('Network Error')
+      await expect(createCourse({ name: 'New Course', subject: 'Math', grades: ['5'] })).rejects.toThrow('Network Error')
     })
   })
 })

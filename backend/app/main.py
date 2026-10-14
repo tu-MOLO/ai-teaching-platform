@@ -1,6 +1,6 @@
 """
 FastAPI应用入口
-AI教学平台后端主应用
+AI培智教学平台后端主应用
 """
 
 import uuid
@@ -207,7 +207,7 @@ def create_application() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         version=settings.APP_VERSION,
-        description="AI教学平台后端API - 提供智能教学、课程管理、教案设计、学生档案、资源管理与AI助手等功能",
+        description="AI培智教学平台后端API - 提供智能教学、课程管理、教案设计、学生档案、资源管理与AI助手等功能",
         docs_url="/docs" if settings.DEBUG else None,
         redoc_url="/redoc" if settings.DEBUG else None,
         openapi_url="/openapi.json" if settings.DEBUG else None,

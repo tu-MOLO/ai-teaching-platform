@@ -1,4 +1,4 @@
-﻿# AI教学平台
+﻿# AI培智教学平台
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python" alt="Python 3.11+">

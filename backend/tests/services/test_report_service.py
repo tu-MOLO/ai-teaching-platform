@@ -103,7 +103,7 @@ class TestGetDashboardStats:
         c1 = Course(
             name="数学课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -112,7 +112,7 @@ class TestGetDashboardStats:
         c2 = Course(
             name="语文课",
             subject="语文",
-            grade="三年级",
+            grades=["三年级"],
             teacher="李老师",
             status=CourseStatus.DRAFT,
             user_id=user.id,
@@ -193,7 +193,7 @@ class TestGetDashboardStats:
         c1 = Course(
             name="过滤课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -216,7 +216,7 @@ class TestGetDashboardStats:
         c = Course(
             name="活动课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -256,7 +256,7 @@ class TestGetCourseStatistics:
         c1 = Course(
             name="数学课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -265,7 +265,7 @@ class TestGetCourseStatistics:
         c2 = Course(
             name="语文课",
             subject="语文",
-            grade="三年级",
+            grades=["三年级"],
             teacher="李老师",
             status=CourseStatus.INACTIVE,
             user_id=user.id,
@@ -274,7 +274,7 @@ class TestGetCourseStatistics:
         c3 = Course(
             name="数学课2",
             subject="数学",
-            grade="四年级",
+            grades=["四年级"],
             teacher="赵老师",
             status=CourseStatus.DRAFT,
             user_id=user.id,
@@ -305,7 +305,7 @@ class TestGetCourseStatistics:
         c = Course(
             name="热门课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -412,7 +412,7 @@ class TestGetMonthlyTrends:
         c = Course(
             name="趋势课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,
@@ -461,7 +461,7 @@ class TestGetMonthlyTrends:
         c = Course(
             name="过滤趋势课",
             subject="数学",
-            grade="三年级",
+            grades=["三年级"],
             teacher="王老师",
             status=CourseStatus.ACTIVE,
             user_id=user.id,

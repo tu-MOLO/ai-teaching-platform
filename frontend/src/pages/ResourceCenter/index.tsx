@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Empty, Input, Pagination, Spin } from 'antd';
+import { Input, Pagination, Spin } from 'antd';
 import { message } from '@/utils/feedback';
-import { FileOutlined, FileImageOutlined, FilePdfOutlined, SearchOutlined, UploadOutlined, VideoCameraOutlined } from '@ant-design/icons'
+import { FileOutlined, FileImageOutlined, FilePdfOutlined, SearchOutlined, UploadOutlined, VideoCameraOutlined, InboxOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import EmptyState from '../../components/Common/EmptyState'
 import { getResources, type ResourceListItem } from '../../services/resource'
 import { getTags } from '../../services/tag'
 import { BusinessError } from '../../types/error'
@@ -232,9 +233,11 @@ const ResourceCenter: React.FC = () => {
           </div>
         </>
       ) : (
-        <div className="empty-state">
-          <Empty description={<div className="empty-state-title">暂无资源</div>} />
-        </div>
+        <EmptyState
+          icon={<InboxOutlined />}
+          title="暂无资源"
+          description="点击右上角上传按钮添加您的第一个教学资源"
+        />
       )}
     </div>
   )

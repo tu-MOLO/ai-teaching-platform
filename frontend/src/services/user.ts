@@ -34,8 +34,13 @@ export const userService = {
     return api.put(`/users/${currentUser.id}`, data)
   },
 
-  updateAvatar: async (userId: string, avatarUrl: string): Promise<{ avatar_url: string }> => {
-    return api.put(`/users/${userId}`, { avatar_url: avatarUrl })
+  uploadAvatar: async (userId: string, file: Blob): Promise<{ avatar_url: string }> => {
+    const formData = new FormData()
+    formData.append('file', file, 'avatar.png')
+    return api.post(`/users/${userId}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    })
   },
 
   changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {

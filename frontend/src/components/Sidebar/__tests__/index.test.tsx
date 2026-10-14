@@ -74,9 +74,9 @@ describe('Sidebar', () => {
     Sidebar = mod.default
   })
 
-  it('renders logo title "AI教学平台"', () => {
+  it('renders logo title "AI培智教学平台"', () => {
     render(React.createElement(Sidebar))
-    expect(screen.getByText('AI教学平台')).toBeInTheDocument()
+    expect(screen.getByText('AI培智教学平台')).toBeInTheDocument()
   })
 
   it('renders all 11 menu item labels', () => {

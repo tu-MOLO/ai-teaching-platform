@@ -63,7 +63,7 @@ describe('CourseForm', () => {
     vi.clearAllMocks()
   })
 
-  it('renders form with name, subject, grade, schedule, status fields', () => {
+  it('renders form with name, subject, grades, class_names, schedule, status fields', () => {
     render(
       React.createElement(CourseForm, {
         currentUserName: '张老师',
@@ -73,7 +73,8 @@ describe('CourseForm', () => {
     )
     expect(screen.getByTestId('form-item-name')).toBeInTheDocument()
     expect(screen.getByTestId('form-item-subject')).toBeInTheDocument()
-    expect(screen.getByTestId('form-item-grade')).toBeInTheDocument()
+    expect(screen.getByTestId('form-item-grades')).toBeInTheDocument()
+    expect(screen.getByTestId('form-item-class_names')).toBeInTheDocument()
     expect(screen.getByTestId('form-item-schedule')).toBeInTheDocument()
     expect(screen.getByTestId('form-item-status')).toBeInTheDocument()
   })

@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event'
 import React from 'react'
 import ConversationList from '../ConversationList'
 
+const { mockModalConfirm } = vi.hoisted(() => ({ mockModalConfirm: vi.fn() }))
+
 vi.mock('antd', () => {
   const ListItem = ({ children, className, onClick, actions}: any) =>
     React.createElement(
@@ -34,9 +36,32 @@ vi.mock('antd', () => {
   ListComp.Item = ListItem
 
   return {
-    Button: ({ children, onClick}: any) =>
-      React.createElement('button', { onClick, type: 'button' }, children),
+    Button: ({ children, onClick, icon}: any) =>
+      React.createElement('button', { onClick, type: 'button' }, icon, children),
     List: ListComp,
+    Dropdown: ({ children, menu }: any) =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'dropdown' },
+        children,
+        React.createElement(
+          'div',
+          { 'data-testid': 'dropdown-menu' },
+          (menu?.items || []).map((it: any) =>
+            React.createElement(
+              'button',
+              {
+                key: it.key,
+                type: 'button',
+                onClick: () =>
+                  menu?.onClick?.({ key: it.key, domEvent: { stopPropagation: () => {} } }),
+              },
+              it.label
+            )
+          )
+        )
+      ),
+    Modal: Object.assign((props: any) => null, { confirm: mockModalConfirm }),
     Popconfirm: ({ children, onConfirm}: any) =>
       React.createElement(
         'div',
@@ -88,20 +113,21 @@ vi.mock('antd', () => {
 
 vi.mock('@ant-design/icons', () => ({
   PlusOutlined: () => React.createElement('span', { 'data-testid': 'plus-icon' }, 'Plus'),
-  DeleteOutlined: () => React.createElement('span', { 'data-testid': 'delete-icon' }, 'Delete'),
-  MessageOutlined: () => React.createElement('span', { 'data-testid': 'message-icon' }, 'Message'),
-  EditOutlined: () => React.createElement('span', { 'data-testid': 'edit-icon' }, 'Edit'),
-  InboxOutlined: () => React.createElement('span', { 'data-testid': 'inbox-icon' }, 'Inbox'),
+  DeleteOutlined: () => React.createElement('span', { 'data-testid': 'delete-icon' }),
+  MessageOutlined: () => React.createElement('span', { 'data-testid': 'message-icon' }),
+  EditOutlined: () => React.createElement('span', { 'data-testid': 'edit-icon' }),
+  InboxOutlined: () => React.createElement('span', { 'data-testid': 'inbox-icon' }),
+  MoreOutlined: () => React.createElement('span', { 'data-testid': 'more-icon' }),
 }))
 
 describe('ConversationList', () => {
   const mockOnSelect = vi.fn()
   const mockOnDelete = vi.fn()
   const mockOnNew = vi.fn()
-  const mockOnRename = vi.fn().mockResolvedValue(undefined)
-  const mockOnArchive = vi.fn().mockResolvedValue(undefined)
+  const mockOnRename = vi.fn().mockResolvedValue(true)
+  const mockOnArchive = vi.fn().mockResolvedValue(true)
   const mockOnToggleShowArchived = vi.fn()
-  const mockOnBatchDelete = vi.fn().mockResolvedValue(undefined)
+  const mockOnBatchDelete = vi.fn().mockResolvedValue(true)
 
   const conversations = [
     { id: '1', title: 'Conversation 1', updated_at: '2024-01-01T00:00:00Z', module: null, created_at: '2024-01-01T00:00:00Z', is_archived: false },
@@ -225,5 +251,55 @@ describe('ConversationList', () => {
       })
     )
     expect(screen.getByText('新建对话')).toBeInTheDocument()
+  })
+
+  const renderList = (items = conversations) =>
+    render(
+      React.createElement(ConversationList, {
+        conversations: items,
+        currentId: null,
+        onSelect: mockOnSelect,
+        onDelete: mockOnDelete,
+        onNew: mockOnNew,
+        onRename: mockOnRename,
+        onArchive: mockOnArchive,
+        showArchived: false,
+        onToggleShowArchived: mockOnToggleShowArchived,
+        onBatchDelete: mockOnBatchDelete,
+      })
+    )
+
+  it('每个会话卡片只暴露一个三点入口，并展开归档/重命名/删除三项', () => {
+    renderList()
+    expect(screen.getAllByTestId('more-icon')).toHaveLength(2)
+    // 每张卡片一个下拉菜单，菜单内为三项操作（带文本）
+    const menus = screen.getAllByTestId('dropdown-menu')
+    expect(menus).toHaveLength(2)
+    expect(menus[0].textContent).toBe('归档重命名删除')
+  })
+
+  it('点击「归档」调用 onArchive', async () => {
+    const user = userEvent.setup()
+    renderList()
+    await user.click(screen.getAllByText('归档')[0])
+    expect(mockOnArchive).toHaveBeenCalledWith('1', true)
+  })
+
+  it('点击「重命名」进入编辑态', async () => {
+    const user = userEvent.setup()
+    renderList()
+    await user.click(screen.getAllByText('重命名')[0])
+    const input = screen.getByTestId('rename-input')
+    expect(input).toHaveValue('Conversation 1')
+  })
+
+  it('点击「删除」弹出确认，确认后调用 onDelete', async () => {
+    const user = userEvent.setup()
+    renderList()
+    await user.click(screen.getAllByText('删除')[0])
+    expect(mockModalConfirm).toHaveBeenCalledTimes(1)
+    const confirmOptions = mockModalConfirm.mock.calls[0][0]
+    await confirmOptions.onOk()
+    expect(mockOnDelete).toHaveBeenCalledWith('1')
   })
 })

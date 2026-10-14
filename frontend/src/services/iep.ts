@@ -302,6 +302,7 @@ export interface AISupports {
 }
 
 export interface IEPDraftAI {
+  student_profile?: string;
   domain_summaries?: AIDomainSummary[];
   long_term_goals?: AILongTermGoal[];
   supports?: AISupports;
@@ -336,15 +337,32 @@ export interface GrowthReportAI {
   generation_log_id?: string;
 }
 
-export const generateIEPDraft = async (id: string): Promise<IEPDraftAI> => {
-  const resp = await api.post(`/ieps/${id}/generate-draft`);
+// AI 起草依赖大模型调用，耗时通常远超默认 10s 超时，需单独放宽以避免被误报为网络错误
+const AI_GENERATION_TIMEOUT = 120000;
+
+/** 生成范围：对应 IEP 编辑页三个步骤，每页只生成当页内容 */
+export type IEPDraftSection = 'profile' | 'goals' | 'supports';
+
+export const generateIEPDraft = async (
+  id: string,
+  section: IEPDraftSection
+): Promise<IEPDraftAI> => {
+  const resp = await api.post(
+    `/ieps/${id}/generate-draft`,
+    { section },
+    { timeout: AI_GENERATION_TIMEOUT }
+  );
   return toItem<IEPDraftAI>(resp);
 };
 
 export const generateGrowthReport = async (
   id: string
 ): Promise<GrowthReportAI> => {
-  const resp = await api.post(`/ieps/${id}/generate-report`);
+  const resp = await api.post(
+    `/ieps/${id}/generate-report`,
+    {},
+    { timeout: AI_GENERATION_TIMEOUT }
+  );
   return toItem<GrowthReportAI>(resp);
 };
 

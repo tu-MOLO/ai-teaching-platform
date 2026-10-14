@@ -63,6 +63,7 @@ vi.mock('@ant-design/icons', () => {
     SearchOutlined: icon('SearchOutlined'),
     UploadOutlined: icon('UploadOutlined'),
     VideoCameraOutlined: icon('VideoCameraOutlined'),
+    InboxOutlined: icon('InboxOutlined'),
   }
 })
 
@@ -124,7 +125,7 @@ describe('ResourceCenter page', () => {
 
   it('should display empty state when no resources', async () => {
     render(React.createElement(ResourceCenter))
-    await waitFor(() => expect(screen.getByTestId('empty')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('暂无资源')).toBeInTheDocument())
   })
 
   it('should handle pagination change', async () => {

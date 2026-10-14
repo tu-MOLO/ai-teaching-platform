@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, Avatar, Form, Input, Button, Row, Col, Statistic, Tag, Divider, Spin, Descriptions, Modal } from 'antd';
 import { message } from '@/utils/feedback';
 import {
@@ -10,15 +10,20 @@ import {
   CalendarOutlined,
   LoginOutlined,
   IdcardOutlined,
-  SafetyOutlined
+  SafetyOutlined,
+  CameraOutlined
 } from '@ant-design/icons'
 import { userService, UserProfile } from '../../services/user'
 import { BusinessError } from '../../types/error'
 import { useAuthStore } from '../../stores/auth'
 import { useUserStore } from '../../stores/user'
 import { useNavigate } from 'react-router-dom'
+import AvatarCropper from '../../components/Common/AvatarCropper'
 import dayjs from 'dayjs'
 import './index.css'
+
+/** 头像文件大小上限：2MB */
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024
 
 /**
  * 格式化 UTC 时间为本地时间
@@ -40,6 +45,11 @@ const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [passwordModalVisible, setPasswordModalVisible] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  // 头像裁剪/上传
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
   // 获取用户资料
@@ -160,6 +170,51 @@ const Profile: React.FC = () => {
       }
     } finally {
       setChangingPassword(false)
+    }
+  }
+
+  // 点击头像：触发隐藏的文件选择框
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  // 校验文件大小/类型，读取为 data URL 后打开裁剪窗口
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      message.error('请选择图片文件')
+      return
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      message.error('头像文件大小不能超过 2MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setCropImageSrc(reader.result)
+        setCropOpen(true)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // 裁剪确认：上传方形 PNG 并刷新头像
+  const handleAvatarConfirm = async (blob: Blob) => {
+    if (!profile) return
+    try {
+      setUploadingAvatar(true)
+      const { avatar_url } = await userService.uploadAvatar(profile.id, blob)
+      setProfile({ ...profile, avatar_url })
+      message.success('头像已更新')
+      setCropOpen(false)
+      setCropImageSrc(null)
+    } catch (error) {
+      message.error(error instanceof BusinessError ? error.message : '头像上传失败，请重试')
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
@@ -318,11 +373,31 @@ const Profile: React.FC = () => {
         <Col xs={24} lg={8}>
           <Card className="profile-card profile-info-card">
             <div className="profile-avatar-section">
-              <Avatar
-                size={120}
-                icon={<UserOutlined />}
-                src={profile.avatar_url}
-                className="profile-avatar"
+              <div
+                className="profile-avatar-wrapper"
+                onClick={handleAvatarClick}
+                role="button"
+                tabIndex={0}
+                title="点击更换头像"
+              >
+                <Avatar
+                  size={120}
+                  icon={<UserOutlined />}
+                  src={profile.avatar_url || undefined}
+                  className="profile-avatar"
+                />
+                <div className="profile-avatar-overlay">
+                  <CameraOutlined />
+                  <span>更换头像</span>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleAvatarFileChange}
+                data-testid="avatar-file-input"
               />
               <h2 className="profile-name">
                 {profile.full_name || profile.username}
@@ -526,20 +601,6 @@ const Profile: React.FC = () => {
               </div>
               <Button type="default" onClick={showPasswordModal}>修改密码</Button>
             </div>
-            <Divider />
-            <div className="profile-security-item">
-              <div className="security-item-info">
-                <h4>账户资料</h4>
-                <p>
-                  {profile.full_name
-                    ? '当前资料已可满足日常教学使用'
-                    : '建议完善真实姓名和联系方式，便于后续交接与使用'}
-                </p>
-              </div>
-              <Button type="default" onClick={handleEdit}>
-                完善资料
-              </Button>
-            </div>
           </Card>
         </Col>
       </Row>
@@ -599,6 +660,18 @@ const Profile: React.FC = () => {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* 头像裁剪弹窗 */}
+      <AvatarCropper
+        open={cropOpen}
+        imageSrc={cropImageSrc}
+        confirmLoading={uploadingAvatar}
+        onCancel={() => {
+          setCropOpen(false)
+          setCropImageSrc(null)
+        }}
+        onConfirm={handleAvatarConfirm}
+      />
     </div>
   )
 }

@@ -45,7 +45,7 @@ class TestCourseAPI:
             json={
                 "name": "Python Programming",
                 "subject": "Computer Science",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
                 "schedule": "Mon/Wed 09:00-10:30",
                 "description": "Introduction to Python",
@@ -57,7 +57,7 @@ class TestCourseAPI:
         data = response.json()["data"]
         assert data["name"] == "Python Programming"
         assert data["subject"] == "Computer Science"
-        assert data["grade"] == "Grade 10"
+        assert data["grades"] == ["Grade 10"]
         assert data["status"] == "draft"
         assert "id" in data
         assert "created_at" in data
@@ -79,7 +79,7 @@ class TestCourseAPI:
             json={
                 "name": "Course A",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -90,7 +90,7 @@ class TestCourseAPI:
             json={
                 "name": "Course B",
                 "subject": "English",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -127,7 +127,7 @@ class TestCourseAPI:
             json={
                 "name": "Physics 101",
                 "subject": "Physics",
-                "grade": "Grade 11",
+                "grades": ["Grade 11"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -146,7 +146,7 @@ class TestCourseAPI:
         assert data["id"] == course_id
         assert data["name"] == "Physics 101"
         assert data["subject"] == "Physics"
-        assert data["grade"] == "Grade 11"
+        assert data["grades"] == ["Grade 11"]
 
     @pytest.mark.asyncio
     async def test_update_course(self, client, test_user):
@@ -164,7 +164,7 @@ class TestCourseAPI:
             json={
                 "name": "Biology",
                 "subject": "Science",
-                "grade": "Grade 8",
+                "grades": ["Grade 8"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -202,7 +202,7 @@ class TestCourseAPI:
             json={
                 "name": "To Be Deleted",
                 "subject": "Art",
-                "grade": "Grade 7",
+                "grades": ["Grade 7"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -242,7 +242,7 @@ class TestCourseAPI:
             json={
                 "name": "User A Course",
                 "subject": "History",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token_a}"},
@@ -284,7 +284,7 @@ class TestCourseFiltering:
             json={
                 "name": "Math Course",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -295,7 +295,7 @@ class TestCourseFiltering:
             json={
                 "name": "English Course",
                 "subject": "English",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -331,7 +331,7 @@ class TestCourseFiltering:
             json={
                 "name": "Grade9 Course",
                 "subject": "Science",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -342,7 +342,7 @@ class TestCourseFiltering:
             json={
                 "name": "Grade10 Course",
                 "subject": "History",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -360,7 +360,7 @@ class TestCourseFiltering:
         data = response.json()
         assert data["total"] >= 1
         for course in data["data"]:
-            assert course["grade"] == "Grade 10"
+            assert course["grades"] == ["Grade 10"]
 
     @pytest.mark.asyncio
     async def test_course_pagination(self, client, test_user):
@@ -379,7 +379,7 @@ class TestCourseFiltering:
                 json={
                     "name": f"Pagination Course {i}",
                     "subject": "Art",
-                    "grade": "Grade 7",
+                    "grades": ["Grade 7"],
                     "teacher": "Test User",
                 },
                 headers={"Authorization": f"Bearer {token}"},
@@ -419,7 +419,7 @@ class TestCourseStudentAssociation:
             json={
                 "name": "Enroll Course",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -465,7 +465,7 @@ class TestCourseStudentAssociation:
             json={
                 "name": "Dup Enroll Course",
                 "subject": "English",
-                "grade": "Grade 8",
+                "grades": ["Grade 8"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -512,7 +512,7 @@ class TestCourseStudentAssociation:
             json={
                 "name": "Unenroll Course",
                 "subject": "Science",
-                "grade": "Grade 7",
+                "grades": ["Grade 7"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -559,7 +559,7 @@ class TestCourseStudentAssociation:
             json={
                 "name": "Students List Course",
                 "subject": "History",
-                "grade": "Grade 10",
+                "grades": ["Grade 10"],
                 "teacher": "Test User",
             },
             headers={"Authorization": f"Bearer {token}"},
@@ -641,7 +641,7 @@ class TestCourseEdgeCases:
             json={
                 "name": "No Auth Course",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Anonymous",
             },
         )
@@ -656,7 +656,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Coverage Course",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
                 "schedule": "Tue/Thu 10:00-11:30",
                 "description": "Coverage test course",
@@ -667,7 +667,7 @@ class TestCourseCoverageGaps:
         data = response.json()["data"]
         assert data["name"] == "Coverage Course"
         assert data["subject"] == "Math"
-        assert data["grade"] == "Grade 9"
+        assert data["grades"] == ["Grade 9"]
         assert data["status"] == "draft"
         assert "id" in data
         assert "created_at" in data
@@ -680,7 +680,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Get By ID Course",
                 "subject": "Physics",
-                "grade": "Grade 11",
+                "grades": ["Grade 11"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -693,7 +693,7 @@ class TestCourseCoverageGaps:
         assert data["id"] == course_id
         assert data["name"] == "Get By ID Course"
         assert data["subject"] == "Physics"
-        assert data["grade"] == "Grade 11"
+        assert data["grades"] == ["Grade 11"]
 
     @pytest.mark.asyncio
     async def test_list_courses_with_pagination(self, client, auth_headers):
@@ -703,7 +703,7 @@ class TestCourseCoverageGaps:
                 json={
                     "name": f"Page Course {i}",
                     "subject": "Chemistry",
-                    "grade": "Grade 10",
+                    "grades": ["Grade 10"],
                     "teacher": "Test User",
                 },
                 headers=auth_headers,
@@ -725,7 +725,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Before Update",
                 "subject": "History",
-                "grade": "Grade 8",
+                "grades": ["Grade 8"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -753,7 +753,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Delete Coverage Course",
                 "subject": "Art",
-                "grade": "Grade 7",
+                "grades": ["Grade 7"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -770,7 +770,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Enroll Coverage Course",
                 "subject": "Math",
-                "grade": "Grade 9",
+                "grades": ["Grade 9"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -807,7 +807,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Unenroll Coverage Course",
                 "subject": "English",
-                "grade": "Grade 8",
+                "grades": ["Grade 8"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -845,7 +845,7 @@ class TestCourseCoverageGaps:
             json={
                 "name": "Students Coverage Course",
                 "subject": "Science",
-                "grade": "Grade 7",
+                "grades": ["Grade 7"],
                 "teacher": "Test User",
             },
             headers=auth_headers,

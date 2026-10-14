@@ -71,6 +71,7 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<any>(null);
   const [evaluationItems, setEvaluationItems] = useState<PortfolioItem[]>([]);
+  const [otherRecordCount, setOtherRecordCount] = useState(0);
 
   /**
    * 获取学生档案数据并计算能力平均值
@@ -95,6 +96,8 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
       // 筛选评价类型的记录
       const filteredItems = items.filter((item: PortfolioItem) => item.type === 'evaluation');
       setEvaluationItems(filteredItems);
+      // 记录非「评价」类型的记录数，用于在说明中提示局限
+      setOtherRecordCount(items.length - filteredItems.length);
 
       // 如果没有评价数据，不设置图表数据
       if (filteredItems.length === 0) {
@@ -209,7 +212,14 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
       <Card className="ability-radar-card">
         <Empty
           image={<RadarChartOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
-          description="暂无评价数据"
+          description={
+            <div>
+              <div>暂无「评价」记录</div>
+              <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                雷达图仅基于「评价」类型记录计算，其他类型记录不参与。
+              </div>
+            </div>
+          }
           style={{ padding: '40px 0' }}
         >
           <Button
@@ -227,8 +237,13 @@ const AbilityRadar: React.FC<AbilityRadarProps> = ({ studentId }) => {
   return (
     <Card className="ability-radar-card">
       <ReactECharts option={chartData} style={{ height: 400 }} />
-      <p style={{ color: '#999', margin: '8px 0 0' }}>
-        注：数值为该维度全部评价的平均分；未评价的维度留空，不计为 0。
+      <p style={{ color: '#999', margin: '8px 0 0', fontSize: 12 }}>
+        注：数值为该维度全部「评价」记录的平均分；未评价的维度留空，不计为 0。
+        雷达图仅依据「评价」类型记录计算，作品、观察记录、里程碑等不参与，
+        不代表能力全貌，请结合实际观察综合判断。
+        {otherRecordCount > 0
+          ? `当前另有 ${otherRecordCount} 条非「评价」记录未纳入统计。`
+          : ''}
       </p>
     </Card>
   );

@@ -53,9 +53,18 @@
   margin-bottom: 24px;
 }
 
+/* 长文本自适应：窄屏下自动换行，保留用户输入的换行 */
+.iep-detail-section .ant-descriptions-item-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .iep-goal-block {
   border: 1px solid var(--color-border, #e5e7eb);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }

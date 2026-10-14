@@ -17,6 +17,7 @@ import {
   updateIEP,
   type DomainAssessment,
   type IEPDraftAI,
+  type IEPDraftSection,
   type IEPSupports,
   type LongTermGoal,
   type ShortTermGoal,
@@ -24,7 +25,8 @@ import {
 import { studentService } from '../../services/student';
 import type { Student } from '../../services/student';
 import AIDraftDrawer from './AIDraftDrawer';
-import type { AppliedGoal } from './AIDraftDrawer';
+import type { AppliedAIResult } from './AIDraftDrawer';
+import ConfigurableSelect from '../../components/Common/ConfigurableSelect';
 import './index.css';
 
 // 0–3 级：数字越小所需支持越多
@@ -66,12 +68,12 @@ const IEPEditor: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [state, setState] = useState<EditorState>(emptyState);
 
-  // AI 初稿（人在回路）
+  // AI 生成（人在回路，三页各自生成、只填本页）
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState<IEPDraftSection | null>(null);
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [aiSection, setAiSection] = useState<IEPDraftSection>('goals');
   const [aiDraft, setAiDraft] = useState<IEPDraftAI | null>(null);
-  const [aiAllHandled, setAiAllHandled] = useState(false);
 
   const patch = useCallback((p: Partial<EditorState>) => {
     setState((prev) => ({ ...prev, ...p }));
@@ -283,7 +285,7 @@ const IEPEditor: React.FC = () => {
     if (validateCurrent()) setStep((s) => s + 1);
   };
 
-  // ---------- AI 初稿（人在回路） ----------
+  // ---------- AI 生成（每页只生成当页内容） ----------
   const resolveDomain = (domain: string) => {
     const hit = state.domain_assessments.find(
       (d) => d.domain_name === domain || d.domain_code === domain
@@ -291,106 +293,138 @@ const IEPEditor: React.FC = () => {
     return hit || { domain_code: domain, domain_name: domain };
   };
 
-  const handleGenerateDraft = async () => {
-    setAiGenerating(true);
+  /** 生成前确保 IEP 已存在（新建时先落草稿），返回可用的 IEP id */
+  const ensureIepId = async (): Promise<string | null> => {
+    const activeId = id || savedId;
+    if (activeId) return activeId;
+    if (!state.student_id || !state.term.trim()) {
+      message.warning('请先选择学生并填写学期，再使用 AI 生成');
+      setStep(0);
+      return null;
+    }
+    const created = await createIEP(buildPayload());
+    setSavedId(created.id);
+    navigate(`/iep/${created.id}/edit`, { replace: true });
+    return created.id;
+  };
+
+  const handleGenerate = async (section: IEPDraftSection) => {
+    setAiGenerating(section);
     try {
-      let activeId = id || savedId;
-      if (!activeId) {
-        if (!state.student_id || !state.term.trim()) {
-          message.warning('请先选择学生并填写学期，再生成 AI 初稿');
-          setStep(0);
-          return;
-        }
-        const created = await createIEP(buildPayload());
-        activeId = created.id;
-        setSavedId(activeId);
-        navigate(`/iep/${activeId}/edit`, { replace: true });
-      }
-      const draft = await generateIEPDraft(activeId);
+      const activeId = await ensureIepId();
+      if (!activeId) return;
+      const draft = await generateIEPDraft(activeId, section);
+      setAiSection(section);
       setAiDraft(draft);
-      setAiAllHandled(false);
       setAiDrawerOpen(true);
     } catch (error: any) {
       message.error(
         error?.response?.data?.message ||
           error?.message ||
-          'AI 初稿生成失败，可手工填写'
+          'AI 生成失败，可手工填写'
       );
     } finally {
-      setAiGenerating(false);
+      setAiGenerating(null);
     }
   };
 
-  const handleApplyAI = (
-    goals: AppliedGoal[],
-    extras: {
-      evaluationPlan: string;
-      supports: NonNullable<IEPDraftAI['supports']>;
-    } | null
-  ) => {
-    const dedupe = (items: string[]) =>
-      Array.from(new Set(items.filter((x) => x && x.trim())));
+  const dedupe = (items: string[]) =>
+    Array.from(new Set(items.filter((x) => x && x.trim())));
 
-    const mappedGoals: LongTermGoal[] = goals.map((g, gi) => {
-      const domain = resolveDomain(g.domain);
-      return {
-        domain_code: domain.domain_code,
-        domain_name: domain.domain_name,
-        goal: g.goal,
-        sort_order: state.long_term_goals.length + gi,
-        short_term_goals: g.shortTermGoals.map((s, si) => ({
-          condition: s.condition,
-          behavior: s.behavior,
-          criterion: s.criterion,
-          support_level: s.support_level,
-          status: 'not_started',
-          teaching_methods: s.teaching_methods,
-          materials: s.materials,
-          sort_order: si,
-        })),
-      };
-    });
+  const handleApplyAI = (result: AppliedAIResult) => {
+    if (result.section === 'goals') {
+      const mappedGoals: LongTermGoal[] = result.goals.map((g, gi) => {
+        const domain = resolveDomain(g.domain);
+        return {
+          domain_code: domain.domain_code,
+          domain_name: domain.domain_name,
+          goal: g.goal,
+          sort_order: state.long_term_goals.length + gi,
+          short_term_goals: g.shortTermGoals.map((s, si) => ({
+            condition: s.condition,
+            behavior: s.behavior,
+            criterion: s.criterion,
+            support_level: s.support_level,
+            status: 'not_started',
+            teaching_methods: s.teaching_methods,
+            materials: s.materials,
+            sort_order: si,
+          })),
+        };
+      });
+      setState((prev) => ({
+        ...prev,
+        long_term_goals: [...prev.long_term_goals, ...mappedGoals],
+      }));
+      setAiDrawerOpen(false);
+      message.success(
+        `已将 ${mappedGoals.length} 条 AI 目标加入计划，请核对后再提交审定`
+      );
+      return;
+    }
+
+    if (result.section === 'profile') {
+      const { studentProfile, domainSummaries } = result.profile;
+      let filled = 0;
+      setState((prev) => ({
+        ...prev,
+        student_profile: studentProfile || prev.student_profile,
+        domain_assessments: prev.domain_assessments.map((d) => {
+          const hit = domainSummaries.find(
+            (s) => s.domain && (s.domain === d.domain_name || s.domain === d.domain_code)
+          );
+          if (!hit || !hit.summary) return d;
+          filled += 1;
+          return { ...d, summary: hit.summary };
+        }),
+      }));
+      setAiDrawerOpen(false);
+      message.success(`已填入学生基本情况和 ${filled} 个领域小结，请核对后修改`);
+      return;
+    }
 
     setState((prev) => ({
       ...prev,
-      long_term_goals: [...prev.long_term_goals, ...mappedGoals],
-      supports: extras
-        ? {
-            teaching: dedupe([
-              ...prev.supports.teaching,
-              ...(extras.supports.teaching || []),
-            ]),
-            rehab: dedupe([
-              ...prev.supports.rehab,
-              ...(extras.supports.rehab || []),
-            ]),
-            family: dedupe([
-              ...prev.supports.family,
-              ...(extras.supports.family || []),
-            ]),
-          }
-        : prev.supports,
-      evaluation_plan:
-        extras && extras.evaluationPlan
-          ? extras.evaluationPlan
-          : prev.evaluation_plan,
+      supports: {
+        teaching: dedupe([
+          ...prev.supports.teaching,
+          ...(result.supports.supports.teaching || []),
+        ]),
+        rehab: dedupe([
+          ...prev.supports.rehab,
+          ...(result.supports.supports.rehab || []),
+        ]),
+        family: dedupe([
+          ...prev.supports.family,
+          ...(result.supports.supports.family || []),
+        ]),
+      },
+      evaluation_plan: result.supports.evaluationPlan || prev.evaluation_plan,
     }));
-
     setAiDrawerOpen(false);
-    message.success(
-      `已将 ${mappedGoals.length} 条 AI 目标加入计划，请核对后再提交审定`
-    );
+    message.success('已填入支持措施与评价方式，请核对后修改');
   };
+
+  /** 每页的 AI 生成按钮 */
+  const renderAiButton = (section: IEPDraftSection, hint: string) => (
+    <Space style={{ marginBottom: 12 }}>
+      <Button
+        icon={<RobotOutlined />}
+        loading={aiGenerating === section}
+        disabled={aiGenerating !== null && aiGenerating !== section}
+        onClick={() => handleGenerate(section)}
+      >
+        AI 生成本页内容
+      </Button>
+      <span style={{ color: '#888' }}>{hint}</span>
+    </Space>
+  );
 
   // 保存（草稿）或保存并提交审定
   const persist = async (submit: boolean) => {
     if (!state.student_id || !state.term.trim()) {
       message.warning('请先完善学生与学期');
       setStep(0);
-      return;
-    }
-    if (submit && aiDraft && !aiAllHandled) {
-      message.warning('请先处理全部 AI 草稿（逐条采纳或忽略）后再提交审定');
       return;
     }
     setSaving(true);
@@ -526,20 +560,12 @@ const IEPEditor: React.FC = () => {
                 />
               </Form.Item>
 
-              <Divider orientation="left">发展领域评估</Divider>
+              {renderAiButton(
+                'profile',
+                '根据已填评估起草「学生基本情况 + 各领域评估小结」，只填入本页'
+              )}
 
-              <Space style={{ marginBottom: 12 }}>
-                <Button
-                  icon={<RobotOutlined />}
-                  loading={aiGenerating}
-                  onClick={handleGenerateDraft}
-                >
-                  AI 生成初稿
-                </Button>
-                <span style={{ color: '#888' }}>
-                  基于已填评估起草目标，结果需逐条采纳，不会自动覆盖
-                </span>
-              </Space>
+              <Divider orientation="left">发展领域评估</Divider>
 
               {state.domain_assessments.map((domain, di) => (
                 <div key={di} className="iep-assessment-domain">
@@ -630,6 +656,11 @@ const IEPEditor: React.FC = () => {
               message="短期目标建议写清「条件 + 行为 + 标准」，并标注所需支持级别"
               style={{ marginBottom: 16 }}
             />
+
+            {renderAiButton(
+              'goals',
+              '根据评估起草长短期目标，逐条采纳后只加入本页'
+            )}
 
             {state.long_term_goals.length === 0 && (
               <Empty description="还没有长期目标" style={{ marginBottom: 16 }} />
@@ -733,24 +764,26 @@ const IEPEditor: React.FC = () => {
                       </Radio.Group>
                     </Space>
                     <Space wrap style={{ marginTop: 10, width: '100%' }}>
-                      <Select
-                        mode="tags"
+                      <ConfigurableSelect
+                        groupKey="iep_teaching_method"
+                        mode="multiple"
                         size="small"
-                        placeholder="教学方法（回车添加）"
+                        placeholder="教学方法"
                         style={{ minWidth: 240, flex: 1 }}
                         value={s.teaching_methods || []}
                         onChange={(v) =>
-                          updateShortGoal(li, si, { teaching_methods: v })
+                          updateShortGoal(li, si, { teaching_methods: v as string[] })
                         }
                       />
-                      <Select
-                        mode="tags"
+                      <ConfigurableSelect
+                        groupKey="iep_material"
+                        mode="multiple"
                         size="small"
                         placeholder="教具 / 材料"
                         style={{ minWidth: 200, flex: 1 }}
                         value={s.materials || []}
                         onChange={(v) =>
-                          updateShortGoal(li, si, { materials: v })
+                          updateShortGoal(li, si, { materials: v as string[] })
                         }
                       />
                     </Space>
@@ -782,6 +815,11 @@ const IEPEditor: React.FC = () => {
         {/* ============ 步骤 3：复核 ============ */}
         {step === 2 && (
           <Card>
+            {renderAiButton(
+              'supports',
+              '根据评估与目标起草支持措施与评价方式，只填入本页'
+            )}
+
             <Form layout="vertical">
               <Form.Item label="评估 / 评价方式">
                 <Input.TextArea
@@ -796,9 +834,16 @@ const IEPEditor: React.FC = () => {
             <Divider orientation="left">支持措施</Divider>
             <Space wrap style={{ marginBottom: 16 }}>
               {(['teaching', 'rehab', 'family'] as const).map((k) => (
-                <Select
+                <ConfigurableSelect
                   key={k}
-                  mode="tags"
+                  groupKey={
+                    k === 'teaching'
+                      ? 'iep_support_teaching'
+                      : k === 'rehab'
+                      ? 'iep_support_rehab'
+                      : 'iep_support_family'
+                  }
+                  mode="multiple"
                   style={{ minWidth: 240 }}
                   placeholder={
                     k === 'teaching'
@@ -809,7 +854,7 @@ const IEPEditor: React.FC = () => {
                   }
                   value={state.supports[k]}
                   onChange={(v) =>
-                    patch({ supports: { ...state.supports, [k]: v } })
+                    patch({ supports: { ...state.supports, [k]: v as string[] } })
                   }
                 />
               ))}
@@ -870,12 +915,12 @@ const IEPEditor: React.FC = () => {
       </div>
 
       <AIDraftDrawer
-        key={aiDraft?.generation_log_id || 'iep-draft'}
+        key={`${aiSection}-${aiDraft?.generation_log_id || 'iep-draft'}`}
         open={aiDrawerOpen}
+        section={aiSection}
         draft={aiDraft}
         onClose={() => setAiDrawerOpen(false)}
         onApply={handleApplyAI}
-        onHandledChange={setAiAllHandled}
       />
     </div>
   );

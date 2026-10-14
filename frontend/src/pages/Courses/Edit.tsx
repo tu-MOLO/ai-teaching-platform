@@ -38,7 +38,8 @@ const EditCourse: React.FC = () => {
         setCourseData({
           name: data.name,
           subject: data.subject,
-          grade: data.grade,
+          grades: data.grades,
+          class_names: data.class_names,
           schedule: data.schedule || '',
           status: data.status,
         });

@@ -142,12 +142,16 @@ describe('iep service', () => {
   })
 
   describe('AI 文书与对比', () => {
-    it('generateIEPDraft POST generate-draft', async () => {
+    it('generateIEPDraft POST generate-draft 并带 section', async () => {
       const { generateIEPDraft } = await import('../iep')
       const draft = { missing_info: ['需补充'] }
       mockPost.mockResolvedValue(draft)
-      const result = await generateIEPDraft('iep-1')
-      expect(mockPost).toHaveBeenCalledWith('/ieps/iep-1/generate-draft')
+      const result = await generateIEPDraft('iep-1', 'goals')
+      expect(mockPost).toHaveBeenCalledWith(
+        '/ieps/iep-1/generate-draft',
+        { section: 'goals' },
+        { timeout: 120000 }
+      )
       expect(result).toBe(draft)
     })
 
@@ -156,7 +160,7 @@ describe('iep service', () => {
       const report = { overview: '概述' }
       mockPost.mockResolvedValue(report)
       const result = await generateGrowthReport('iep-1')
-      expect(mockPost).toHaveBeenCalledWith('/ieps/iep-1/generate-report')
+      expect(mockPost).toHaveBeenCalledWith('/ieps/iep-1/generate-report', {}, { timeout: 120000 })
       expect(result).toBe(report)
     })
 

@@ -164,7 +164,7 @@ const Login: React.FC = () => {
                 <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
               </svg>
             </div>
-            <h1 className="brand-title">AI教学平台</h1>
+            <h1 className="brand-title">AI培智教学平台</h1>
             <p className="brand-subtitle">
               面向教学场景的管理平台，聚焦课程、学生、资源与教案的真实使用流程。
             </p>
@@ -224,7 +224,7 @@ const Login: React.FC = () => {
                 立即注册
               </Link>
             </div>
-            <p>© 2026 AI教学平台</p>
+            <p>© 2026 AI培智教学平台</p>
           </div>
         </div>
       </div>

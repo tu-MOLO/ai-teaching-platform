@@ -394,7 +394,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Math 101",
                 "subject": "Math",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
                 "schedule": "Mon 9:00",
                 "description": "Basic math",
@@ -429,7 +429,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Science 101",
                 "subject": "Science",
-                "grade": "Grade 2",
+                "grades": ["Grade 2"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -449,7 +449,7 @@ class TestCourseEndpoints:
             json={
                 "name": "History 101",
                 "subject": "History",
-                "grade": "Grade 3",
+                "grades": ["Grade 3"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -481,7 +481,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Art 101",
                 "subject": "Art",
-                "grade": "Grade 4",
+                "grades": ["Grade 4"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -500,7 +500,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Enroll Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -530,7 +530,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Dup Enroll Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -570,7 +570,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Enroll NF Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -588,7 +588,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Unenroll Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -628,7 +628,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Unenroll NF Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -646,7 +646,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Unenroll NE Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,
@@ -676,7 +676,7 @@ class TestCourseEndpoints:
             json={
                 "name": "Students List Course",
                 "subject": "Test",
-                "grade": "Grade 1",
+                "grades": ["Grade 1"],
                 "teacher": "Test User",
             },
             headers=auth_headers,

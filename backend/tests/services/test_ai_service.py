@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.services.ai import MODULE_GUIDES, SYSTEM_PROMPT, TOOL_EXECUTOR, AIService
+from app.services.ai_client import AIServiceError
 
 
 class TestGetModuleTag:
@@ -559,7 +560,7 @@ class TestNonStreamChat:
             ]
         }
 
-        with patch("app.services.ai.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
@@ -590,14 +591,14 @@ class TestNonStreamChat:
         mock_response = MagicMock()
         mock_response.status_code = 500
 
-        with patch("app.services.ai.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(return_value=mock_response)
             mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
             mock_client_instance.__aexit__ = AsyncMock(return_value=False)
             MockClient.return_value = mock_client_instance
 
-            with pytest.raises(ValueError, match="AI服务调用失败"):
+            with pytest.raises(AIServiceError, match="AI 服务商暂时不可用"):
                 await AIService._non_stream_chat(
                     db, "user-1", conversation, messages, effective_config
                 )
@@ -653,7 +654,7 @@ class TestNonStreamChat:
             ]
         }
 
-        with patch("app.services.ai.httpx.AsyncClient") as MockClient:
+        with patch("app.services.ai_client.httpx.AsyncClient") as MockClient:
             mock_client_instance = AsyncMock()
             mock_client_instance.post = AsyncMock(side_effect=[first_response, second_response])
             mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)

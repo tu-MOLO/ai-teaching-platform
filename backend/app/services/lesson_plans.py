@@ -191,9 +191,28 @@ class LessonPlanService:
         await self.db.flush()
         return True
 
+    async def permanent_delete(self, plan_id: str, user_id: str) -> bool:
+        """
+        彻底删除教案（从数据库中移除，不可恢复）
+
+        Args:
+            plan_id: 教案ID
+            user_id: 用户ID
+
+        Returns:
+            是否删除成功
+        """
+        lesson_plan = await self.get_by_id(plan_id, user_id)
+        if not lesson_plan:
+            return False
+
+        await self.db.delete(lesson_plan)
+        await self.db.flush()
+        return True
+
     async def publish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
         """
-        发布教案
+        标记教案为完成
 
         Args:
             plan_id: 教案ID
@@ -213,8 +232,8 @@ class LessonPlanService:
         await NotificationService.create(
             self.db,
             NotificationCreate(
-                title="教案已发布",
-                content=f"教案「{lesson_plan.title}」已发布",
+                title="教案已完成",
+                content=f"教案「{lesson_plan.title}」已完成",
                 type=NotificationType.COURSE,
                 user_id=user_id,
                 target_id=lesson_plan.id,
@@ -226,7 +245,7 @@ class LessonPlanService:
 
     async def unpublish(self, plan_id: str, user_id: str) -> Optional[LessonPlan]:
         """
-        取消发布教案（将已完成状态恢复为草稿）
+        取消完成教案（将已完成状态恢复为草稿）
 
         Args:
             plan_id: 教案ID

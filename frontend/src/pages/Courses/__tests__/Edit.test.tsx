@@ -15,7 +15,8 @@ vi.mock('../../services/course', () => ({
     id: 'course-1',
     name: 'Course',
     subject: 'Math',
-    grade: '一年级',
+    grades: ['一年级'],
+    class_names: ['一班'],
     schedule: '',
     status: 'active',
   }),
@@ -34,7 +35,7 @@ vi.mock('@/components', () => ({
   CourseForm: ({ onSubmit, onCancel, initialData }: any) =>
     React.createElement('div', { 'data-testid': 'course-form' },
       JSON.stringify(initialData),
-      React.createElement('button', { onClick: () => onSubmit({ name: 'Course', subject: 'Math', grade: '一年级', schedule: '', status: 'active' }), 'data-testid': 'btn-submit' }, '提交'),
+      React.createElement('button', { onClick: () => onSubmit({ name: 'Course', subject: 'Math', grades: ['一年级'], class_names: ['一班'], schedule: '', status: 'active' }), 'data-testid': 'btn-submit' }, '提交'),
       React.createElement('button', { onClick: onCancel, 'data-testid': 'btn-cancel' }, '取消')
     ),
 }))

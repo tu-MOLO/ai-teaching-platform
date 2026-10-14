@@ -17,6 +17,7 @@ from app.schemas.iep import (
     AssessmentTemplateResponse,
     AssessmentTemplateUpdate,
     IEPCreate,
+    IEPDraftGenerateRequest,
     IEPResponse,
     IEPSummaryResponse,
     IEPUpdate,
@@ -226,9 +227,19 @@ async def export_iep(iep_id: str, db: DBSession, user_id: CurrentUser):
 
 
 @iep_router.post("/{iep_id}/generate-draft", response_model=DataResponse[dict])
-async def generate_iep_draft(iep_id: str, db: DBSession, user_id: CurrentUser):
-    """AI 依据教师评估起草 IEP 目标与措施草稿（不自动写入，需教师逐条采纳）。"""
-    parsed, log_id = await IEPAIService(db).generate_draft(iep_id, user_id)
+async def generate_iep_draft(
+    iep_id: str,
+    db: DBSession,
+    user_id: CurrentUser,
+    data: Optional[IEPDraftGenerateRequest] = None,
+):
+    """
+    AI 依据教师评估起草 IEP 内容（不自动写入，需教师采纳）。
+
+    section 指定只生成编辑页某一页的内容，缺省为全部。
+    """
+    section = data.section if data else "all"
+    parsed, log_id = await IEPAIService(db).generate_draft(iep_id, user_id, section)
     return DataResponse(data={**parsed, "generation_log_id": log_id})
 
 

@@ -376,6 +376,35 @@ input:focus, textarea:focus, select:focus {
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .w-full { width: 100%; }
 
+/* ========== 表格窄屏适配 ==========
+   页面变窄时，表格内容不再撑破所在容器（卡片 / 面板），
+   超出部分在表格容器内部横向滚动，右侧不会溢出。 */
+.ant-table-wrapper {
+  max-width: 100%;
+}
+
+.ant-table-wrapper .ant-table-content,
+.ant-table-wrapper .ant-table-body {
+  overflow-x: auto;
+}
+
+/* ========== 头像裁剪器 ========== */
+.avatar-crop-hint {
+  margin-bottom: 12px;
+  color: var(--color-text-secondary, #8c8c8c);
+  font-size: 13px;
+}
+
+.avatar-crop-stage {
+  display: flex;
+  justify-content: center;
+}
+
+.avatar-crop-slider {
+  margin-top: 8px;
+  padding: 0 8px;
+}
+
 /* ========== 卡片 - 仅在确实需要时使用 ========== */
 .card {
   background: var(--color-bg-card);
@@ -448,6 +477,7 @@ input:focus, textarea:focus, select:focus {
 .empty-state-icon { font-size: 48px; color: var(--color-text-quaternary); margin-bottom: var(--space-md); }
 .empty-state-title { font-size: var(--type-h3-size); font-weight: var(--type-h3-weight); color: var(--color-text-primary); margin-bottom: var(--space-sm); }
 .empty-state-desc { font-size: var(--type-body-size); color: var(--type-body-color); margin-bottom: var(--space-lg); max-width: 320px; }
+.empty-state-action { margin-top: var(--space-xs); }
 
 /* ========== 标签 ========== */
 .tag {
@@ -460,6 +490,16 @@ input:focus, textarea:focus, select:focus {
   font-weight: var(--font-weight-medium);
   line-height: 1;
   height: 22px;
+}
+
+/* ========== antd 兼容修复 ========== */
+/* antd 5.29 的带文字水平分隔线把基础边框写成了无效值
+   `border-block-start: 0 <color>`，导致 1px 横线无法被清除，
+   分割线会从文字中间穿过。这里显式清除容器自身边框，
+   由 ::before / ::after 承担两端线段的绘制。 */
+.ant-divider.ant-divider-horizontal.ant-divider-with-text {
+  border-block-start: 0;
+  border-top: 0;
 }
 
 /* ========== 响应式 ========== */

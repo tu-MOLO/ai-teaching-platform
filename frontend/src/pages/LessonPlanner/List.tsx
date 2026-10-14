@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DEFAULT_PAGE_SIZE } from '../../constants/pagination';
-import { Card, Button, Table, Space, Tag, Input, Empty } from 'antd';
+import { Card, Button, Table, Space, Tag, Input } from 'antd';
 import { message, modal } from '@/utils/feedback';
 import { 
   PlusOutlined, 
@@ -25,8 +25,10 @@ import {
   unpublishLessonPlan,
   archiveLessonPlan,
   restoreLessonPlan,
+  permanentDeleteLessonPlan,
   type LessonPlan 
 } from '../../services/lessonPlan';
+import EmptyState from '../../components/Common/EmptyState';
 import { refreshDashboardStats } from '../../stores/dashboard';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import './index.css';
@@ -191,6 +193,28 @@ const LessonPlanList: React.FC = () => {
     fetchLessonPlans(page, pageSize);
   };
 
+  // 处理彻底删除（不可恢复）
+  const handlePermanentDelete = (id: string, title: string) => {
+    modal.confirm({
+      title: '确认彻底删除',
+      content: `确定要彻底删除教案 "${title}" 吗？该操作将从系统中永久移除，无法恢复。`,
+      okText: '彻底删除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await permanentDeleteLessonPlan(id);
+          message.success('已彻底删除');
+          fetchLessonPlans(pagination.current);
+          refreshDashboardStats();
+        } catch (error) {
+          message.error('彻底删除失败');
+          console.error('Failed to permanently delete lesson plan:', error);
+        }
+      },
+    });
+  };
+
   // 渲染草稿箱操作按钮
   const renderDraftActions = (plan: LessonPlan, inCard = false) => {
     const stopPropagation = (e: React.MouseEvent) => e.stopPropagation();
@@ -297,6 +321,15 @@ const LessonPlanList: React.FC = () => {
           }}
         >
           <RollbackOutlined /> 恢复
+        </button>
+        <button
+          className="action-btn action-btn-delete"
+          onClick={(e) => {
+            inCard && stopPropagation(e);
+            handlePermanentDelete(plan.id, plan.title);
+          }}
+        >
+          <DeleteOutlined /> 彻底删除
         </button>
       </>
     );
@@ -497,17 +530,15 @@ const LessonPlanList: React.FC = () => {
             />
           )
         ) : (
-          <Empty
-            image={<FileTextOutlined style={{ fontSize: 64, color: 'var(--color-text-tertiary)' }} />}
+          <EmptyState
+            icon={<FileTextOutlined />}
+            title={`暂无${currentStatus.title}教案`}
             description={
-              <div className="empty-state">
-                <div className="empty-state-title">暂无{currentStatus.title}教案</div>
-                <div className="empty-state-desc">
-                  {status === 'draft' && '点击上方按钮创建您的第一个教案'}
-                  {status === 'published' && '草稿箱中的教案可以标记为完成'}
-                  {status === 'archived' && '已完成的教案可以归档到这里'}
-                </div>
-              </div>
+              status === 'draft'
+                ? '点击上方按钮创建您的第一个教案'
+                : status === 'published'
+                ? '草稿箱中的教案可以标记为完成'
+                : '已完成的教案可以归档到这里'
             }
           />
         )}

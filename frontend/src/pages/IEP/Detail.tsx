@@ -286,7 +286,12 @@ const IEPDetailPage: React.FC = () => {
       </div>
 
       <Card className="iep-detail-section">
-        <Descriptions column={2} bordered size="small">
+        <Descriptions
+          column={{ xs: 1, sm: 1, md: 2 }}
+          bordered
+          size="small"
+          labelStyle={{ whiteSpace: 'nowrap' }}
+        >
           <Descriptions.Item label="学生基本情况" span={2}>
             {iep.student_profile || '—'}
           </Descriptions.Item>
@@ -339,6 +344,7 @@ const IEPDetailPage: React.FC = () => {
               size="small"
               rowKey={(r) => r.item_name}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               dataSource={d.items}
               columns={[
                 { title: '观察条目', dataIndex: 'item_name' },
@@ -379,6 +385,7 @@ const IEPDetailPage: React.FC = () => {
               size="small"
               rowKey={(r, i) => `${r.behavior}-${i}`}
               pagination={false}
+              scroll={{ x: 'max-content' }}
               dataSource={g.short_term_goals}
               columns={[
                 { title: '条件', dataIndex: 'condition', render: (v) => v || '—' },
@@ -412,7 +419,7 @@ const IEPDetailPage: React.FC = () => {
         ))}
       </Card>
 
-      <Card title="支持措施">
+      <Card className="iep-detail-section" title="支持措施">
         <Descriptions column={1} size="small">
           <Descriptions.Item label="教学支持">
             {iep.supports?.teaching?.join('；') || '—'}
@@ -431,6 +438,7 @@ const IEPDetailPage: React.FC = () => {
         open={reportOpen}
         report={report}
         onClose={() => setReportOpen(false)}
+        exportName={[iep?.student_name, iep?.term].filter(Boolean).join(' ')}
       />
     </div>
   );

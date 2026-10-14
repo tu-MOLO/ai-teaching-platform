@@ -13,6 +13,15 @@ vi.mock('../../stores/dashboard', () => ({
   refreshDashboardStats: vi.fn(),
 }))
 
+vi.mock('../../../components/Common/ConfigurableSelect', () => ({
+  default: ({ placeholder, onChange }: any) =>
+    React.createElement('input', {
+      placeholder,
+      'data-testid': 'grade-filter',
+      onChange: (e: any) => onChange?.(e.target.value),
+    }),
+}))
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [new URLSearchParams(), vi.fn()],
@@ -96,7 +105,7 @@ describe('Courses page', () => {
   it('should handle delete course', async () => {
     const { getCourses, deleteCourse } = await import('../../../services/course') as any
     ;(getCourses as any).mockResolvedValue({
-      data: [{ id: '1', name: 'Course 1', subject: 'Math', grade: '7', teacher: 'T1', schedule: 'Mon', status: 'active' }],
+      data: [{ id: '1', name: 'Course 1', subject: 'Math', grades: ['7'], class_names: ['1班'], teacher: 'T1', schedule: 'Mon', status: 'active' }],
       page: 1, page_size: 10, total: 1,
     })
     render(React.createElement(Courses))
@@ -104,5 +113,15 @@ describe('Courses page', () => {
     const deleteBtn = screen.getByText('删除')
     fireEvent.click(deleteBtn)
     await waitFor(() => expect(deleteCourse).toHaveBeenCalledWith('1'))
+  })
+
+  it('should filter courses by grade', async () => {
+    const { getCourses } = await import('../../../services/course')
+    render(React.createElement(Courses))
+    await waitFor(() => expect(getCourses).toHaveBeenCalled())
+    fireEvent.change(screen.getByTestId('grade-filter'), { target: { value: '七年级' } })
+    await waitFor(() =>
+      expect(getCourses).toHaveBeenLastCalledWith(expect.objectContaining({ grade: '七年级' }))
+    )
   })
 })

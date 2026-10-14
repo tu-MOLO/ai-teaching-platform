@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { Button, Card, Typography, Timeline, Space, Empty, Input, Select } from 'antd';
+import { Button, Card, Typography, Timeline, Space, Input, Select } from 'antd';
 import { message } from '@/utils/feedback';
 import { EditOutlined, FileTextOutlined, PlusOutlined, ClockCircleOutlined, SearchOutlined } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import { studentService } from '@/services/student'
 import { portfolioService } from '@/services/portfolio'
 import { AbilityRadar, TimelineItem } from '@/components'
+import EmptyState from '@/components/Common/EmptyState'
 import { usePortfolioTypesStore } from '@/stores/portfolioTypes'
 import type { Student } from '@/types/student'
 import type { PortfolioItem } from '@/types/portfolio'
@@ -239,23 +240,25 @@ const StudentDetail: React.FC = () => {
             )}
 
             {portfolioItems.length === 0 ? (
-              <Empty
-                image={<ClockCircleOutlined style={{ fontSize: 64, color: '#d9d9d9' }} />}
-                description="暂无成长记录"
-                style={{ padding: '40px 0' }}
-              >
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => navigate(`/portfolio/${id}/add-record`)}
-                >
-                  添加第一条记录
-                </Button>
-              </Empty>
+              <EmptyState
+                icon={<ClockCircleOutlined />}
+                title="暂无成长记录"
+                description="记录学生的作品、评价与成长里程碑"
+                action={
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => navigate(`/portfolio/${id}/add-record`)}
+                  >
+                    添加第一条记录
+                  </Button>
+                }
+              />
             ) : filteredPortfolioItems.length === 0 ? (
-              <Empty
-                description="未找到匹配的记录"
-                style={{ padding: '40px 0' }}
+              <EmptyState
+                icon={<SearchOutlined />}
+                title="未找到匹配的记录"
+                description="请调整搜索关键词或筛选条件"
               />
             ) : (
               <Timeline

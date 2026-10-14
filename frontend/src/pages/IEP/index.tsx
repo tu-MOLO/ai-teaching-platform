@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Card, Empty, Input, Select, Space, Table, Tabs, Tag } from 'antd';
+import { Button, Card, Input, Select, Space, Table, Tabs, Tag } from 'antd';
 import { message, modal } from '@/utils/feedback';
 import {
   PlusOutlined,
@@ -10,6 +10,7 @@ import {
   FileProtectOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import EmptyState from '../../components/Common/EmptyState';
 import {
   deleteIEP,
   listIEPs,
@@ -283,13 +284,10 @@ const IEPListPage: React.FC = () => {
             }}
           />
         ) : (
-          <Empty
-            image={
-              <FileProtectOutlined
-                style={{ fontSize: 56, color: 'var(--color-text-quaternary, #bbb)' }}
-              />
-            }
-            description="暂无 IEP，点击右上角「新建 IEP」开始为学生制定一人一案"
+          <EmptyState
+            icon={<FileProtectOutlined />}
+            title="暂无 IEP"
+            description="点击右上角「新建 IEP」开始为学生制定一人一案"
           />
         )}
       </Card>

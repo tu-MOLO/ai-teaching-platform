@@ -28,7 +28,16 @@ TOOL_DEFINITIONS = [
                 "properties": {
                     "name": {"type": "string", "description": "课程名称"},
                     "subject": {"type": "string", "description": "学科"},
-                    "grade": {"type": "string", "description": "年级"},
+                    "grades": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "年级（支持多选）",
+                    },
+                    "class_names": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "班级（支持多选）",
+                    },
                     "description": {"type": "string", "description": "课程描述"},
                     "schedule": {"type": "string", "description": "课程安排"},
                     "status": {
@@ -37,7 +46,7 @@ TOOL_DEFINITIONS = [
                         "default": "draft",
                     },
                 },
-                "required": ["name", "subject", "grade"],
+                "required": ["name", "subject", "grades"],
             },
         },
     },
@@ -88,7 +97,16 @@ TOOL_DEFINITIONS = [
                     "course_id": {"type": "string", "description": "课程ID"},
                     "name": {"type": "string", "description": "课程名称"},
                     "subject": {"type": "string", "description": "学科"},
-                    "grade": {"type": "string", "description": "年级"},
+                    "grades": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "年级（支持多选）",
+                    },
+                    "class_names": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "班级（支持多选）",
+                    },
                     "description": {"type": "string", "description": "课程描述"},
                     "schedule": {"type": "string", "description": "课程安排"},
                     "status": {"type": "string", "description": "课程状态"},
@@ -515,7 +533,8 @@ async def _create_course(db: AsyncSession, user_id: str, **kwargs):
         "id": course.id,
         "name": course.name,
         "subject": course.subject,
-        "grade": course.grade,
+        "grades": course.grades,
+        "class_names": course.class_names,
         "status": course.status,
     }
 
@@ -534,7 +553,8 @@ async def _list_courses(db: AsyncSession, user_id: str, **kwargs):
                 "id": c.id,
                 "name": c.name,
                 "subject": c.subject,
-                "grade": c.grade,
+                "grades": c.grades,
+                "class_names": c.class_names,
                 "status": c.status,
                 "teacher": c.teacher,
             }
@@ -556,7 +576,8 @@ async def _get_course(db: AsyncSession, user_id: str, **kwargs):
         "id": course.id,
         "name": course.name,
         "subject": course.subject,
-        "grade": course.grade,
+        "grades": course.grades,
+        "class_names": course.class_names,
         "description": course.description,
         "schedule": course.schedule,
         "status": course.status,
@@ -584,7 +605,8 @@ async def _update_course(db: AsyncSession, user_id: str, **kwargs):
         "id": course.id,
         "name": course.name,
         "subject": course.subject,
-        "grade": course.grade,
+        "grades": course.grades,
+        "class_names": course.class_names,
         "status": course.status,
     }
 
@@ -994,7 +1016,7 @@ TOOL_EXECUTOR = {
     "delete_notification": _delete_notification,
 }
 
-SYSTEM_PROMPT = """你是 AI 教学平台的智能助手，帮助教师高效管理教学事务。你可以通过工具函数直接操作平台数据。
+SYSTEM_PROMPT = """你是 AI培智教学平台的智能助手，帮助教师高效管理教学事务。你可以通过工具函数直接操作平台数据。
 
 ## 你的能力
 - 课程创建与管理：创建、查询、更新、删除课程

@@ -48,6 +48,26 @@ vi.mock('../../../services/student', () => ({
   studentService: { getStudents: (...a: any[]) => mockGetStudents(...a) },
 }));
 
+vi.mock('../../../components/Common/ConfigurableSelect', () => ({
+  default: ({ value, onChange, placeholder, groupKey }: any) =>
+    React.createElement(
+      'div',
+      { 'data-testid': `configurable-${groupKey}` },
+      React.createElement('input', {
+        value: (value || []).join(','),
+        readOnly: true,
+      }),
+      React.createElement(
+        'button',
+        {
+          type: 'button',
+          onClick: () => onChange?.([...(value || []), `${placeholder}项`]),
+        },
+        '添加标签'
+      )
+    ),
+}));
+
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useParams: () => mockParams,
@@ -195,6 +215,10 @@ const IEPEditor = (await import('../Editor')).default;
 const draftAI = {
   ai_disclaimer: 'AI 草稿声明',
   missing_info: ['需补充家庭情况'],
+  student_profile: '喜欢拼图，能用简单句表达',
+  domain_summaries: [
+    { domain: '感知', current_level: '视觉追踪需少量辅助', priority: 'high' },
+  ],
   long_term_goals: [
     {
       domain: '感知',
@@ -459,38 +483,58 @@ describe('IEP editor', () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  it('未选学生时生成 AI 初稿被提示拦截', async () => {
+  it('未选学生时 AI 生成本页内容被提示拦截', async () => {
     renderEditor();
     await screen.findByText('发展领域评估');
 
-    fireEvent.click(screen.getByRole('button', { name: 'AI 生成初稿' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI 生成本页内容' }));
 
     expect(mockMessage.warning).toHaveBeenCalledWith(
-      '请先选择学生并填写学期，再生成 AI 初稿'
+      '请先选择学生并填写学期，再使用 AI 生成'
     );
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockGenerateDraft).not.toHaveBeenCalled();
   });
 
-  it('AI 初稿：先落库再生成，采纳后目标与附加信息合入计划', async () => {
+  it('第 1 页：按 profile 生成，采纳后只填学生基本情况与领域小结', async () => {
     mockGenerateDraft.mockResolvedValue(draftAI);
     renderEditor();
     await screen.findByText('发展领域评估');
     await fillStudentAndTerm();
 
-    fireEvent.click(screen.getByRole('button', { name: 'AI 生成初稿' }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI 生成本页内容' }));
 
     await waitFor(() => expect(mockCreate).toHaveBeenCalled());
-    expect(mockNavigate).toHaveBeenCalledWith(
-      '/iep/new1/edit',
-      expect.objectContaining({ replace: true })
-    );
+    expect(mockGenerateDraft).toHaveBeenCalledWith('new1', 'profile');
     expect(await screen.findByText('AI 草稿声明')).toBeInTheDocument();
 
-    // 分别采纳目标卡片与附加信息卡片
-    fireEvent.click(screen.getAllByRole('button', { name: '采纳' })[0]);
-    fireEvent.click(screen.getAllByRole('button', { name: '采纳' })[1]);
+    fireEvent.click(screen.getByRole('button', { name: '采纳' }));
+    fireEvent.click(screen.getByRole('button', { name: '采纳并填入本页' }));
+
+    await waitFor(() =>
+      expect(mockMessage.success).toHaveBeenCalledWith(
+        '已填入学生基本情况和 1 个领域小结，请核对后修改'
+      )
+    );
+    // 只填本页：不应新增目标
+    expect(screen.queryByText('提升追踪')).not.toBeInTheDocument();
+  });
+
+  it('第 2 页：按 goals 生成，逐条采纳后加入目标', async () => {
+    mockGenerateDraft.mockResolvedValue(draftAI);
+    renderEditor();
+    await screen.findByText('发展领域评估');
+    await fillStudentAndTerm();
+    await goToStep(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'AI 生成本页内容' }));
+
+    await waitFor(() => expect(mockGenerateDraft).toHaveBeenCalledWith('new1', 'goals'));
+    expect(await screen.findByText('AI 草稿声明')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '采纳' }));
     fireEvent.click(
-      screen.getByRole('button', { name: '将已采纳内容加入计划' })
+      screen.getByRole('button', { name: '将已采纳目标加入计划' })
     );
 
     await waitFor(() =>
@@ -500,24 +544,27 @@ describe('IEP editor', () => {
     );
   });
 
-  it('AI 草稿未全部处理时提交审定被拦截', async () => {
+  it('第 3 页：按 supports 生成，采纳后只填支持措施与评价方式', async () => {
     mockGenerateDraft.mockResolvedValue(draftAI);
     renderEditor();
     await screen.findByText('发展领域评估');
     await fillStudentAndTerm();
-
-    fireEvent.click(screen.getByRole('button', { name: 'AI 生成初稿' }));
-    expect(await screen.findByText('AI 草稿声明')).toBeInTheDocument();
-
-    // 不处理草稿，直接跳到复核页提交
     await goToStep(2);
-    fireEvent.click(screen.getByRole('button', { name: '保存并提交审定' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'AI 生成本页内容' }));
 
     await waitFor(() =>
-      expect(mockMessage.warning).toHaveBeenCalledWith(
-        '请先处理全部 AI 草稿（逐条采纳或忽略）后再提交审定'
+      expect(mockGenerateDraft).toHaveBeenCalledWith('new1', 'supports')
+    );
+    expect(await screen.findByText('AI 草稿声明')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '采纳' }));
+    fireEvent.click(screen.getByRole('button', { name: '采纳并填入本页' }));
+
+    await waitFor(() =>
+      expect(mockMessage.success).toHaveBeenCalledWith(
+        '已填入支持措施与评价方式，请核对后修改'
       )
     );
-    expect(mockSubmit).not.toHaveBeenCalled();
   });
 });

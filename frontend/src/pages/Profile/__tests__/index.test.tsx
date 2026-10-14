@@ -94,6 +94,15 @@ vi.mock('antd', () => {
     Modal: ({ children, open, title: _title, onOk, onCancel }: any) =>
       open ? React.createElement('div', { 'data-testid': 'modal' }, React.createElement('button', { onClick: onOk, 'data-testid': 'modal-ok' }, 'OK'), React.createElement('button', { onClick: onCancel, 'data-testid': 'modal-cancel' }, 'Cancel'), children) : null,
     Spin: ({ children, size: _size }: any) => React.createElement('div', { 'data-testid': 'spin' }, children),
+    Slider: ({ min, max, step, value, onChange }: any) =>
+      React.createElement('input', {
+        type: 'range',
+        min,
+        max,
+        step,
+        value,
+        onChange: (e: any) => onChange?.(Number(e.target.value)),
+      }),
     message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   }
 })
@@ -110,6 +119,7 @@ vi.mock('@ant-design/icons', () => {
     LoginOutlined: icon('LoginOutlined'),
     IdcardOutlined: icon('IdcardOutlined'),
     SafetyOutlined: icon('SafetyOutlined'),
+    CameraOutlined: icon('CameraOutlined'),
   }
 })
 
