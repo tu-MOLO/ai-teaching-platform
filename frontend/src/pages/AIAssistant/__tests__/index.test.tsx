@@ -14,15 +14,21 @@ const mockUpdateLastAssistantMessage = vi.fn()
 const mockSetStreaming = vi.fn()
 const mockSetCurrentConversationId = vi.fn()
 const mockRenameConversation = vi.fn()
+const mockDeleteConversation = vi.fn()
+const mockArchiveConversation = vi.fn()
+const mockBatchDeleteConversations = vi.fn()
+const mockToggleShowArchived = vi.fn()
 
 const createMockStore = (overrides: any = {}) => ({
   conversations: [],
   currentConversationId: null,
   messages: [],
   isLoading: false,
+  listLoading: false,
   isStreaming: false,
   aiConfig: { api_key: 'test-key', provider: 'zhipu', model: 'glm-4' },
   configLoaded: true,
+  showArchived: false,
   loadConversations: mockLoadConversations,
   selectConversation: mockSelectConversation,
   addMessage: mockAddMessage,
@@ -31,6 +37,10 @@ const createMockStore = (overrides: any = {}) => ({
   setCurrentConversationId: mockSetCurrentConversationId,
   loadAIConfig: mockLoadAIConfig,
   renameConversation: mockRenameConversation,
+  deleteConversation: mockDeleteConversation,
+  archiveConversation: mockArchiveConversation,
+  batchDeleteConversations: mockBatchDeleteConversations,
+  toggleShowArchived: mockToggleShowArchived,
   ...overrides,
 })
 
@@ -41,11 +51,9 @@ vi.mock('../../../stores/ai', () => ({
 }))
 
 const mockStreamChatMessage = vi.fn()
-const mockDeleteConversationApi = vi.fn()
 
 vi.mock('../../../services/ai', () => ({
   streamChatMessage: (...args: any[]) => mockStreamChatMessage(...args),
-  deleteConversation: (...args: any[]) => mockDeleteConversationApi(...args),
   MODULE_OPTIONS: [],
 }))
 
@@ -130,6 +138,14 @@ describe('AIAssistant page', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/settings?tab=ai')
   })
 
+  it('未配置密钥时仍保留会话列表，会话管理不被整页引导遮住', () => {
+    mockStore = createMockStore({ aiConfig: { api_key: '' } })
+    render(React.createElement(AIAssistant))
+    expect(screen.getByText('AI 助手尚未启用')).toBeInTheDocument()
+    expect(screen.getByTestId('conversation-list')).toBeInTheDocument()
+    expect(screen.queryByTestId('chat-input')).not.toBeInTheDocument()
+  })
+
   it('should toggle sidebar collapse', () => {
     render(React.createElement(AIAssistant))
     expect(screen.getByTestId('conversation-list')).toBeInTheDocument()
@@ -148,11 +164,10 @@ describe('AIAssistant page', () => {
 
   it('should handle delete conversation', async () => {
     mockStore = createMockStore({ currentConversationId: 'c1' })
-    mockDeleteConversationApi.mockResolvedValue(undefined)
+    mockDeleteConversation.mockResolvedValue(true)
     render(React.createElement(AIAssistant))
     fireEvent.click(screen.getByTestId('delete-conv-btn'))
-    await waitFor(() => expect(mockDeleteConversationApi).toHaveBeenCalledWith('c1'))
-    expect(mockSelectConversation).toHaveBeenCalledWith(null)
+    await waitFor(() => expect(mockDeleteConversation).toHaveBeenCalledWith('c1'))
   })
 
   it('should handle send message with stream content', async () => {
@@ -186,7 +201,7 @@ describe('AIAssistant page', () => {
     mockStreamChatMessage.mockReturnValue(mockStream())
     render(React.createElement(AIAssistant))
     fireEvent.click(screen.getByTestId('chat-send-btn'))
-    await waitFor(() => expect(mockUpdateLastAssistantMessage).toHaveBeenCalledWith(expect.stringContaining('请求失败')))
+    await waitFor(() => expect(mockUpdateLastAssistantMessage).toHaveBeenCalledWith(expect.stringContaining('本次回复未能完成')))
   })
 
   it('should handle abort error silently', async () => {

@@ -108,7 +108,10 @@ export const getConversations = async (archived?: boolean): Promise<Conversation
 
 export const getConversationMessages = async (conversationId: string): Promise<MessageListResponse> => {
   const response = await api.get(`/ai/conversations/${conversationId}`)
-  return toItem<MessageListResponse>(response)
+  // 后端 MessageListSchema 只声明了 data 字段，响应拦截器会把它解包成裸数组；
+  // 两种形态都要能接住，否则消息列表会一直是空的。
+  const payload = toItem<MessageListResponse | Message[]>(response)
+  return Array.isArray(payload) ? { data: payload } : payload
 }
 
 export const deleteConversation = async (conversationId: string): Promise<void> => {
@@ -117,7 +120,7 @@ export const deleteConversation = async (conversationId: string): Promise<void> 
 
 export const batchDeleteConversations = async (conversationIds: string[]): Promise<{ count: number }> => {
   const response = await api.post('/ai/conversations/batch-delete', { conversation_ids: conversationIds })
-  return response.data
+  return toItem<{ count: number }>(response)
 }
 
 export const renameConversation = async (conversationId: string, title: string): Promise<void> => {
@@ -202,14 +205,29 @@ export async function* streamChatMessage(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    const detail = errorData.detail || `HTTP ${response.status}`
-    yield { type: 'error', content: detail }
+    // 后端统一响应体把可读文案放在 message 字段，detail 仅作兜底
+    const friendly =
+      (typeof errorData?.message === 'string' && errorData.message) ||
+      (typeof errorData?.detail === 'string' && errorData.detail) ||
+      ''
+    if (errorData?.request_id) {
+      console.error('[AI] 请求失败，排查用 request_id:', errorData.request_id, errorData)
+    }
+    yield {
+      type: 'error',
+      content:
+        friendly ||
+        `AI 服务未能返回结果（HTTP ${response.status}）。请稍后重试；若持续出现，请到「设置 → AI 助手」检查服务配置。`,
+    }
     return
   }
 
   const reader = response.body?.getReader()
   if (!reader) {
-    yield { type: 'error', content: '无法读取响应流' }
+    yield {
+      type: 'error',
+      content: '浏览器未能读取 AI 服务的响应流，本次回复未完成。请刷新页面后重试。',
+    }
     return
   }
 

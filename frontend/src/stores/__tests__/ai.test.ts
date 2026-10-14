@@ -6,6 +6,7 @@ const mockGetAIConfig = vi.fn()
 const mockRenameConversationApi = vi.fn()
 const mockArchiveConversationApi = vi.fn()
 const mockBatchDeleteConversationsApi = vi.fn()
+const mockDeleteConversationApi = vi.fn()
 
 vi.mock('../../services/ai', () => ({
   getConversations: (...args: any[]) => mockGetConversations(...args),
@@ -14,6 +15,7 @@ vi.mock('../../services/ai', () => ({
   renameConversation: (...args: any[]) => mockRenameConversationApi(...args),
   archiveConversation: (...args: any[]) => mockArchiveConversationApi(...args),
   batchDeleteConversations: (...args: any[]) => mockBatchDeleteConversationsApi(...args),
+  deleteConversation: (...args: any[]) => mockDeleteConversationApi(...args),
 }))
 
 import { useAIStore } from '../ai'
@@ -23,9 +25,11 @@ const defaultInitialState = {
   currentConversationId: null,
   messages: [],
   isLoading: false,
+  listLoading: false,
   isStreaming: false,
   aiConfig: null,
   configLoaded: false,
+  showArchived: false,
 }
 
 describe('useAIStore', () => {
@@ -267,6 +271,53 @@ describe('useAIStore', () => {
       await useAIStore.getState().renameConversation('1', 'New Title')
 
       expect(useAIStore.getState().conversations[0].title).toBe('Old Title')
+    })
+  })
+
+  describe('deleteConversation', () => {
+    it('删除当前会话后清空选中态与消息并刷新列表', async () => {
+      mockDeleteConversationApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+      })
+
+      const ok = await useAIStore.getState().deleteConversation('1')
+
+      expect(ok).toBe(true)
+      expect(mockDeleteConversationApi).toHaveBeenCalledWith('1')
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBeNull()
+      expect(state.messages).toEqual([])
+    })
+
+    it('删除的不是当前会话时保留当前会话', async () => {
+      mockDeleteConversationApi.mockResolvedValueOnce(undefined)
+      mockGetConversations.mockResolvedValueOnce({ data: [] })
+      useAIStore.setState({
+        currentConversationId: '2',
+        messages: [{ id: 'm2' }],
+      })
+
+      await useAIStore.getState().deleteConversation('1')
+
+      const state = useAIStore.getState()
+      expect(state.currentConversationId).toBe('2')
+      expect(state.messages).toEqual([{ id: 'm2' }])
+    })
+
+    it('API 失败时返回 false 且不清空', async () => {
+      mockDeleteConversationApi.mockRejectedValueOnce(new Error('fail'))
+      useAIStore.setState({
+        currentConversationId: '1',
+        messages: [{ id: 'm1' }],
+      })
+
+      const ok = await useAIStore.getState().deleteConversation('1')
+
+      expect(ok).toBe(false)
+      expect(useAIStore.getState().currentConversationId).toBe('1')
     })
   })
 

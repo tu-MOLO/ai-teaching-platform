@@ -6,6 +6,7 @@ import {
   renameConversation as renameConversationApi,
   archiveConversation as archiveConversationApi,
   batchDeleteConversations as batchDeleteConversationsApi,
+  deleteConversation as deleteConversationApi,
   type Conversation,
   type Message,
   type AIConfigResponse,
@@ -16,6 +17,7 @@ interface AIState {
   currentConversationId: string | null
   messages: Message[]
   isLoading: boolean
+  listLoading: boolean
   isStreaming: boolean
   aiConfig: AIConfigResponse | null
   configLoaded: boolean
@@ -29,9 +31,10 @@ interface AIState {
   setStreaming: (streaming: boolean) => void
   setCurrentConversationId: (id: string | null) => void
   loadAIConfig: () => Promise<void>
-  renameConversation: (id: string, title: string) => Promise<void>
-  archiveConversation: (id: string, archived: boolean) => Promise<void>
-  batchDeleteConversations: (ids: string[]) => Promise<void>
+  renameConversation: (id: string, title: string) => Promise<boolean>
+  archiveConversation: (id: string, archived: boolean) => Promise<boolean>
+  deleteConversation: (id: string) => Promise<boolean>
+  batchDeleteConversations: (ids: string[]) => Promise<boolean>
   toggleShowArchived: () => void
   reset: () => void
 }
@@ -41,18 +44,20 @@ export const useAIStore = create<AIState>((set, get) => ({
   currentConversationId: null,
   messages: [],
   isLoading: false,
+  listLoading: false,
   isStreaming: false,
   aiConfig: null,
   configLoaded: false,
   showArchived: false,
 
   loadConversations: async () => {
+    set({ listLoading: true })
     try {
       const { showArchived } = get()
       const response = await getConversations(showArchived)
-      set({ conversations: response.data || [] })
+      set({ conversations: response?.data || [], listLoading: false })
     } catch {
-      // ignore
+      set({ listLoading: false })
     }
   },
 
@@ -106,39 +111,55 @@ export const useAIStore = create<AIState>((set, get) => ({
           c.id === id ? { ...c, title } : c
         ),
       }))
+      return true
     } catch {
-      // ignore
+      return false
     }
   },
 
   archiveConversation: async (id: string, archived: boolean) => {
+    const { loadConversations, currentConversationId } = get()
     try {
       await archiveConversationApi(id, archived)
-      const { showArchived, loadConversations } = get()
       await loadConversations()
-      // 如果当前会话被归档且不在归档视图，清空当前会话
-      if (!showArchived && archived) {
-        const { currentConversationId } = get()
-        if (currentConversationId === id) {
-          set({ currentConversationId: null, messages: [] })
-        }
+      // 归档会把会话移出"全部对话"列表，此时清空选中态，避免主区停在一个列表里已不存在的会话上；
+      // 取消归档只是把它放回主列表，用户多半还想继续看，因此保留当前选中。
+      const stillVisible = get().conversations.some((c) => c.id === id)
+      if (archived && currentConversationId === id && !stillVisible) {
+        set({ currentConversationId: null, messages: [] })
       }
+      return true
     } catch {
-      // ignore
+      return false
+    }
+  },
+
+  deleteConversation: async (id: string) => {
+    const { loadConversations, currentConversationId } = get()
+    try {
+      await deleteConversationApi(id)
+      await loadConversations()
+      if (currentConversationId === id) {
+        set({ currentConversationId: null, messages: [] })
+      }
+      return true
+    } catch {
+      return false
     }
   },
 
   batchDeleteConversations: async (ids: string[]) => {
-    if (ids.length === 0) return
+    if (ids.length === 0) return false
+    const { loadConversations, currentConversationId } = get()
     try {
       await batchDeleteConversationsApi(ids)
-      const { currentConversationId, loadConversations } = get()
       await loadConversations()
       if (currentConversationId && ids.includes(currentConversationId)) {
         set({ currentConversationId: null, messages: [] })
       }
+      return true
     } catch {
-      // ignore
+      return false
     }
   },
 
@@ -153,6 +174,7 @@ export const useAIStore = create<AIState>((set, get) => ({
       currentConversationId: null,
       messages: [],
       isLoading: false,
+      listLoading: false,
       isStreaming: false,
       showArchived: false,
     })

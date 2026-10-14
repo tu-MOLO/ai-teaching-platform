@@ -21,6 +21,7 @@
   width: 800px;
   height: 800px;
   background: radial-gradient(circle, rgba(84, 140, 168, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 8%, transparent) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -33,6 +34,7 @@
   width: 600px;
   height: 600px;
   background: radial-gradient(circle, rgba(84, 140, 168, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 6%, transparent) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -72,6 +74,9 @@
   background:
     radial-gradient(circle at 20% 80%, rgba(84, 140, 168, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(84, 140, 168, 0.08) 0%, transparent 50%);
+  background:
+    radial-gradient(circle at 20% 80%, color-mix(in srgb, var(--color-primary) 15%, transparent) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--color-primary) 8%, transparent) 0%, transparent 50%);
   pointer-events: none;
 }
 
@@ -90,6 +95,7 @@
   justify-content: center;
   margin-bottom: var(--space-xl);
   box-shadow: 0 8px 24px rgba(84, 140, 168, 0.3);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .brand-logo svg {
@@ -116,20 +122,26 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  margin-top: var(--space-lg);
 }
 
 .brand-feature {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.75);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: var(--font-size-base);
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .brand-feature-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
+  font-size: 17px;
   background: rgba(84, 140, 168, 0.15);
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -160,7 +172,7 @@
 .form-subtitle {
   font-size: var(--font-size-base);
   color: var(--color-text-secondary);
-  margin: 0;
+  margin: var(--space-sm) 0 0;
 }
 
 .login-form {
@@ -186,6 +198,7 @@
 .login-form .ant-input-affix-wrapper-focused {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .login-form .ant-input {
@@ -230,12 +243,14 @@
   background: var(--color-primary);
   border: none;
   box-shadow: 0 4px 14px rgba(84, 140, 168, 0.3);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 30%, transparent);
   transition: all var(--transition-fast);
 }
 
 .login-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(84, 140, 168, 0.4);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 .login-button:active {

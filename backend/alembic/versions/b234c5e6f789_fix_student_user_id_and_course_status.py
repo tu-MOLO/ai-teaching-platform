@@ -37,11 +37,12 @@ def upgrade() -> None:
     if "courses" in inspector.get_table_names():
         check_constraints = {constraint["name"] for constraint in inspector.get_check_constraints("courses")}
         if "courses_status_check" not in check_constraints:
-            op.create_check_constraint(
-                "courses_status_check",
-                "courses",
-                "status IN ('ACTIVE', 'INACTIVE', 'DRAFT', 'active', 'inactive', 'draft')",
-            )
+            # SQLite 不支持 ALTER ... ADD CONSTRAINT，必须走 batch 模式重建表
+            with op.batch_alter_table("courses", schema=None) as batch_op:
+                batch_op.create_check_constraint(
+                    "courses_status_check",
+                    "status IN ('ACTIVE', 'INACTIVE', 'DRAFT', 'active', 'inactive', 'draft')",
+                )
 
 
 def downgrade() -> None:
@@ -50,4 +51,6 @@ def downgrade() -> None:
     if "courses" in inspector.get_table_names():
         check_constraints = {constraint["name"] for constraint in inspector.get_check_constraints("courses")}
         if "courses_status_check" in check_constraints:
-            op.drop_constraint("courses_status_check", "courses", type_="check")
+            # 同上，删除约束也需要 batch 模式
+            with op.batch_alter_table("courses", schema=None) as batch_op:
+                batch_op.drop_constraint("courses_status_check", type_="check")

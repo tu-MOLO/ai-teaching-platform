@@ -13,6 +13,21 @@
   --color-primary-hover: #6a9cb5;
   --color-primary-active: #457a93;
 
+  /* 主色衍生色：跟随 --color-primary，供阴影/描边等半透明场景使用。
+     不支持 color-mix 的浏览器回退到上面一行写死的默认值。 */
+  --color-primary-wash: rgba(84, 140, 168, 0.04);
+  --color-primary-wash: color-mix(in srgb, var(--color-primary) 4%, transparent);
+  --color-primary-wash-strong: rgba(84, 140, 168, 0.06);
+  --color-primary-wash-strong: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  --color-primary-soft: rgba(84, 140, 168, 0.12);
+  --color-primary-soft: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --color-primary-shadow: rgba(84, 140, 168, 0.25);
+  --color-primary-shadow: color-mix(in srgb, var(--color-primary) 25%, transparent);
+  --color-primary-shadow-hover: rgba(84, 140, 168, 0.35);
+  --color-primary-shadow-hover: color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --color-error-shadow: rgba(201, 123, 123, 0.25);
+  --color-error-shadow: color-mix(in srgb, var(--color-error) 25%, transparent);
+
   /* ========== 语义色 ========== */
   --color-success: #6b9b7a;
   --color-success-light: #e8f3ec;
@@ -49,9 +64,14 @@
 
   /* ========== 边框 ========== */
   --color-border: rgba(84, 140, 168, 0.14);
+  /* ========== 边框 ========== */
+  --color-border: color-mix(in srgb, var(--color-primary) 14%, transparent);
   --color-border-light: rgba(84, 140, 168, 0.07);
+  --color-border-light: color-mix(in srgb, var(--color-primary) 7%, transparent);
   --color-border-medium: rgba(84, 140, 168, 0.20);
+  --color-border-medium: color-mix(in srgb, var(--color-primary) 20%, transparent);
   --color-divider: rgba(84, 140, 168, 0.10);
+  --color-divider: color-mix(in srgb, var(--color-primary) 10%, transparent);
 
   /* ========== 阴影系统 ========== */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -60,6 +80,7 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.14);
   --shadow-glow: 0 4px 20px rgba(84, 140, 168, 0.25);
+  --shadow-glow: 0 4px 20px color-mix(in srgb, var(--color-primary) 25%, transparent);
 
   /* ========== 间距系统 - 4px基准 ========== */
   --space-xxs: 2px;
@@ -172,6 +193,12 @@
   --z-modal: 1050;
   --z-popover: 1060;
   --z-tooltip: 1080;
+
+  /* ========== 控件尺寸 ========== */
+  /* 与 App.css 的覆写、ThemeProvider 的 controlHeight token 保持一致 */
+  --control-height: 36px;
+  --control-height-sm: 28px;
+  --control-height-lg: 44px;
 
   /* ========== 布局 ========== */
   --sidebar-width: 240px;

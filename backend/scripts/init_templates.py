@@ -1,11 +1,21 @@
 """
 初始化教案模板数据
+
+运行（在 backend 目录）：
+    venv\\Scripts\\python.exe -m scripts.init_templates
 """
 
 import json
+import os
+import sys
+from pathlib import Path
 
-from backend.app.core.database import get_sync_session
-from backend.app.models.lesson_template import LessonTemplate
+ROOT = Path(__file__).resolve().parent.parent
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+
+from app.core.database import get_sync_session  # noqa: E402
+from app.models.lesson_template import LessonTemplate  # noqa: E402
 
 
 def init_templates():

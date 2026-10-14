@@ -167,6 +167,7 @@
   border-color: var(--color-primary-light);
   background: var(--color-bg-card);
   box-shadow: 0 0 0 3px rgba(84, 140, 168, 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .header-search-icon {
@@ -226,6 +227,7 @@
 
 .notification-item.unread {
   background: rgba(84, 140, 168, 0.04);
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
 }
 
 .notification-item-title {

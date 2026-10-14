@@ -6,16 +6,19 @@ import { BrowserRouter } from 'react-router-dom'
 import ErrorBoundary from './components/Common/ErrorBoundary.tsx'
 import { App as AntApp } from 'antd'
 import { MessageBridge } from './utils/feedback'
+import ThemeProvider from './components/Theme/ThemeProvider'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <AntApp>
-        <MessageBridge />
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
-      </AntApp>
+      <ThemeProvider>
+        <AntApp>
+          <MessageBridge />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </AntApp>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>,
 )

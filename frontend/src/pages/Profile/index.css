@@ -182,7 +182,7 @@
 .profile-form .ant-input:focus,
 .profile-form .ant-input-focused {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(84, 140, 168, 0.15);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
 }
 
 .profile-form.ant-form-disabled .ant-input {

@@ -1,12 +1,18 @@
 import React, { useState } from 'react'
 import { Button, Form, Input, Select, Typography } from 'antd';
 import { message } from '@/utils/feedback';
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, SafetyCertificateOutlined, BookOutlined, TeamOutlined, RocketOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../../services/auth'
 import './index.css'
 
 const { Text } = Typography
+
+const BRAND_FEATURES = [
+  { icon: <BookOutlined />, text: '智能备课辅助' },
+  { icon: <TeamOutlined />, text: '学生成长档案' },
+  { icon: <RocketOutlined />, text: '教学数据分析' },
+]
 
 const SECURITY_QUESTIONS = [
   "您的母校名称是什么？",
@@ -133,6 +139,14 @@ const Register: React.FC = () => {
             <p className="brand-subtitle">
               面向教学场景的管理平台，聚焦课程、学生、资源与教案的真实使用流程。
             </p>
+            <div className="brand-features">
+              {BRAND_FEATURES.map((feature, index) => (
+                <div key={index} className="brand-feature">
+                  <div className="brand-feature-icon">{feature.icon}</div>
+                  <span>{feature.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

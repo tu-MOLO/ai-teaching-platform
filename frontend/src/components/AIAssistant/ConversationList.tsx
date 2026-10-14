@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Button, List, Popconfirm, Input, Switch, Tooltip, Checkbox } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react'
+import { Button, Empty, List, Popconfirm, Input, Switch, Tooltip, Checkbox, Spin } from 'antd';
 import { message } from '@/utils/feedback';
 import { PlusOutlined, DeleteOutlined, EditOutlined, InboxOutlined } from '@ant-design/icons'
 import type { Conversation } from '../../services/ai'
@@ -7,12 +7,13 @@ import type { Conversation } from '../../services/ai'
 interface ConversationListProps {
   conversations: Conversation[]
   currentId: string | null
+  loading?: boolean
   onSelect: (id: string) => void
-  onDelete: (id: string) => void
+  onDelete: (id: string) => Promise<boolean>
   onNew: () => void
-  onRename: (id: string, title: string) => Promise<void>
-  onArchive: (id: string, archived: boolean) => Promise<void>
-  onBatchDelete: (ids: string[]) => Promise<void>
+  onRename: (id: string, title: string) => Promise<boolean>
+  onArchive: (id: string, archived: boolean) => Promise<boolean>
+  onBatchDelete: (ids: string[]) => Promise<boolean>
   showArchived: boolean
   onToggleShowArchived: () => void
 }
@@ -20,6 +21,7 @@ interface ConversationListProps {
 const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
   currentId,
+  loading = false,
   onSelect,
   onDelete,
   onNew,
@@ -34,6 +36,16 @@ const ConversationList: React.FC<ConversationListProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [batchDeleting, setBatchDeleting] = useState(false)
 
+  // 会话被删除 / 归档后不再出现在当前列表里，同步清掉勾选，避免残留的幽灵选项
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === 0) return prev
+      const visible = new Set(conversations.map((c) => c.id))
+      const next = new Set([...prev].filter((id) => visible.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [conversations])
+
   const startEditing = (e: React.MouseEvent, item: Conversation) => {
     e.stopPropagation()
     setEditingId(item.id)
@@ -41,13 +53,21 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   const confirmRename = async () => {
-    if (!editingId || !editingTitle.trim()) return
+    if (!editingId) return
     const trimmed = editingTitle.trim()
+    if (!trimmed) {
+      cancelRename()
+      return
+    }
     if (trimmed.length > 100) {
       message.warning('会话名称不能超过100个字符')
       return
     }
-    await onRename(editingId, trimmed)
+    const ok = await onRename(editingId, trimmed)
+    if (!ok) {
+      message.error('重命名失败，请稍后重试')
+      return
+    }
     setEditingId(null)
     setEditingTitle('')
   }
@@ -59,8 +79,23 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   const handleArchive = async (e: React.MouseEvent, item: Conversation) => {
     e.stopPropagation()
-    await onArchive(item.id, !item.is_archived)
-    message.success(item.is_archived ? '已取消归档' : '已归档')
+    const nextArchived = !item.is_archived
+    const ok = await onArchive(item.id, nextArchived)
+    if (!ok) {
+      message.error(nextArchived ? '归档失败，请稍后重试' : '取消归档失败，请稍后重试')
+      return
+    }
+    message.success(nextArchived ? '已归档' : '已取消归档')
+  }
+
+  const handleDelete = async (e: React.MouseEvent | undefined, item: Conversation) => {
+    e?.stopPropagation()
+    const ok = await onDelete(item.id)
+    if (!ok) {
+      message.error('删除失败，请稍后重试')
+      return
+    }
+    message.success('已删除该对话')
   }
 
   const toggleSelect = (id: string, checked: boolean) => {
@@ -87,8 +122,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
     if (selectedIds.size === 0) return
     setBatchDeleting(true)
     try {
-      await onBatchDelete(Array.from(selectedIds))
-      message.success(`已删除 ${selectedIds.size} 条对话`)
+      const count = selectedIds.size
+      const ok = await onBatchDelete(Array.from(selectedIds))
+      if (!ok) {
+        message.error('批量删除失败，请稍后重试')
+        return
+      }
+      message.success(`已删除 ${count} 条对话`)
       setSelectedIds(new Set())
     } finally {
       setBatchDeleting(false)
@@ -100,7 +140,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   const isSelecting = selectedIds.size > 0
-  const allSelected = conversations.length > 0 && conversations.every((c) => selectedIds.has(c.id))
+  const allSelected = useMemo(
+    () => conversations.length > 0 && conversations.every((c) => selectedIds.has(c.id)),
+    [conversations, selectedIds]
+  )
 
   return (
     <div className="conversation-list">
@@ -115,19 +158,27 @@ const ConversationList: React.FC<ConversationListProps> = ({
         </Button>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, padding: '0 4px' }}>
-        <span style={{ fontSize: 12, color: '#666' }}>
-          {showArchived ? '已归档' : '全部对话'}
+        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+          {showArchived ? '已归档对话' : '全部对话'}（{conversations.length}）
         </span>
-        <Tooltip title={showArchived ? '显示全部对话' : '仅显示已归档'}>
-          <Switch
-            size="small"
-            checked={showArchived}
-            onChange={onToggleShowArchived}
-            checkedChildren={<InboxOutlined />}
-            unCheckedChildren={<InboxOutlined />}
-          />
+        <Tooltip title={showArchived ? '返回全部对话' : '只看已归档'}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>只看归档</span>
+            <Switch
+              size="small"
+              checked={showArchived}
+              onChange={onToggleShowArchived}
+              checkedChildren={<InboxOutlined />}
+              unCheckedChildren={<InboxOutlined />}
+            />
+          </span>
         </Tooltip>
       </div>
+      {!isSelecting && conversations.length > 0 && (
+        <div style={{ padding: '0 4px 8px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+          勾选会话前的复选框可批量删除
+        </div>
+      )}
       {isSelecting && (
         <div
           style={{
@@ -136,7 +187,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             justifyContent: 'space-between',
             marginBottom: 8,
             padding: '8px 4px',
-            background: '#f6ffed',
+            background: 'var(--color-bg-secondary)',
             borderRadius: 4,
           }}
         >
@@ -158,88 +209,103 @@ const ConversationList: React.FC<ConversationListProps> = ({
           </div>
         </div>
       )}
-      <List
-        dataSource={conversations}
-        renderItem={(item) => (
-          <List.Item
-            className={`conversation-item ${item.id === currentId ? 'active' : ''}`}
-            onClick={() => {
-              if (editingId !== item.id) onSelect(item.id)
-            }}
-            actions={[
-              <Tooltip key="archive" title={item.is_archived ? '取消归档' : '归档'}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<InboxOutlined style={{ color: item.is_archived ? '#1890ff' : undefined }} />}
-                  onClick={(e) => handleArchive(e, item)}
-                />
-              </Tooltip>,
-              <Button
-                key="edit"
-                type="text"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={(e) => startEditing(e, item)}
-              />,
-              <Popconfirm
-                key="delete"
-                title="确定删除此对话？"
-                onConfirm={(e) => {
-                  e?.stopPropagation()
-                  onDelete(item.id)
-                }}
-                onCancel={(e) => e?.stopPropagation()}
-              >
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => e.stopPropagation()}
-                  danger
-                />
-              </Popconfirm>,
-            ]}
-          >
-            <List.Item.Meta
-              avatar={
-                <Checkbox
-                  checked={selectedIds.has(item.id)}
-                  onChange={(e) => toggleSelect(item.id, e.target.checked)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              }
-              title={
-                editingId === item.id ? (
-                  <Input
+      {loading && conversations.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0' }}>
+          <Spin size="small" />
+        </div>
+      ) : (
+        <List
+          dataSource={conversations}
+          locale={{
+            emptyText: (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={showArchived ? '还没有归档的对话' : '还没有对话，点上方新建开始'}
+              />
+            ),
+          }}
+          renderItem={(item) => (
+            <List.Item
+              className={`conversation-item ${item.id === currentId ? 'active' : ''}`}
+              onClick={() => {
+                if (editingId !== item.id) onSelect(item.id)
+              }}
+              actions={[
+                <Tooltip key="archive" title={item.is_archived ? '取消归档' : '归档'}>
+                  <Button
+                    type="text"
                     size="small"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onPressEnter={confirmRename}
-                    onBlur={confirmRename}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') cancelRename()
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    autoFocus
-                    maxLength={100}
+                    icon={
+                      <InboxOutlined
+                        style={{ color: item.is_archived ? 'var(--color-primary)' : undefined }}
+                      />
+                    }
+                    onClick={(e) => handleArchive(e, item)}
                   />
-                ) : (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    {item.title}
-                    {item.is_archived && (
-                      <span style={{ fontSize: 10, color: '#1890ff', marginLeft: 4 }}>
-                        (已归档)
-                      </span>
-                    )}
-                  </span>
-                )
-              }
-              description={new Date(item.updated_at).toLocaleString()}
-            />
-          </List.Item>
-        )}
-      />
+                </Tooltip>,
+                <Button
+                  key="edit"
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={(e) => startEditing(e, item)}
+                />,
+                <Popconfirm
+                  key="delete"
+                  title="确定删除此对话？"
+                  onConfirm={(e) => handleDelete(e, item)}
+                  onCancel={(e) => e?.stopPropagation()}
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => e.stopPropagation()}
+                    danger
+                  />
+                </Popconfirm>,
+              ]}
+            >
+              <List.Item.Meta
+                avatar={
+                  <Checkbox
+                    checked={selectedIds.has(item.id)}
+                    onChange={(e) => toggleSelect(item.id, e.target.checked)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                }
+                title={
+                  editingId === item.id ? (
+                    <Input
+                      size="small"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onPressEnter={confirmRename}
+                      onBlur={confirmRename}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') cancelRename()
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      autoFocus
+                      maxLength={100}
+                    />
+                  ) : (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {item.title}
+                      {item.is_archived && (
+                        <span style={{ fontSize: 10, color: 'var(--color-primary)', marginLeft: 4 }}>
+                          (已归档)
+                        </span>
+                      )}
+                    </span>
+                  )
+                }
+                description={new Date(item.updated_at).toLocaleString()}
+              />
+            </List.Item>
+          )}
+        />
+      )}
     </div>
   )
 }

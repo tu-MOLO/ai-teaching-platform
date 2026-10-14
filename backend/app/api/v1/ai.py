@@ -14,6 +14,7 @@ from app.schemas.ai import (
     MessageListSchema,
 )
 from app.services.ai import AIService
+from app.services.ai_client import AIServiceError
 
 router = APIRouter()
 
@@ -40,9 +41,14 @@ async def chat(
             )
         else:
             return await AIService.chat(db, user_id, request, stream=False)
+    except AIServiceError as e:
+        # user_message 已是面向用户的文案，原始细节留在日志里
+        raise BadRequestException(e.user_message)
     except ValueError as e:
         if str(e) == "NO_API_KEY":
-            raise BadRequestException("未配置API密钥，请先在设置中配置API密钥")
+            raise BadRequestException(
+                "尚未配置 AI 服务：请到「设置 → AI 助手」填写服务商与 API 密钥后再发起对话。"
+            )
         raise BadRequestException(str(e))
 
 

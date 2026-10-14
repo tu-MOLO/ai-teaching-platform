@@ -32,15 +32,26 @@ if not exist .env (
 :: 3. Database Migration
 echo [3/6] Running database migrations...
 alembic upgrade head
+if errorlevel 1 (
+    echo   [WARN] alembic upgrade failed; falling back to create_all + stamp head
+    python -c "import asyncio;from app.core.database import init_db;asyncio.run(init_db())"
+    alembic stamp head
+)
 
 :: 4. Initialize Seed Data
 echo [4/6] Initializing seed data...
-python scripts/init_dropdown_options.py
-python scripts/init_tags.py
-python scripts/init_templates.py
-python scripts/init_data.py
+python -m scripts.init_dropdown_options
+python -m scripts.init_tags
+python -m scripts.init_templates
+python -m scripts.init_data
 
 echo   Default teacher account: teacher / Teacher@Local2026!
+echo   （演示数据可选：设置 SEED_DEMO=1 后重跑本脚本会额外生成全虚构演示数据）
+
+if "%SEED_DEMO%"=="1" (
+    echo   Generating demo dataset...
+    python -m scripts.seed_demo
+)
 
 :: 5. Start Backend
 echo [5/6] Starting backend server (port 8000)...

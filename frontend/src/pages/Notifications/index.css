@@ -79,6 +79,7 @@
 
 .notification-row.is-unread {
   background: rgba(84, 140, 168, 0.04);
+  background: color-mix(in srgb, var(--color-primary) 4%, transparent);
 }
 
 .notification-avatar {

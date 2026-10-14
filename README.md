@@ -306,7 +306,7 @@ npm run dev
 
 - 用户名：`teacher`
 - 邮箱：`teacher@example.com`
-- 密码：`Teacher123`
+- 密码：`Teacher@Local2026!`
 
 建议首次登录后立即修改密码。
 
@@ -317,12 +317,12 @@ npm run dev
 ```bash
 cd backend
 # Windows（虚拟环境）：
-venv\Scripts\python.exe scripts\seed_demo.py
+venv\Scripts\python.exe -m scripts.seed_demo
 # macOS / Linux：
-python3 scripts/seed_demo.py
+python3 -m scripts.seed_demo
 ```
 
-脚本幂等、可重复运行（每次重建 teacher 账号下的演示数据），登录：用户名 `teacher`，密码 `Teacher123`。**所有演示人物与数据均为虚构**；公开演示时请勿录入真实学生的敏感信息。
+脚本幂等、可重复运行（每次重建 teacher 账号下的演示数据），登录：用户名 `teacher`，密码 `Teacher@Local2026!`。**所有演示人物与数据均为虚构**；公开演示时请勿录入真实学生的敏感信息。
 
 ---
 

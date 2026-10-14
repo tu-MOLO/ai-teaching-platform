@@ -72,6 +72,12 @@ vi.mock('antd', () => {
       React.createElement('span', { 'data-testid': 'tooltip' }, children),
     Checkbox: ({ checked, onChange, children }: any) =>
       React.createElement('label', null, React.createElement('input', { type: 'checkbox', checked, onChange: onChange ? (e: any) => onChange(e) : undefined }), children),
+    Empty: Object.assign(
+      ({ description }: any) =>
+        React.createElement('div', { 'data-testid': 'empty' }, description),
+      { PRESENTED_IMAGE_SIMPLE: 'simple' }
+    ),
+    Spin: () => React.createElement('div', { 'data-testid': 'spin' }, 'loading'),
     message: {
       success: vi.fn(),
       error: vi.fn(),

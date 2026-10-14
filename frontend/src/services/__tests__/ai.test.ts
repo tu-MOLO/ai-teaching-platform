@@ -182,6 +182,20 @@ describe('ai service', () => {
 
       expect(result).toBe(messages)
     })
+
+    it('响应拦截器解包成裸数组时仍包装成 { data }', async () => {
+      const { getConversationMessages } = await import('../ai')
+      const list = [
+        { id: '1', conversation_id: 'conv-123', role: 'user', content: 'Hello', tool_calls: null, tool_call_id: null, module_tag: null, created_at: '' },
+      ]
+
+      // MessageListSchema 只声明 data 字段，拦截器会把它解包成数组
+      mockGet.mockResolvedValue(list)
+
+      const result = await getConversationMessages('conv-123')
+
+      expect(result.data).toEqual(list)
+    })
   })
 
   describe('deleteConversation', () => {
@@ -292,7 +306,9 @@ describe('ai service', () => {
         events.push(event)
       }
 
-      expect(events[0]).toEqual({ type: 'error', content: 'HTTP 500' })
+      expect(events[0].type).toBe('error')
+      // 后端未给出可读文案时，也要返回面向用户的提示，而不是裸的 HTTP 状态码
+      expect(events[0].content).toContain('AI 服务未能返回结果')
     })
 
     it('handles missing reader', async () => {
@@ -309,7 +325,8 @@ describe('ai service', () => {
         events.push(event)
       }
 
-      expect(events[0]).toEqual({ type: 'error', content: '无法读取响应流' })
+      expect(events[0].type).toBe('error')
+      expect(events[0].content).toContain('未能读取')
     })
 
     it('skips malformed data lines', async () => {

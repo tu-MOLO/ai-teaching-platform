@@ -365,11 +365,13 @@
 
 .action-btn-edit {
   background: rgba(84, 140, 168, 0.1);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-primary);
 }
 
 .action-btn-edit:hover {
   background: rgba(84, 140, 168, 0.2);
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 .action-btn-delete {
@@ -395,11 +397,13 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 4px 12px rgba(84, 140, 168, 0.3);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 .btn-add:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(84, 140, 168, 0.4);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-primary) 40%, transparent);
 }
 
 /* 绌虹姸鎬?*/

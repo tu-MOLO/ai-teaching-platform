@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Optional, cast
 
-import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +14,8 @@ from app.schemas.ai import (
     MessageListSchema,
     MessageSchema,
 )
+from app.services import ai_client as ai_client_module
+from app.services.ai_client import AIServiceError
 
 TOOL_DEFINITIONS = [
     {
@@ -1285,6 +1286,12 @@ class AIService:
         return result_str, module_tag
 
     @staticmethod
+    def _error_event(message: str) -> str:
+        """把用户可读的错误文案包装成 SSE 事件。"""
+        payload = json.dumps({"type": "error", "content": message}, ensure_ascii=False)
+        return f"data: {payload}\n\n"
+
+    @staticmethod
     def _process_sse_line(
         line: str,
         conversation_id: str,
@@ -1331,35 +1338,40 @@ class AIService:
         for iteration in range(max_iterations):
             state: dict[str, Any] = {"response_content": "", "tool_calls_list": []}
 
-            async with httpx.AsyncClient(timeout=settings.AI_REQUEST_TIMEOUT) as client:
-                async with client.stream(
-                    "POST",
-                    f"{effective_config['api_base']}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {effective_config['api_key']}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": effective_config["model"],
-                        "messages": current_messages,
-                        "tools": TOOL_DEFINITIONS,
-                        "stream": True,
-                    },
-                ) as response:
-                    if response.status_code != 200:
-                        await response.aread()
-                        data = json.dumps(
-                            {"type": "error", "content": "AI服务调用失败"}, ensure_ascii=False
-                        )
-                        yield f"data: {data}\n\n"
-                        return
+            async with ai_client_module.build_client() as client:
+                try:
+                    async with client.stream(
+                        "POST",
+                        f"{effective_config['api_base']}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {effective_config['api_key']}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": effective_config["model"],
+                            "messages": current_messages,
+                            "tools": TOOL_DEFINITIONS,
+                            "stream": True,
+                        },
+                    ) as response:
+                        ai_client_module.raise_for_status(response, effective_config["api_base"])
 
-                    async for line in response.aiter_lines():
-                        event = AIService._process_sse_line(line, conversation.id, state)
-                        if event == "__done__":
-                            break
-                        if event:
-                            yield event
+                        async for line in response.aiter_lines():
+                            event = AIService._process_sse_line(line, conversation.id, state)
+                            if event == "__done__":
+                                break
+                            if event:
+                                yield event
+                except AIServiceError as exc:
+                    # 已经是可直接展示的文案，原样推给前端
+                    yield AIService._error_event(exc.user_message)
+                    return
+                except Exception as exc:  # noqa: BLE001 - 兜底，避免整条流变成 500
+                    described = ai_client_module.log_and_describe(
+                        exc, effective_config["api_base"], "stream_chat"
+                    )
+                    yield AIService._error_event(described.user_message)
+                    return
 
             response_content: str = state["response_content"]
             tool_calls_list: list[dict[str, Any]] = state["tool_calls_list"]
@@ -1421,23 +1433,28 @@ class AIService:
         module_tag = None
 
         for iteration in range(max_iterations):
-            async with httpx.AsyncClient(timeout=settings.AI_REQUEST_TIMEOUT) as client:
-                response = await client.post(
-                    f"{effective_config['api_base']}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {effective_config['api_key']}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": effective_config["model"],
-                        "messages": current_messages,
-                        "tools": TOOL_DEFINITIONS,
-                        "stream": False,
-                    },
-                )
-
-                if response.status_code != 200:
-                    raise ValueError("AI服务调用失败")
+            async with ai_client_module.build_client() as client:
+                try:
+                    response = await client.post(
+                        f"{effective_config['api_base']}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {effective_config['api_key']}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": effective_config["model"],
+                            "messages": current_messages,
+                            "tools": TOOL_DEFINITIONS,
+                            "stream": False,
+                        },
+                    )
+                    ai_client_module.raise_for_status(response, effective_config["api_base"])
+                except AIServiceError:
+                    raise
+                except Exception as exc:  # noqa: BLE001 - 兜底，避免接口返回 500
+                    raise ai_client_module.log_and_describe(
+                        exc, effective_config["api_base"], "non_stream_chat"
+                    ) from exc
 
             data = response.json()
             choice = data.get("choices", [{}])[0]

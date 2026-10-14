@@ -12,6 +12,7 @@ seed_demo.py — 生成一套完整、全虚构的演示数据（求职作品集
 - 不调用大模型，IEP 内容为脚本构造的示例（AI 初稿/成长报告需在界面配置模型后生成）。
 """
 
+import os
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -42,8 +43,9 @@ from app.models.resource import Resource  # noqa: E402
 from app.models.student import Gender, Student  # noqa: E402
 from app.models.user import User, UserRole, UserStatus  # noqa: E402
 
-DEMO_USERNAME = "teacher"
-DEMO_PASSWORD = "Teacher123"
+DEMO_USERNAME = os.getenv("DEFAULT_TEACHER_USERNAME", "teacher")
+# 与 start.bat / scripts/init_data.py 保持一致的默认教师密码
+DEMO_PASSWORD = os.getenv("DEFAULT_TEACHER_PASSWORD", "Teacher@Local2026!")
 
 NOW = datetime.now(timezone.utc)
 
@@ -548,7 +550,7 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
         session.commit()
         print("[6/6] 已创建 IEP（含3组双版本对比，覆盖草稿/送审/锁定）")
 
-    print("\n演示数据生成完成。登录：teacher / Teacher123")
+    print(f"\n演示数据生成完成。登录：{DEMO_USERNAME} / {DEMO_PASSWORD}")
 
 
 if __name__ == "__main__":

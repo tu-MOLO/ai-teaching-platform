@@ -270,7 +270,7 @@ input:focus, textarea:focus, select:focus {
 .table-section-toolbar-left {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   flex-wrap: wrap;
 }
 

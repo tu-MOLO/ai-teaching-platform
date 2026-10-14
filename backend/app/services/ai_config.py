@@ -2,7 +2,6 @@ import ipaddress
 from typing import Optional
 from urllib.parse import urlparse
 
-import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +16,8 @@ from app.schemas.ai_config import (
     AIConfigTestResponse,
     AIConfigUpdate,
 )
+from app.services import ai_client as ai_client_module
+from app.services.ai_client import AIServiceError
 
 logger = get_logger(__name__)
 
@@ -190,7 +191,7 @@ class AIConfigService:
 
         try:
             _validate_api_base_url(api_base, allow_local=(provider == "ollama"))
-            async with httpx.AsyncClient(timeout=settings.AI_CONNECT_TIMEOUT) as client:
+            async with ai_client_module.build_client() as client:
                 response = await client.post(
                     f"{api_base}/chat/completions",
                     headers={
@@ -204,31 +205,20 @@ class AIConfigService:
                         "stream": False,
                     },
                 )
-                if response.status_code == 200:
-                    return AIConfigTestResponse(success=True, message="连接成功，API密钥有效")
-                elif response.status_code == 429:
+                # 429 说明请求已经到达服务商且通过了鉴权，只是被限流，密钥是有效的
+                if response.status_code == 429:
                     return AIConfigTestResponse(
-                        success=True, message="连接成功（API返回速率限制，密钥有效，请稍后再试）"
+                        success=True,
+                        message="连接成功（服务商提示请求受限，密钥已通过校验，稍后即可正常使用）",
                     )
-                elif response.status_code == 401:
-                    return AIConfigTestResponse(
-                        success=False, message="认证失败，请检查API密钥是否正确"
-                    )
-                else:
-                    error_data = (
-                        response.json()
-                        if response.headers.get("content-type", "").startswith("application/json")
-                        else {}
-                    )
-                    error_msg = error_data.get("error", {}).get(
-                        "message", f"HTTP {response.status_code}"
-                    )
-                    return AIConfigTestResponse(success=False, message=f"连接失败: {error_msg}")
-        except httpx.TimeoutException:
-            return AIConfigTestResponse(success=False, message="连接超时，请检查网络或API地址")
-        except Exception as e:
-            logger.error(f"API connection test failed: {e}")
-            return AIConfigTestResponse(success=False, message=f"连接失败: {str(e)[:100]}")
+                ai_client_module.raise_for_status(response, api_base)
+                return AIConfigTestResponse(success=True, message="连接成功，API 密钥有效")
+        except AIServiceError as exc:
+            logger.error("API 连接测试失败: %s", exc.log_detail)
+            return AIConfigTestResponse(success=False, message=exc.user_message)
+        except Exception as exc:  # noqa: BLE001 - 兜底，原始异常只进日志
+            described = ai_client_module.log_and_describe(exc, api_base, "config_test")
+            return AIConfigTestResponse(success=False, message=described.user_message)
 
     @staticmethod
     async def get_effective_config(db: AsyncSession, user_id: str) -> dict | None:

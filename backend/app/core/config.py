@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # 应用基础配置
     APP_NAME: str = "AI Teaching Platform"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "1.2.0"
     DEBUG: bool = False
     TESTING: bool = False
 
@@ -112,6 +112,9 @@ class Settings(BaseSettings):
     AI_REQUEST_TIMEOUT: int = 600
     # AI 连接测试超时（秒）
     AI_CONNECT_TIMEOUT: int = 60
+    # 是否校验 AI 服务商的 HTTPS 证书。存在 HTTPS 中间人拦截的内网/代理环境
+    # 可设为 false，其余情况应保持 true。
+    AI_VERIFY_SSL: bool = True
 
     # 日志配置
     LOG_LEVEL: str = "INFO"

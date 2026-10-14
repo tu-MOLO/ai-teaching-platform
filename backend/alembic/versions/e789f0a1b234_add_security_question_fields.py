@@ -34,8 +34,20 @@ def upgrade() -> None:
         .values(security_question='未设置密保问题', hashed_security_answer=default_hashed_answer)
     )
 
-    op.alter_column('users', 'security_question', nullable=False)
-    op.alter_column('users', 'hashed_security_answer', nullable=False)
+    # SQLite 不支持 ALTER COLUMN，需走 batch 模式重建表
+    with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.alter_column(
+            'security_question',
+            existing_type=sa.String(200),
+            existing_nullable=True,
+            nullable=False,
+        )
+        batch_op.alter_column(
+            'hashed_security_answer',
+            existing_type=sa.String(255),
+            existing_nullable=True,
+            nullable=False,
+        )
 
 
 def downgrade() -> None:

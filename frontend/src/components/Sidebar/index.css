@@ -74,6 +74,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 3px 10px rgba(84, 140, 168, 0.25);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--color-primary) 25%, transparent);
   flex-shrink: 0;
   transition: all var(--transition-normal);
 }
@@ -151,6 +152,7 @@
   background: var(--color-primary);
   color: white;
   box-shadow: 0 3px 10px rgba(84, 140, 168, 0.25);
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
 .sidebar-menu .ant-menu-item-selected:hover {

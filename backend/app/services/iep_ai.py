@@ -13,13 +13,13 @@ import json
 import re
 from typing import Any
 
-import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.logging import get_logger
 from app.models.iep import IEPGenerationLog, IEPStatus
+from app.services import ai_client as ai_client_module
+from app.services.ai_client import AIServiceError
 from app.services.ai_config import AIConfigService
 from app.services.iep import IEPService
 
@@ -137,29 +137,35 @@ class IEPAIService:
             "temperature": 0.2,
         }
         try:
-            async with httpx.AsyncClient(timeout=settings.AI_CONNECT_TIMEOUT) as client:
+            async with ai_client_module.build_client() as client:
                 response = await client.post(
                     f"{cfg['api_base']}/chat/completions",
                     headers=headers,
                     json=payload,
                 )
-        except httpx.TimeoutException:
-            raise BadRequestException("AI 服务请求超时，请稍后重试或手工填写")
-        except httpx.HTTPError as exc:
-            logger.error(f"IEP AI request failed: {exc}")
-            raise BadRequestException("无法连接 AI 服务，请检查网络或配置")
+                ai_client_module.raise_for_status(response, cfg["api_base"])
+        except AIServiceError as exc:
+            logger.error("IEP AI 调用失败: %s", exc.log_detail)
+            raise BadRequestException(f"{exc.user_message} 若反复失败，可改用手工填写。")
+        except Exception as exc:  # noqa: BLE001 - 兜底，避免接口返回 500
+            described = ai_client_module.log_and_describe(exc, cfg["api_base"], "iep_ai")
+            raise BadRequestException(f"{described.user_message} 若反复失败，可改用手工填写。")
 
-        if response.status_code != 200:
-            logger.error(f"IEP AI HTTP {response.status_code}: {response.text[:300]}")
+        try:
+            data = response.json()
+        except ValueError:
+            logger.error("IEP AI 返回非 JSON 内容: %s", (response.text or "")[:300])
             raise BadRequestException(
-                f"AI 服务返回异常（HTTP {response.status_code}），请检查配置或稍后重试"
+                "AI 服务返回的内容不是合法 JSON，可能是服务地址填写成了网页地址。"
+                "请到「设置 → AI 助手」核对服务地址，或改用手工填写。"
             )
 
-        data = response.json()
         try:
             content = data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError):
-            raise BadRequestException("AI 返回内容格式不正确，请重试")
+            raise BadRequestException(
+                "AI 服务返回的内容格式与预期不符，本次生成未成功。可稍后重试，或改用手工填写。"
+            )
         model = data.get("model") or cfg["model"]
         return content, model
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -22,7 +23,10 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create or update a teacher user.")
     parser.add_argument("--username", default="teacher")
     parser.add_argument("--email", default="teacher@example.com")
-    parser.add_argument("--password", default="Teacher123")
+    parser.add_argument(
+        "--password",
+        default=os.getenv("DEFAULT_TEACHER_PASSWORD", "Teacher@Local2026!"),
+    )
     parser.add_argument("--full-name", default="Default Teacher")
     parser.add_argument("--phone", default="")
     parser.add_argument("--security-question", default="您的母校名称是什么？")
