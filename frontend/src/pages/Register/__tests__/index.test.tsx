@@ -44,7 +44,6 @@ vi.mock('@ant-design/icons', () => ({
   MailOutlined: () => React.createElement('span', null, 'Mail'),
   IdcardOutlined: () => React.createElement('span', null, 'Id'),
   ArrowLeftOutlined: () => React.createElement('span', null, 'Back'),
-  SafetyCertificateOutlined: () => React.createElement('span', null, 'Safety'),
   BookOutlined: () => React.createElement('span', null, 'Book'),
   TeamOutlined: () => React.createElement('span', null, 'Team'),
   RocketOutlined: () => React.createElement('span', null, 'Rocket'),

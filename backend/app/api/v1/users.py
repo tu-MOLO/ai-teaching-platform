@@ -80,7 +80,7 @@ async def update_user(
         if result.scalar_one_or_none():
             raise AlreadyExistsException("用户", "用户名")
 
-    if "email" in payload:
+    if payload.get("email"):
         stmt = select(User).where(
             User.email == payload["email"],
             User.id != user_id,

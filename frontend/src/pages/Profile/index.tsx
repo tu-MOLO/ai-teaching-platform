@@ -208,6 +208,11 @@ const Profile: React.FC = () => {
       setUploadingAvatar(true)
       const { avatar_url } = await userService.uploadAvatar(profile.id, blob)
       setProfile({ ...profile, avatar_url })
+      // 同步更新全局用户信息，使右上角头部头像立即生效
+      const storeUser = useUserStore.getState().user
+      if (storeUser) {
+        useUserStore.getState().setUser({ ...storeUser, avatar_url })
+      }
       message.success('头像已更新')
       setCropOpen(false)
       setCropImageSrc(null)
@@ -285,15 +290,14 @@ const Profile: React.FC = () => {
                   <Col xs={24} sm={12}>
                     <Form.Item
                       name="email"
-                      label="邮箱地址"
+                      label="邮箱地址（可选）"
                       rules={[
-                        { required: true, message: '请输入邮箱地址' },
                         { type: 'email', message: '请输入有效的邮箱地址' }
                       ]}
                     >
                       <Input
                         prefix={<MailOutlined />}
-                        placeholder="请输入邮箱地址"
+                        placeholder="请输入邮箱地址（可选）"
                       />
                     </Form.Item>
                   </Col>
@@ -384,7 +388,7 @@ const Profile: React.FC = () => {
                   size={120}
                   icon={<UserOutlined />}
                   src={profile.avatar_url || undefined}
-                  className="profile-avatar"
+                  className={`profile-avatar${profile.avatar_url ? ' profile-avatar-has-image' : ''}`}
                 />
                 <div className="profile-avatar-overlay">
                   <CameraOutlined />
@@ -519,15 +523,14 @@ const Profile: React.FC = () => {
                 <Col xs={24} sm={12}>
                   <Form.Item
                     name="email"
-                    label="邮箱地址"
+                    label="邮箱地址（可选）"
                     rules={[
-                      { required: true, message: '请输入邮箱地址' },
                       { type: 'email', message: '请输入有效的邮箱地址' }
                     ]}
                   >
                     <Input
                       prefix={<MailOutlined />}
-                      placeholder="请输入邮箱地址"
+                      placeholder="请输入邮箱地址（可选）"
                     />
                   </Form.Item>
                 </Col>

@@ -2,7 +2,7 @@ import api from './api'
 
 export interface UserProfile {
   id: string
-  email: string
+  email: string | null
   username: string
   full_name: string | null
   phone: string | null

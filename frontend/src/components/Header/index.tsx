@@ -318,8 +318,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick, isMobile = false }) => {
           overlayClassName="header-dropdown"
         >
           <button className="header-user" data-testid="user-menu">
-            <div className="user-avatar">
-              <UserOutlined />
+            <div className={`user-avatar${user?.avatar_url ? ' user-avatar-has-image' : ''}`}>
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt="头像" />
+              ) : (
+                <UserOutlined />
+              )}
             </div>
             <div className="user-info">
               <span className="user-name">{user?.username || '用户'}</span>

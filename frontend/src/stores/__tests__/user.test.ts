@@ -36,6 +36,19 @@ describe('useUserStore', () => {
       expect(state.user?.role).toBe('teacher')
     })
 
+    it('should keep avatar_url when provided', () => {
+      useUserStore.getState().setUser({
+        id: '1',
+        username: 'testuser',
+        email: 'test@example.com',
+        full_name: 'Test User',
+        avatar_url: '/api/v1/users/1/avatar?v=1',
+        role: 'teacher',
+      })
+
+      expect(useUserStore.getState().user?.avatar_url).toBe('/api/v1/users/1/avatar?v=1')
+    })
+
     it('should update user when called with different data', () => {
       const firstUser = {
         id: '1',

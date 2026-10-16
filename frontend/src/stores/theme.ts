@@ -283,6 +283,8 @@ export const useThemeStore = create<ThemeState>()(
 
 export const initTheme = () => {
   useThemeStore.getState().applyThemeToDom()
+  // Markdown 编辑器（@uiw/react-md-editor）默认跟随系统深色，本应用为浅色主题，统一按浅色渲染编辑器与预览
+  document.body.setAttribute('data-color-mode', 'light')
 }
 
 export const subscribeToThemeChanges = (callback: (state: ThemeState) => void) => {

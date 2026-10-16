@@ -119,6 +119,20 @@
   color: white;
   font-size: 15px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* 已上传头像时，圆内底色改为白色，避免裁剪后透明像素透出主题色 */
+.user-avatar-has-image {
+  background: #fff;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
 .user-info {

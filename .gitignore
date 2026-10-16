@@ -111,6 +111,7 @@ backend/reports/test_report.html
 
 # 上传的本地文件存储（仅保留目录结构）
 backend/storage/resources/
+backend/storage/avatars/
 backend/storage/*.db
 
 # Alembic迁移生成的临时文件

@@ -120,6 +120,11 @@
   font-size: 44px !important;
 }
 
+/* 已上传头像时，圆内底色改为白色，避免裁剪后透明像素透出主题色 */
+.profile-avatar-has-image {
+  background: #fff;
+}
+
 .profile-name {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);

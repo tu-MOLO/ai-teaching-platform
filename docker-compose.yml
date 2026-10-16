@@ -100,15 +100,6 @@ services:
       # Redis 配置
       REDIS_URL: redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS_PASSWORD}@redis:6379/0
       
-      # SMTP 邮件配置（用于邮箱验证码，留空则禁用发信）
-      SMTP_HOST: ${SMTP_HOST:-smtp.qq.com}
-      SMTP_PORT: ${SMTP_PORT:-465}
-      SMTP_USERNAME: ${SMTP_USERNAME:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
-      SMTP_USE_SSL: ${SMTP_USE_SSL:-true}
-      VERIFICATION_CODE_EXPIRE_MINUTES: ${VERIFICATION_CODE_EXPIRE_MINUTES:-10}
-      
       # 日志配置
       LOG_LEVEL: "INFO"
       

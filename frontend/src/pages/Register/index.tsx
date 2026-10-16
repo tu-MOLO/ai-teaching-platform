@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Button, Form, Input, Select, Typography } from 'antd';
 import { message } from '@/utils/feedback';
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, SafetyCertificateOutlined, BookOutlined, TeamOutlined, RocketOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, ArrowLeftOutlined, BookOutlined, TeamOutlined, RocketOutlined } from '@ant-design/icons'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../../services/auth'
 import './index.css'
@@ -24,54 +24,18 @@ const SECURITY_QUESTIONS = [
 
 interface RegisterFormData {
   username: string
-  email: string
+  email?: string
   password: string
   confirmPassword: string
   full_name?: string
   security_question: string
   security_answer: string
-  verification_code?: string
 }
 
 const Register: React.FC = () => {
   const [loading, setLoading] = useState(false)
-  const [sendingCode, setSendingCode] = useState(false)
-  const [countdown, setCountdown] = useState(0)
   const navigate = useNavigate()
   const [form] = Form.useForm()
-
-  // 倒计时效果
-  React.useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
-      return () => clearTimeout(timer)
-    }
-  }, [countdown])
-
-  const handleSendCode = async () => {
-    try {
-      const email = form.getFieldValue('email')
-      if (!email) {
-        message.warning('请先输入邮箱地址')
-        return
-      }
-      // 检查邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(email)) {
-        message.warning('请输入有效的邮箱地址')
-        return
-      }
-      setSendingCode(true)
-      await authService.sendRegisterCode({ email })
-      message.success('验证码已发送，请查收邮件')
-      setCountdown(60)
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.detail || '发送验证码失败'
-      message.error(errorMsg)
-    } finally {
-      setSendingCode(false)
-    }
-  }
 
   const onFinish = async (values: RegisterFormData) => {
     try {
@@ -170,7 +134,10 @@ const Register: React.FC = () => {
             <Form.Item
               name="username"
               label="用户名"
-              rules={[{ validator: validateUsername }]}
+              rules={[
+                { required: true, message: '请输入用户名' },
+                { validator: validateUsername },
+              ]}
             >
               <Input
                 prefix={<UserOutlined />}
@@ -181,51 +148,21 @@ const Register: React.FC = () => {
 
             <Form.Item
               name="email"
-              label="邮箱地址"
+              label="邮箱地址（可选）"
               rules={[
-                { required: true, message: '请输入邮箱地址' },
                 { type: 'email', message: '请输入有效的邮箱地址' },
               ]}
             >
               <Input
                 prefix={<MailOutlined />}
-                placeholder="请输入邮箱地址"
+                placeholder="请输入邮箱地址（可选）"
                 size="large"
               />
             </Form.Item>
 
-            <Form.Item>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Form.Item
-                  name="verification_code"
-                  noStyle
-                  rules={[
-                    { pattern: /^\d{6}$/, message: '请输入6位数字验证码' },
-                  ]}
-                >
-                  <Input
-                    prefix={<SafetyCertificateOutlined />}
-                    placeholder="邮箱验证码"
-                    size="large"
-                    maxLength={6}
-                    style={{ flex: 1 }}
-                  />
-                </Form.Item>
-                <Button
-                  size="large"
-                  disabled={countdown > 0}
-                  loading={sendingCode}
-                  onClick={handleSendCode}
-                  style={{ minWidth: 120 }}
-                >
-                  {countdown > 0 ? `${countdown}s后重发` : '发送验证码'}
-                </Button>
-              </div>
-            </Form.Item>
-
             <Form.Item
               name="full_name"
-              label="真实姓名"
+              label="真实姓名（可选）"
               rules={[{ max: 100, message: '真实姓名不能超过100个字符' }]}
             >
               <Input
@@ -238,7 +175,10 @@ const Register: React.FC = () => {
             <Form.Item
               name="password"
               label="密码"
-              rules={[{ validator: validatePassword }]}
+              rules={[
+                { required: true, message: '请输入密码' },
+                { validator: validatePassword },
+              ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
@@ -303,7 +243,7 @@ const Register: React.FC = () => {
 
           <div className="form-footer">
             <Text type="secondary">
-              注册后可在个人设置中补充资料与邮箱信息。
+              带 * 的为必填项，注册后可在个人设置中完善个人资料。
             </Text>
           </div>
         </div>

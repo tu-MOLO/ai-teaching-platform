@@ -28,6 +28,28 @@ class TestAuthRegistration:
         assert response.status_code == 201
 
     @pytest.mark.asyncio
+    async def test_register_without_email(self, client):
+        """邮箱为选填：不传邮箱也应注册成功，且其它接口能容忍 NULL 邮箱"""
+        response = await client.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "noemailuser",
+                "password": "SecurePass123!",
+                "full_name": "No Email",
+                "security_question": "What is your pet name?",
+                "security_answer": "Fluffy",
+            },
+        )
+        assert response.status_code == 201
+
+        login_resp = await client.post(
+            "/api/v1/auth/login",
+            json={"username": "noemailuser", "password": "SecurePass123!"},
+        )
+        assert login_resp.status_code == 200
+        assert login_resp.json()["user"]["email"] is None
+
+    @pytest.mark.asyncio
     async def test_register_duplicate_username(self, client, test_user):
         response = await client.post(
             "/api/v1/auth/register",

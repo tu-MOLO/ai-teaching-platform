@@ -3,6 +3,10 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 import Header from '../index'
 
+const { mockUser } = vi.hoisted(() => ({
+  mockUser: { user: { username: 'teacher', full_name: '张老师' } as Record<string, unknown> },
+}))
+
 const mockNavigate = vi.fn()
 const mockLogout = vi.fn()
 const mockClearUser = vi.fn()
@@ -20,7 +24,7 @@ vi.mock('../../../stores/auth', () => ({
 }))
 
 vi.mock('../../../stores/user', () => ({
-  useUserStore: () => ({ user: { username: 'teacher', full_name: '张老师' }, clearUser: mockClearUser }),
+  useUserStore: () => ({ user: mockUser.user, clearUser: mockClearUser }),
 }))
 
 vi.mock('../../../services/auth', () => ({
@@ -139,12 +143,29 @@ vi.mock('@ant-design/icons', () => ({
 describe('Header', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUser.user = { username: 'teacher', full_name: '张老师' }
     mockGetNotifications.mockResolvedValue({ data: [] })
   })
 
   it('renders search input with placeholder "搜索课程..." in desktop mode', () => {
     render(React.createElement(Header))
     expect(screen.getByPlaceholderText('搜索课程...')).toBeInTheDocument()
+  })
+
+  it('已上传头像时渲染头像图片', () => {
+    mockUser.user = {
+      username: 'teacher',
+      full_name: '张老师',
+      avatar_url: '/api/v1/users/u1/avatar?v=abc',
+    }
+    render(React.createElement(Header))
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/api/v1/users/u1/avatar?v=abc')
+  })
+
+  it('未上传头像时回退为默认图标', () => {
+    render(React.createElement(Header))
+    expect(screen.getByText('UserIcon')).toBeInTheDocument()
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
   it('renders user name from store', () => {

@@ -12,7 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - IEP 长短期目标管理（条件 + 可观察行为 + 达成标准 + 辅助等级）、计划状态机（草稿 / 待审定 / 已锁定）与修订版本链
 - 目标达成率统计、期初 / 期末双快照对比雷达
 - AI 起草 IEP 与学期成长报告（仅出草稿、教师人在回路逐条采纳、全程留痕、禁止杜撰医学诊断）
+- IEP 编辑页分步 AI 生成：发展评估 / 长短期目标 / 支持措施三个步骤各自「AI 生成本页内容」，仅回填当前页
+- AI 学期成长报告导出为 Markdown 文件
 - IEP 一键导出 PDF
+- 自定义头像：无依赖 Canvas 裁剪组件与后端头像上传接口（≤2MB、强制裁剪为正方形）
+- 课程支持多个年级（`grades` 数组）与多个班级（`class_names`）
 - 演示数据种子脚本 `scripts/seed_demo.py`（全虚构、幂等可重复）
 - GitHub Actions CI/CD 流水线、Issue 模板与贡献指南
 
@@ -25,6 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 脚本与配置一致性：教师默认密码、版本号统一为 1.2.0，start.bat 初始化流程补齐
 - AI 错误提示：原始异常与状态码替换为面向用户文案，原始信息仅落日志
 - 后端脚本目录补充 README 说明
+- 课程年级由单值 `grade` 改为 JSON 数组 `grades`，并新增班级多选字段 `class_names`（含 Alembic 迁移）
+- AI 助手会话卡片的归档 / 重命名 / 删除三项操作收进「⋮」下拉菜单
+- 成长报告提示词不再输出内部 ID / 编号等技术标识，证据引用改为中文可读表述
+- 项目名称统一为「AI培智教学平台」
+- 移除与「编辑资料」重复的「账户资料」菜单项
+- 全局弹窗层级调至侧边栏之上、宽度按视口自适应；宽表增加横向滚动容器
+- 邮箱改为选填：注册与个人资料编辑均不再强制填写邮箱，`users.email` 允许为空（含 Alembic 迁移 `b2c3d4e5f6a7`）
+
+### Removed
+- 邮箱验证码机制整体下线：移除注册邮箱验证码、邮箱验证码找回密码两条链路，及相关 API、数据模型、邮件发送工具、SMTP 配置与 `aiosmtplib` 依赖；密码重置统一为密保问题验证
+- 删除 `verification_codes` 数据表（Alembic 迁移 `a1b2c3d4e5f6`）
 
 ### Fixed
 - SQLite 迁移链：`b234c5e6f789`、`e789f0a1b234` 改用 batch 模式，全新库 upgrade/downgrade 全链通过
@@ -36,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 会话重命名/归档/删除失败时静默吞异常，界面无反馈
 - 前端读取后端错误字段错误（读 `detail`，实际在 `message`），错误只显示 HTTP 状态码
 - 注册页与登录页的品牌特性区、表单副标题间距不一致
+- 注册页「创建账号」标题在窄屏被顶出且无法滚动查看；必填项星标与「（可选）」标注不统一
+- 成长报告 / AI 初稿把列表项写成 `{description, evidence_refs}` 对象导致的 `Objects are not valid as a React child` 渲染崩溃（前后端双层判型归一化）
+- 成长报告弹窗被侧边栏遮挡、弹窗宽度在窄屏溢出
+- AI 助手会话列表条目的日期与归档图标部分重合
+- 前端全局请求 10s 超时导致 AI 生成类长耗时接口被中断，相关接口单独放宽超时
 
 ## [1.1.0] - 2026-07-11
 

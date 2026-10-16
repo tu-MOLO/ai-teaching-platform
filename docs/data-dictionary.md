@@ -24,7 +24,7 @@
 | 字段 | 类型 | 约束 | 默认值 | 说明 |
 |------|------|------|--------|------|
 | `id` | UUID String(36) | PK | UUID v4 | 用户唯一标识 |
-| `email` | String(255) | NOT NULL, UNIQUE(partial) | — | 邮箱地址 |
+| `email` | String(255) | NULLABLE, UNIQUE(partial) | null | 邮箱地址（选填） |
 | `username` | String(50) | NOT NULL, UNIQUE(partial) | — | 用户名 |
 | `hashed_password` | String(255) | NOT NULL | — | bcrypt哈希密码 |
 | `full_name` | String(100) | NULLABLE | null | 真实姓名 |
@@ -64,7 +64,8 @@
 |------|------|------|--------|------|
 | `name` | String(200) | NOT NULL, INDEX | — | 课程名称 |
 | `subject` | String(100) | NOT NULL, INDEX | — | 学科 |
-| `grade` | String(50) | NOT NULL, INDEX | — | 年级 |
+| `grades` | JSON (List[str]) | NOT NULL | `[]` | 年级（支持多选） |
+| `class_names` | JSON (List[str]) | NOT NULL | `[]` | 班级（支持多选） |
 | `teacher` | String(100) | NOT NULL | — | 授课教师 |
 | `user_id` | FK → users.id | NULLABLE, INDEX, CASCADE | null | 关联用户ID |
 | `schedule` | String(500) | NULLABLE | null | 课程安排 |
@@ -72,8 +73,9 @@
 | `status` | Enum | NOT NULL, INDEX | `draft` | 课程状态 |
 
 **索引**:
-- `ix_courses_subject_grade` — (subject, grade)
 - `ix_courses_status` — (status)
+
+> 说明：`grades` / `class_names` 为 JSON 数组，年级筛选按「数组包含指定年级」匹配（`grade` 仍作为单值查询参数）。
 
 **状态枚举**: `draft` / `active` / `inactive`
 

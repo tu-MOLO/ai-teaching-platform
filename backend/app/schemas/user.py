@@ -114,7 +114,7 @@ class UserResponse(AuditSchema):
     model_config = ConfigDict(from_attributes=True)
 
     id: str = Field(..., description="用户ID")
-    email: EmailStr = Field(..., description="邮箱地址")
+    email: Optional[EmailStr] = Field(default=None, description="邮箱地址")
     username: str = Field(..., description="用户名")
     full_name: Optional[str] = Field(default=None, description="真实姓名")
     phone: Optional[str] = Field(default=None, description="手机号码")

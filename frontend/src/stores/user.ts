@@ -3,8 +3,10 @@ import { create } from 'zustand'
 interface User {
   id: string
   username: string
-  email: string
+  email: string | null
   full_name: string | null
+  /** 头像地址（后端返回相对路径，可直接用于 <img>） */
+  avatar_url?: string | null
   role: string
 }
 

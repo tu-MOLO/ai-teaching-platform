@@ -36,7 +36,9 @@ class User(BaseModel):
     __tablename__ = "users"
 
     # 基本信息
-    email: Mapped[str] = mapped_column(String(255), index=True, nullable=False, comment="邮箱地址")
+    email: Mapped[Optional[str]] = mapped_column(
+        String(255), index=True, nullable=True, comment="邮箱地址（选填）"
+    )
 
     username: Mapped[str] = mapped_column(String(50), index=True, nullable=False, comment="用户名")
 

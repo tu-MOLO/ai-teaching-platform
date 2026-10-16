@@ -17,7 +17,7 @@ export interface TokenData {
 export interface UserAuthInfo {
   id: string
   username: string
-  email: string
+  email: string | null
   full_name: string | null
   avatar_url: string | null
   role: string
@@ -31,7 +31,7 @@ export interface LoginResponse {
 
 export interface RegisterData {
   username: string
-  email: string
+  email?: string
   password: string
   full_name?: string
   security_question: string
@@ -57,16 +57,6 @@ export interface SecurityQuestionResponse {
   username: string
   security_question: string
   is_legacy: boolean
-}
-
-export interface SendCodeData {
-  email: string
-}
-
-export interface ResetPasswordByCodeData {
-  email: string
-  code: string
-  new_password: string
 }
 
 export const authService = {
@@ -122,27 +112,6 @@ export const authService = {
    */
   getSecurityQuestion: async (data: SecurityQuestionData): Promise<SecurityQuestionResponse> => {
     return api.post('/auth/password/reset/question', data)
-  },
-
-  /**
-   * 发送注册验证码
-   */
-  sendRegisterCode: async (data: SendCodeData): Promise<{ message: string; code: string }> => {
-    return api.post('/auth/send-register-code', data)
-  },
-
-  /**
-   * 发送重置密码验证码
-   */
-  sendResetCode: async (data: SendCodeData): Promise<{ message: string; code: string }> => {
-    return api.post('/auth/send-reset-code', data)
-  },
-
-  /**
-   * 通过验证码重置密码
-   */
-  resetPasswordByCode: async (data: ResetPasswordByCodeData): Promise<{ message: string; code: string }> => {
-    return api.post('/auth/password/reset-by-code', data)
   }
 }
 

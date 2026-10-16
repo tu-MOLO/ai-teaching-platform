@@ -1,4 +1,4 @@
-﻿# AI培智教学平台
+# AI培智教学平台
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-blue?logo=python" alt="Python 3.11+">
@@ -106,8 +106,8 @@
 
 - JWT Token 认证（Access Token 30 分钟 / Refresh Token 7 天）
 - 教师单角色产品逻辑
-- 本地注册、登录、改密、重置密码
-- 密码重置双通道：密保问题验证 或 邮箱验证码（SMTP 发送，10 分钟有效）
+- 本地注册、登录、改密、重置密码（注册时邮箱为选填）
+- 密码重置通道：密保问题验证
 - Refresh Token 通过 HttpOnly Cookie 传递（防 XSS）
 - 请求速率限制
 - 账户锁定（5 次失败登录后锁定 30 分钟）
@@ -156,7 +156,6 @@
 | **python-docx**       | 0.8.11  | Word 导出            |
 | **minio**             | 7.2.4   | MinIO 客户端         |
 | **redis**             | 5.0.1   | Redis 客户端         |
-| **aiosmtplib**        | 3.0.1   | SMTP 邮件发送        |
 | **python-multipart**  | 0.0.20  | 表单解析（文件上传） |
 | **python-dotenv**     | 1.0.1   | 环境变量加载         |
 | **Pytest**            | 7.4.4   | 测试框架（dev）      |
