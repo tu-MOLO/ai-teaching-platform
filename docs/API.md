@@ -103,6 +103,10 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 |--------|------|---------|------|
 | GET | `/users/{user_id}` | 获取用户详情 | ✅ |
 | PUT | `/users/{user_id}` | 更新用户资料 | ✅ |
+| POST | `/users/{user_id}/avatar` | 上传头像（multipart/form-data） | ✅ |
+| GET | `/users/{user_id}/avatar` | 获取用户头像 | ❌ |
+
+> 说明：`GET /users/{user_id}/avatar` 直接返回 PNG 图片文件流（非标准 JSON 信封），头像公开可读以便 `<img>` 直接展示。
 
 ### Courses — 课程管理
 
@@ -132,10 +136,10 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 | GET | `/students/{student_id}` | 获取学生详情 | ✅ |
 | PUT | `/students/{student_id}` | 更新学生信息 | ✅ |
 | DELETE | `/students/{student_id}` | 删除学生（软删除） | ✅ |
-| GET | `/students/{student_id}/export` | 导出学生成长报告（PDF/DOCX） | ✅ |
+| GET | `/students/{student_id}/export` | 导出学生成长报告（PDF） | ✅ |
 | GET | `/students/{student_id}/courses` | 获取学生关联课程 | ✅ |
 
-**筛选参数：** `keyword`, `grade`, `class_name`, `gender`, `is_active`
+**筛选参数：** `keyword`, `grade`, `class_name`
 
 ### Lesson Plans — 教案管理
 
@@ -149,12 +153,13 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 | GET | `/lesson-plans/{plan_id}` | 获取教案详情 | ✅ |
 | PUT | `/lesson-plans/{plan_id}` | 更新教案 | ✅ |
 | DELETE | `/lesson-plans/{plan_id}` | 删除教案（软删除） | ✅ |
+| DELETE | `/lesson-plans/{plan_id}/permanent` | 物理删除教案（不可恢复） | ✅ |
 | POST | `/lesson-plans/{plan_id}/publish` | 发布教案 | ✅ |
 | POST | `/lesson-plans/{plan_id}/unpublish` | 取消发布 | ✅ |
 | POST | `/lesson-plans/{plan_id}/archive` | 归档教案 | ✅ |
 | POST | `/lesson-plans/{plan_id}/restore` | 恢复教案 | ✅ |
 
-**筛选参数：** `keyword`, `subject`, `grade`, `status`（draft/published/archived）
+**筛选参数：** `search`（关键词）, `status_filter`（draft/published/archived）
 
 ### Lesson Templates — 教案模板
 
@@ -164,6 +169,46 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 |--------|------|---------|------|
 | GET | `/lesson-templates` | 获取模板列表 | ✅ |
 | GET | `/lesson-templates/{template_id}` | 获取模板详情 | ✅ |
+
+### IEP Templates — 发展领域评估模板
+
+前缀：`/api/v1/iep-templates`
+
+| Method | Path | Summary | Auth |
+|--------|------|---------|------|
+| GET | `/iep-templates` | 获取评估模板列表 | ✅ |
+| GET | `/iep-templates/default` | 获取默认评估模板（不存在则自动创建） | ✅ |
+| POST | `/iep-templates` | 创建评估模板 | ✅ |
+| GET | `/iep-templates/{template_id}` | 获取评估模板详情 | ✅ |
+| PUT | `/iep-templates/{template_id}` | 更新评估模板 | ✅ |
+| DELETE | `/iep-templates/{template_id}` | 删除评估模板（软删除） | ✅ |
+| POST | `/iep-templates/{template_id}/reset` | 重置评估模板为默认六领域 | ✅ |
+
+### IEP — 个别化教育计划
+
+前缀：`/api/v1/ieps`
+
+| Method | Path | Summary | Auth |
+|--------|------|---------|------|
+| GET | `/ieps` | 获取 IEP 列表（分页） | ✅ |
+| POST | `/ieps` | 创建 IEP | ✅ |
+| GET | `/ieps/{iep_id}` | 获取 IEP 详情 | ✅ |
+| PUT | `/ieps/{iep_id}` | 更新 IEP | ✅ |
+| DELETE | `/ieps/{iep_id}` | 删除 IEP（软删除） | ✅ |
+| POST | `/ieps/{iep_id}/submit` | 提交审定（draft → review） | ✅ |
+| POST | `/ieps/{iep_id}/back-to-draft` | 退回草稿（review → draft） | ✅ |
+| POST | `/ieps/{iep_id}/lock` | 锁定 IEP | ✅ |
+| POST | `/ieps/{iep_id}/revise` | 创建修订版本（保留历史） | ✅ |
+| GET | `/ieps/{iep_id}/export` | 导出 IEP（PDF 文件流） | ✅ |
+| POST | `/ieps/{iep_id}/generate-draft` | AI 生成 IEP 草稿 | ✅ |
+| POST | `/ieps/{iep_id}/generate-report` | AI 生成学期成长报告 | ✅ |
+| GET | `/ieps/{iep_id}/compare` | 版本对比（上一版 vs 当前版） | ✅ |
+
+**筛选参数：** `student_id`, `status_filter`（draft/review/locked）, `term`, `search`
+
+**状态枚举**：`draft`（草稿）/ `review`（待审定）/ `locked`（已锁定）
+
+> 说明：`GET /ieps/{iep_id}/export` 返回 PDF 文件流（非标准 JSON 信封）；`POST /ieps/{iep_id}/generate-draft` 请求体可带 `section`（all/profile/goals/supports，默认 all）只生成编辑页某一页内容。
 
 ### Portfolios — 成长档案
 
@@ -177,7 +222,7 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 | PUT | `/portfolios/{portfolio_id}` | 更新档案 | ✅ |
 | DELETE | `/portfolios/{portfolio_id}` | 删除档案（软删除） | ✅ |
 
-**筛选参数：** `keyword`, `student_id`, `type`
+**筛选参数：** `student_id`, `type`
 
 ### Resources — 资源管理
 
@@ -245,7 +290,7 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 | PUT | `/dropdown-options/{option_id}` | 更新下拉选项 | ✅ |
 | DELETE | `/dropdown-options/{option_id}` | 删除下拉选项 | ✅ |
 
-**查询参数：** `group_key`（按分组过滤）
+**查询参数：** `group_key`（按分组过滤）, `active_only`（默认 true，仅返回启用项）
 
 ### AI Assistant — AI 助手
 
@@ -258,6 +303,10 @@ Token 过期后通过 `POST /api/v1/auth/refresh` 刷新（Refresh Token 通过 
 | GET | `/ai/conversations/{conversation_id}` | 获取对话消息 | ✅ |
 | DELETE | `/ai/conversations/{conversation_id}` | 删除对话 | ✅ |
 | PATCH | `/ai/conversations/{conversation_id}` | 重命名对话 | ✅ |
+| POST | `/ai/conversations/batch-delete` | 批量删除对话 | ✅ |
+| POST | `/ai/conversations/{conversation_id}/archive` | 归档/取消归档对话 | ✅ |
+
+**查询参数：** `archived`（GET `/ai/conversations`：true=已归档，false=未归档，不传=全部；POST `/ai/conversations/{conversation_id}/archive`：true=归档，false=取消归档，必填）
 
 ### AI Config — AI 配置
 

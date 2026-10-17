@@ -388,6 +388,30 @@ input:focus, textarea:focus, select:focus {
   overflow-x: auto;
 }
 
+/* ========== 标签页窄屏适配 ==========
+   页面变窄时，Tab 栏内容不再被直接裁掉，
+   超出部分在 Tab 栏内部横向滑动，右侧 Tab 始终可以滑动查看。 */
+.ant-tabs-nav-wrap {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar-thumb {
+  background: var(--color-border, #d9d9d9);
+  border-radius: 2px;
+}
+
+/* antd 的边缘遮罩（ping-left/right 的 ::before/::after 内阴影）是按「非滚动容器」定位的，
+   改成原生横向滚动后会随内容一起漂移，滚到中间时出现多余的纵向阴影，这里直接隐藏。 */
+.ant-tabs-nav-wrap::before,
+.ant-tabs-nav-wrap::after {
+  display: none;
+}
+
 /* ========== 头像裁剪器 ========== */
 .avatar-crop-hint {
   margin-bottom: 12px;

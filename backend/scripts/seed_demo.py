@@ -38,9 +38,11 @@ from app.models.iep import (  # noqa: E402
     IEPStatus,
 )
 from app.models.lesson_plan import LessonPlan, LessonPlanStatus  # noqa: E402
+from app.models.notification import Notification, NotificationType  # noqa: E402
 from app.models.portfolio import Portfolio  # noqa: E402
 from app.models.resource import Resource  # noqa: E402
 from app.models.student import Gender, Student  # noqa: E402
+from app.models.tag import Tag  # noqa: E402
 from app.models.user import User, UserRole, UserStatus  # noqa: E402
 
 DEMO_USERNAME = os.getenv("DEFAULT_TEACHER_USERNAME", "teacher")
@@ -76,7 +78,11 @@ def month_anchor(months_back: int, day: int = 18) -> datetime:
 # ============================================================
 
 
-def get_or_create_user(session: Session) -> User:
+def get_or_create_user(session: Session) -> tuple[User, bool]:
+    """返回 (演示教师, 是否新建)。
+
+    已存在的账号不修改密码，避免覆盖本地已配置账号（含其 AI 配置）的登录凭据。
+    """
     user = session.query(User).filter(User.username == DEMO_USERNAME).first()
     if user is None:
         user = User(
@@ -92,9 +98,8 @@ def get_or_create_user(session: Session) -> User:
         )
         session.add(user)
         session.flush()
-    else:
-        user.hashed_password = get_password_hash(DEMO_PASSWORD)
-    return user
+        return user, True
+    return user, False
 
 
 def reset_demo_data(session: Session, user: User) -> None:
@@ -108,6 +113,8 @@ def reset_demo_data(session: Session, user: User) -> None:
     for obj in session.query(Resource).filter_by(user_id=user.id).all():
         session.delete(obj)
     for obj in session.query(LessonPlan).filter_by(user_id=user.id).all():
+        session.delete(obj)
+    for obj in session.query(Notification).filter_by(user_id=user.id).all():
         session.delete(obj)
 
     for course in session.query(Course).filter(Course.user_id == user.id).all():
@@ -228,9 +235,12 @@ def build_iep(
 def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来自各步骤的数据规格循环
     engine = create_engine(settings.sync_database_url)
     with Session(engine) as session:
-        user = get_or_create_user(session)
+        user, user_created = get_or_create_user(session)
         reset_demo_data(session, user)
-        print(f"[1/6] 演示教师就绪：{DEMO_USERNAME} / {DEMO_PASSWORD}")
+        if user_created:
+            print(f"[1/8] 演示教师已新建：{DEMO_USERNAME} / {DEMO_PASSWORD}")
+        else:
+            print(f"[1/8] 复用已有教师账号：{DEMO_USERNAME}（密码未改动）")
 
         # ---------- 学生（5 名，跨年级，全虚构） ----------
         student_specs = [
@@ -257,25 +267,26 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
             session.add(student)
             students.append(student)
         session.flush()
-        print(f"[2/6] 已创建 {len(students)} 名虚构学生")
+        print(f"[2/8] 已创建 {len(students)} 名虚构学生")
 
         # ---------- 课程（6 门，创建时间分布制造月度起伏） ----------
         course_specs = [
-            ("生活适应", "生活适应", "全校", 5, [0, 1, 2, 3, 4]),
-            ("唱游与律动", "唱游律动", "低年级", 4, [1, 2, 3, 4]),
-            ("运动与保健", "运动保健", "全校", 4, [0, 1, 2, 4]),
-            ("生活语文", "生活语文", "中年级", 2, [0, 1, 3]),
-            ("生活数学", "生活数学", "中年级", 1, [0, 2, 3]),
-            ("绘画与手工", "绘画手工", "低年级", 0, [1, 2]),
+            ("生活适应", "生活适应", "全校", 5, [0, 1, 2, 3, 4], ["培智一班", "培智二班", "培智三班"]),
+            ("唱游与律动", "唱游律动", "低年级", 4, [1, 2, 3, 4], ["培智一班", "培智三班"]),
+            ("运动与保健", "运动保健", "全校", 4, [0, 1, 2, 4], ["培智一班", "培智二班"]),
+            ("生活语文", "生活语文", "中年级", 2, [0, 1, 3], ["培智一班", "培智二班"]),
+            ("生活数学", "生活数学", "中年级", 1, [0, 2, 3], ["培智二班", "培智三班"]),
+            ("绘画与手工", "绘画手工", "低年级", 0, [1, 2], ["培智一班", "培智二班"]),
         ]
         courses: list[Course] = []
-        for cname, subject, grade, mb, idxs in course_specs:
+        for cname, subject, grade, mb, idxs, classes in course_specs:
             created = month_anchor(mb)
             course = Course(
                 user_id=user.id,
                 name=cname,
                 subject=subject,
                 grades=[grade],
+                class_names=classes,
                 teacher=user.full_name or "演示教师",
                 schedule="每周2课时",
                 description=f"{cname}课程（演示数据）。",
@@ -288,7 +299,7 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
             session.add(course)
             courses.append(course)
         session.flush()
-        print(f"[3/6] 已创建 {len(courses)} 门课程及选课关系")
+        print(f"[3/8] 已创建 {len(courses)} 门课程及选课关系")
 
         # ---------- 教案（跨6月，发布为主、少量草稿） ----------
         published_per_month = [2, 3, 1, 4, 3, 2]
@@ -328,7 +339,7 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
                 )
             )
         session.flush()
-        print(f"[4/6] 已创建 {lesson_index} 篇发布教案与 2 篇草稿")
+        print(f"[4/8] 已创建 {lesson_index} 篇发布教案与 2 篇草稿")
 
         # ---------- 资源（8 个，不同类型） ----------
         resource_specs = [
@@ -341,23 +352,44 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
             ("精细动作训练图", "pdf", 1),
             ("学期评价量规示例", "xlsx", 0),
         ]
+        resources: list[Resource] = []
         for rname, ftype, mb in resource_specs:
             created = month_anchor(mb)
-            session.add(
-                Resource(
-                    user_id=user.id,
-                    name=rname,
-                    description=f"{rname}（演示资源，无真实文件）。",
-                    file_path=f"demo/{rname}.{ftype}",
-                    file_name=f"{rname}.{ftype}",
-                    file_size=1024 * (mb + 1),
-                    file_type=ftype,
-                    created_at=created,
-                    updated_at=created,
-                )
+            resource = Resource(
+                user_id=user.id,
+                name=rname,
+                description=f"{rname}（演示资源，无真实文件）。",
+                file_path=f"demo/{rname}.{ftype}",
+                file_name=f"{rname}.{ftype}",
+                file_size=1024 * (mb + 1),
+                file_type=ftype,
+                created_at=created,
+                updated_at=created,
             )
+            session.add(resource)
+            resources.append(resource)
+
+        # 标签：复用已有同名标签，缺失则补建，再与资源建立多对多关联
+        tag_specs = [
+            ("视觉支持", "#1677ff"),
+            ("生活自理", "#52c41a"),
+            ("课堂管理", "#faad14"),
+            ("分层练习", "#722ed1"),
+            ("家校沟通", "#eb2f96"),
+        ]
+        tags: list[Tag] = []
+        for tname, color in tag_specs:
+            tag = session.query(Tag).filter(Tag.name == tname, Tag.is_deleted == False).first()
+            if tag is None:
+                tag = Tag(name=tname, color=color, description=f"{tname}（演示标签）。")
+                session.add(tag)
+            tags.append(tag)
         session.flush()
-        print("[5/6] 已创建 8 个演示资源")
+        for i, resource in enumerate(resources):
+            resource.tags.append(tags[i % len(tags)])
+            resource.tags.append(tags[(i + 1) % len(tags)])
+        session.flush()
+        print(f"[5/8] 已创建 {len(resources)} 个演示资源与 {len(tags)} 个标签关联")
 
         # ---------- 成长档案评价（每学生3条，跨月，体现成长） ----------
         base_scores = {
@@ -390,6 +422,7 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
                     )
                 )
         session.flush()
+        print(f"[6/8] 已创建成长档案评价（每名学生 {len(eval_points)} 条）")
 
         # ---------- IEP：3 名重点学生的双版本链路 ----------
         prev_levels = {
@@ -547,10 +580,42 @@ def seed() -> None:  # noqa: C901 - 种子脚本为线性编排，复杂度来�
                     created=created,
                 )
             )
-        session.commit()
-        print("[6/6] 已创建 IEP（含3组双版本对比，覆盖草稿/送审/锁定）")
+        session.flush()
+        print("[7/8] 已创建 IEP（含3组双版本对比，覆盖草稿/送审/锁定）")
 
-    print(f"\n演示数据生成完成。登录：{DEMO_USERNAME} / {DEMO_PASSWORD}")
+        # ---------- 通知（8 条，覆盖全部类型与已读/未读） ----------
+        notification_specs = [
+            ("学期初 IEP 材料提交提醒", NotificationType.REMINDER, False, 0),
+            (
+                "陈小明的 IEP 已完成锁定",
+                NotificationType.SYSTEM,
+                False,
+                1,
+            ),
+            ("林雨欣 IEP 已进入送审状态", NotificationType.SYSTEM, True, 1),
+            ("生活适应课程优秀教案已发布", NotificationType.COURSE, True, 2),
+            ("课堂分层练习纸已上传至资源中心", NotificationType.COURSE, False, 3),
+            ("家长会沟通模板更新啦", NotificationType.MESSAGE, True, 3),
+            ("期中成长档案评价填报送达", NotificationType.HOMEWORK, True, 4),
+            ("期末评估与目标达成核查安排", NotificationType.EXAM, False, 5),
+        ]
+        for ntitle, ntype, is_read, mb in notification_specs:
+            created = month_anchor(mb)
+            session.add(
+                Notification(
+                    user_id=user.id,
+                    title=ntitle,
+                    content=f"{ntitle}（演示通知，内容为示例）。",
+                    type=ntype,
+                    read=is_read,
+                    created_at=created,
+                    updated_at=created,
+                )
+            )
+        session.commit()
+        print(f"[8/8] 已创建 {len(notification_specs)} 条演示通知")
+
+    print(f"\n演示数据生成完成。演示账号：{DEMO_USERNAME}")
 
 
 if __name__ == "__main__":

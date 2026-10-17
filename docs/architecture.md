@@ -2,7 +2,7 @@
 
 ## 1. 系统概述
 
-AI培智教学平台是一款面向教师群体的智能教学辅助系统，基于FastAPI + React技术栈构建，提供课程管理、学生跟踪、教案设计、AI智能助手、资源中心、通知公告、数据报告等核心功能模块。平台支持多模态AI对话（SSE流式响应 + Function Calling工具链），帮助教师高效完成日常教学管理工作。
+AI培智教学平台是一款面向教师群体的智能教学辅助系统，基于FastAPI + React技术栈构建，提供课程管理、学生跟踪、成长档案、个别化教育计划（IEP）、教案设计、AI智能助手、资源中心、通知公告、数据报告等核心功能模块。平台支持多模态AI对话（SSE流式响应 + Function Calling工具链），帮助教师高效完成日常教学管理工作。
 
 **目标用户**：中小学教师、教育机构教务人员
 **核心定位**：AI赋能的教学管理与备课助手
@@ -34,7 +34,7 @@ AI培智教学平台是一款面向教师群体的智能教学辅助系统，基
 │  │      前端 (React 18)     │    │      后端 (FastAPI)          │ │
 │  │  Vite + TypeScript      │    │  Python 3.11+ / asyncio      │ │
 │  │  Ant Design + Zustand   │    │  SQLAlchemy 2.0 (async)      │ │
-│  │  ECharts + Recharts     │    │  Pydantic v2                 │ │
+│  │  ECharts                │    │  Pydantic v2                 │ │
 │  └───────────┬─────────────┘    └─────────────┬───────────────┘ │
 └──────────────┼────────────────────────────────┼─────────────────┘
                │                                │
@@ -43,7 +43,7 @@ AI培智教学平台是一款面向教师群体的智能教学辅助系统，基
 │      前端状态管理            │    │       后端服务层              │
 │  Zustand (分模块Store)      │    │  API → Schema → Service      │
 │  内存存储 / localStorage     │    │  JWT认证 / 权限控制           │
-│  (Token持久化)              │    │  速率限制 / 审计日志           │
+│  (Token持久化)              │    │  速率限制 / 请求日志           │
 └─────────────────────────────┘    └─────────────┬───────────────┘
                                                  │
                     ┌────────────────────────────┼────────────────────────────┐
@@ -51,9 +51,9 @@ AI培智教学平台是一款面向教师群体的智能教学辅助系统，基
                     ▼                            ▼                            ▼
            ┌─────────────┐            ┌─────────────────┐          ┌─────────────────┐
            │   数据库     │            │   对象存储       │          │    AI服务       │
-           │  PostgreSQL │            │    MinIO        │          │  OpenRouter /   │
+           │  PostgreSQL │            │    MinIO        │          │  Zhipu / OpenAI │
            │   (SQLite)  │            │   (本地文件)     │          │  DeepSeek /     │
-           │   Redis缓存 │            │                 │          │  SiliconFlow    │
+           │   Redis缓存 │            │                 │          │  Ollama         │
            └─────────────┘            └─────────────────┘          └─────────────────┘
 ```
 
@@ -120,7 +120,7 @@ Schema层 (app/schemas/)
 - **构建工具**: Vite (极速开发体验、代码分割、Tree Shaking)
 - **UI组件库**: Ant Design 5.x
 - **状态管理**: Zustand (轻量、无样板代码、分模块设计)
-- **图表库**: ECharts + Recharts
+- **图表库**: ECharts
 - **HTTP客户端**: Axios (统一拦截器、错误处理、Token刷新)
 - **路由**: React Router 6
 
@@ -128,14 +128,16 @@ Schema层 (app/schemas/)
 
 ```
 frontend/src/
-├── api/              # API接口封装（按模块分组）
 ├── components/       # 公共组件（Common / UI）
 ├── pages/            # 页面级组件（按功能模块）
-├── services/         # 业务服务层（数据转换、本地缓存）
+├── services/         # API接口封装与业务服务层（请求拦截、数据转换、本地缓存）
 ├── stores/           # Zustand状态管理（auth / course / student...）
+├── router/           # 路由定义与懒加载配置
 ├── hooks/            # 自定义React Hooks
+├── constants/        # 全局常量与枚举映射
 ├── utils/            # 工具函数（日期、格式化、校验）
 ├── types/            # TypeScript类型定义
+├── styles/           # 全局样式（含窄屏适配规则）
 └── test/             # 测试配置与Mock数据
 ```
 
@@ -199,9 +201,9 @@ Access Token过期 (30分钟)
                             ▼
                     ┌─────────────────┐
                     │ 调用AI服务      │
-                    │ (OpenRouter/    │
+                    │ (Zhipu/         │
                     │  DeepSeek/      │
-                    │  SiliconFlow)   │
+                    │  Ollama)        │
                     └─────────────────┘
                             │
                             ▼
@@ -245,7 +247,6 @@ services:
   minio:    MinIO (对象存储)
   backend:  FastAPI + Uvicorn Workers
   frontend: Nginx (静态资源 + 反向代理)
-  nginx:    入口网关 (HTTPS / 负载均衡)
 ```
 
 **部署特性**:
@@ -277,7 +278,7 @@ services:
 ### 7.3 数据安全
 
 - **软删除**: 全局 `is_deleted` + `deleted_at` 字段，避免误删
-- **审计日志**: 关键操作全量记录 (操作人/时间/IP/结果)
+- **请求日志**: 请求方法 / 路径 / 耗时 / 状态码自动记录（响应头 `X-Process-Time`）
 - **API密钥加密**: AI服务商API Key使用Fernet对称加密存储
 - **日志脱敏**: 手机号/密码等敏感字段自动掩码
 
@@ -300,7 +301,7 @@ services:
 
 ### 8.2 功能扩展
 
-- **AI服务商热插拔**: 通过配置切换智谱/OpenAI/DeepSeek/Moonshot/通义千问或自定义 OpenAI 兼容接口，统一抽象
+- **AI服务商热插拔**: 通过配置切换智谱/OpenAI/DeepSeek/Moonshot/通义千问/Ollama（本地）或自定义 OpenAI 兼容接口，统一抽象
 - **工具链扩展**: 新增Function Calling工具只需注册到 `TOOL_DEFINITIONS` + `TOOL_EXECUTOR`
 - **导出格式扩展**: ExportService支持PDF/Word，可扩展为PPT/Excel
 - **通知渠道扩展**: 当前支持站内信，可扩展邮件/短信/WebPush

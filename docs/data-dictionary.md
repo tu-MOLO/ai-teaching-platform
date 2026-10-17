@@ -230,49 +230,20 @@
 
 ---
 
-## 12. audit_logs — 审计日志表
-
-| 字段 | 类型 | 约束 | 默认值 | 说明 |
-|------|------|------|--------|------|
-| `user_id` | FK → users.id | NULLABLE, INDEX, SET NULL | null | 操作用户ID |
-| `username` | String(50) | NULLABLE | null | 操作用户名（冗余） |
-| `action` | Enum | NOT NULL, INDEX | — | 操作类型 |
-| `resource_type` | String(50) | NOT NULL, INDEX | — | 资源类型 |
-| `resource_id` | String(36) | NULLABLE, INDEX | null | 资源ID |
-| `description` | Text | NOT NULL | — | 操作描述 |
-| `old_values` | Text | NULLABLE | null | 变更前值（JSON） |
-| `new_values` | Text | NULLABLE | null | 变更后值（JSON） |
-| `changed_fields` | Text | NULLABLE | null | 变更字段（JSON数组） |
-| `ip_address` | String(45) | NULLABLE | null | 客户端IP |
-| `user_agent` | String(500) | NULLABLE | null | User-Agent |
-| `request_path` | String(500) | NULLABLE | null | 请求路径 |
-| `request_method` | String(10) | NULLABLE | null | 请求方法 |
-| `success` | Boolean | NOT NULL | true | 操作是否成功 |
-| `error_message` | Text | NULLABLE | null | 错误信息 |
-| `execution_time` | Integer | NULLABLE | null | 执行时间（毫秒） |
-
-**action 枚举**: `create` / `update` / `delete` / `soft_delete` / `restore` / `login` / `logout` / `export` / `import` / `view`
-
-**索引**:
-- `ix_audit_logs_created_at` — (created_at)
-- `ix_audit_logs_user_action` — (user_id, action)
-- `ix_audit_logs_resource` — (resource_type, resource_id)
-
----
-
-## 13. ai_conversations — AI对话会话表
+## 12. ai_conversations — AI对话会话表
 
 | 字段 | 类型 | 约束 | 默认值 | 说明 |
 |------|------|------|--------|------|
 | `user_id` | FK → users.id | NOT NULL, INDEX, CASCADE | — | 用户ID |
 | `title` | String(100) | NOT NULL | — | 会话标题 |
 | `module` | String(50) | NULLABLE | null | 关联模块标签 |
+| `is_archived` | Boolean | NOT NULL | false | 是否已归档 |
 
 **关系**: `messages`: 一对多（级联删除）
 
 ---
 
-## 14. ai_messages — AI对话消息表
+## 13. ai_messages — AI对话消息表
 
 | 字段 | 类型 | 约束 | 默认值 | 说明 |
 |------|------|------|--------|------|
@@ -285,7 +256,7 @@
 
 ---
 
-## 15. ai_configs — AI配置表
+## 14. ai_configs — AI配置表
 
 | 字段 | 类型 | 约束 | 默认值 | 说明 |
 |------|------|------|--------|------|
@@ -299,7 +270,7 @@
 
 ---
 
-## 16. dropdown_options — 下拉选项表
+## 15. dropdown_options — 下拉选项表
 
 | 字段 | 类型 | 约束 | 默认值 | 说明 |
 |------|------|------|--------|------|
@@ -318,6 +289,166 @@
 
 ---
 
+## 16. assessment_templates — 发展领域评估模板表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `user_id` | FK → users.id | NOT NULL, INDEX, CASCADE | — | 用户ID |
+| `name` | String(100) | NOT NULL | — | 模板名称 |
+| `is_default` | Boolean | NOT NULL | false | 是否为该用户默认模板 |
+
+**关系**:
+- `domains`: 一对多（级联删除，按 `sort_order` 排序）
+
+---
+
+## 17. assessment_domains — 评估领域表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `template_id` | FK → assessment_templates.id | NOT NULL, INDEX, CASCADE | — | 模板ID |
+| `code` | String(50) | NULLABLE | null | 领域标识（可空，用于程序关联） |
+| `name` | String(100) | NOT NULL | — | 领域名称 |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**关系**:
+- `template`: 多对一（关联 assessment_templates）
+- `items`: 一对多（级联删除，按 `sort_order` 排序）
+
+---
+
+## 18. assessment_items — 评估条目表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `domain_id` | FK → assessment_domains.id | NOT NULL, INDEX, CASCADE | — | 领域ID |
+| `name` | String(200) | NOT NULL | — | 条目名称（可观测行为） |
+| `observation` | Text | NULLABLE | null | 观测说明（如何观察该行为） |
+| `level_anchors` | JSON | NULLABLE | null | 0-3 级行为锚点，形如 {'0':..,'1':..,'2':..,'3':..} |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**关系**: `domain`: 多对一（关联 assessment_domains）
+
+---
+
+## 19. iep_plans — 个别化教育计划表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `user_id` | FK → users.id | NOT NULL, INDEX, CASCADE | — | 教师ID |
+| `student_id` | FK → students.id | NOT NULL, INDEX, CASCADE | — | 学生ID |
+| `term` | String(100) | NOT NULL, INDEX | — | 学期，如 2026-2027学年第一学期 |
+| `status` | Enum | NOT NULL, INDEX | `draft` | IEP状态 |
+| `parent_id` | FK → iep_plans.id（自引用） | NULLABLE, INDEX, SET NULL | null | 上一版本IEP ID（修订链） |
+| `revision_no` | Integer | NOT NULL | 1 | 第几版 |
+| `student_profile` | Text | NULLABLE | null | 学生情况/教育诊断摘要（教师提供） |
+| `supports` | JSON | NULLABLE | null | 教学/康复/家庭支持，形如 {'teaching':[],'rehab':[],'family':[]} |
+| `evaluation_plan` | Text | NULLABLE | null | 评价方式与周期 |
+| `reviewed_by` | String(36) | NULLABLE | null | 审定人ID |
+| `reviewed_at` | DateTime(tz) | NULLABLE | null | 审定时间 |
+
+**状态枚举**: `draft`（草稿）/ `review`（待审定）/ `locked`（已锁定）
+
+**关系**:
+- `domain_assessments`: 一对多（级联删除，按 `sort_order` 排序）
+- `long_term_goals`: 一对多（级联删除，按 `sort_order` 排序）
+- `generation_logs`: 一对多（级联删除）
+- `student`: 多对一（关联 students）
+- 自引用 `parent_id` 形成修订版本链（删除父版本时置空）
+
+> 说明：状态机保证 AI 只能生成草稿，只有教师动作端点可流转/锁定；修订通过 `parent_id` 新建版本并保留历史。
+
+---
+
+## 20. iep_domain_assessments — IEP领域评估快照表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `iep_id` | FK → iep_plans.id | NOT NULL, INDEX, CASCADE | — | IEP ID |
+| `domain_code` | String(50) | NULLABLE | null | 领域标识快照 |
+| `domain_name` | String(100) | NOT NULL | — | 领域名称快照 |
+| `overall_level` | Integer | NULLABLE, CHECK 0-3 | null | 领域总体掌握度 0-3 |
+| `summary` | Text | NULLABLE | null | 领域现状描述（基于评估，不诊断） |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**约束**: `ck_iep_da_overall_level_range` — overall_level 为 NULL 或 0-3
+
+**关系**:
+- `iep`: 多对一（关联 iep_plans）
+- `items`: 一对多（级联删除，按 `sort_order` 排序）
+
+---
+
+## 21. iep_assessment_snapshot_items — IEP条目评估快照表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `domain_assessment_id` | FK → iep_domain_assessments.id | NOT NULL, INDEX, CASCADE | — | 领域评估快照ID |
+| `item_name` | String(200) | NOT NULL | — | 条目名称快照 |
+| `level` | Integer | NULLABLE, CHECK 0-3 | null | 掌握度评级 0-3 |
+| `note` | Text | NULLABLE | null | 教师备注 |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**约束**: `ck_iep_snap_item_level_range` — level 为 NULL 或 0-3
+
+**关系**: `domain_assessment`: 多对一（关联 iep_domain_assessments）
+
+---
+
+## 22. iep_long_term_goals — IEP长期目标表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `iep_id` | FK → iep_plans.id | NOT NULL, INDEX, CASCADE | — | IEP ID |
+| `domain_code` | String(50) | NULLABLE | null | 领域标识 |
+| `domain_name` | String(100) | NULLABLE | null | 领域名称 |
+| `goal` | Text | NOT NULL | — | 长期目标描述 |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**关系**:
+- `iep`: 多对一（关联 iep_plans）
+- `short_term_goals`: 一对多（级联删除，按 `sort_order` 排序）
+
+---
+
+## 23. iep_short_term_goals — IEP短期目标表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `long_term_goal_id` | FK → iep_long_term_goals.id | NOT NULL, INDEX, CASCADE | — | 长期目标ID |
+| `condition` | Text | NULLABLE | null | 完成条件 |
+| `behavior` | Text | NOT NULL | — | 可观察行为 |
+| `criterion` | Text | NULLABLE | null | 达成标准 |
+| `support_level` | Integer | NULLABLE, CHECK 0-3 | null | 辅助等级 0-3 |
+| `status` | Enum | NOT NULL, INDEX | `not_started` | 目标达成状态 |
+| `teaching_methods` | JSON (List[str]) | NULLABLE | null | 具体教学策略列表 |
+| `materials` | JSON (List[str]) | NULLABLE | null | 教具/材料列表 |
+| `sort_order` | Integer | NOT NULL | 0 | 排序 |
+
+**状态枚举**: `not_started` / `in_progress` / `achieved` / `maintain`
+
+**约束**: `ck_iep_stg_support_level_range` — support_level 为 NULL 或 0-3
+
+**关系**: `long_term_goal`: 多对一（关联 iep_long_term_goals）
+
+---
+
+## 24. iep_generation_logs — IEP AI生成留痕表
+
+| 字段 | 类型 | 约束 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `iep_id` | FK → iep_plans.id | NOT NULL, INDEX, CASCADE | — | IEP ID |
+| `kind` | String(20) | NOT NULL | — | 生成类型：draft(IEP初稿) / report(成长报告) |
+| `model` | String(100) | NULLABLE | null | 使用的模型 |
+| `template_snapshot` | Text | NULLABLE | null | 输入评估快照版本/摘要 |
+| `raw_output` | Text | NULLABLE | null | 模型原始输出 |
+
+**关系**: `iep`: 多对一（关联 iep_plans）
+
+> 说明：删除 IEP 计划将级联删除其领域评估快照、长期目标、短期目标与生成日志；删除领域评估快照级联删除其条目快照；删除长期目标级联删除其短期目标；删除评估模板级联删除其领域与条目。
+
+---
+
 ## ER关系总览
 
 ```
@@ -327,7 +458,6 @@ users ──1:N──► lesson_plans
 users ──1:N──► portfolios
 users ──1:N──► resources
 users ──1:N──► notifications
-users ──1:N──► audit_logs
 users ──1:1──► ai_configs
 users ──1:N──► ai_conversations
 
@@ -337,4 +467,16 @@ resources ◄──M:N──► tags            (via resource_tag_association)
 students ──1:N──► portfolios
 lesson_templates ──1:N──► lesson_plans
 ai_conversations ──1:N──► ai_messages
+
+users ──1:N──► assessment_templates
+users ──1:N──► iep_plans
+students ──1:N──► iep_plans
+assessment_templates ──1:N──► assessment_domains
+assessment_domains ──1:N──► assessment_items
+iep_plans ──1:N──► iep_domain_assessments
+iep_plans ──1:N──► iep_long_term_goals
+iep_plans ──1:N──► iep_generation_logs
+iep_domain_assessments ──1:N──► iep_assessment_snapshot_items
+iep_long_term_goals ──1:N──► iep_short_term_goals
+iep_plans ──self──► iep_plans          (parent_id 修订版本链)
 ```

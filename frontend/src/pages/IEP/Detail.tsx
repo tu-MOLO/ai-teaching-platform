@@ -344,7 +344,9 @@ const IEPDetailPage: React.FC = () => {
               size="small"
               rowKey={(r) => r.item_name}
               pagination={false}
-              scroll={{ x: 'max-content' }}
+              // 固定列宽布局，保证各领域表格的「水平」「备注」列在同一垂直线上对齐
+              tableLayout="fixed"
+              scroll={{ x: 560 }}
               dataSource={d.items}
               columns={[
                 { title: '观察条目', dataIndex: 'item_name' },
@@ -357,6 +359,7 @@ const IEPDetailPage: React.FC = () => {
                 {
                   title: '备注',
                   dataIndex: 'note',
+                  width: 200,
                   render: (v: string | null) => v || '—',
                 },
               ]}

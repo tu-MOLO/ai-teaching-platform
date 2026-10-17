@@ -8,7 +8,7 @@
 | ------------- | -------------------- | ---------- | -------------------- |
 | `db`        | PostgreSQL 15 Alpine | 5432       | 主数据库             |
 | `redis`     | Redis 7 Alpine       | 6379       | 缓存/限流            |
-| `minio`     | MinIO (latest)       | 9000/+9001 | 对象存储             |
+| `minio`     | MinIO (RELEASE.2025-06-13T14-13-47Z) | 9000/+9001 | 对象存储   |
 | `backend`   | FastAPI + Uvicorn    | 8000       | API服务              |
 | `frontend`  | Nginx + React SPA    | 80         | 前端入口/反向代理    |
 | `migration` | Alembic              | —         | 数据库迁移（一次性） |
@@ -328,7 +328,7 @@ alembic revision -m "describe_your_change"
 
 | 版本号           | 描述                           |
 | ---------------- | ------------------------------ |
-| `a6187dbdd1d8` | 添加学生状态字段               |
+| `a6187dbdd1d8` | 初始 schema 基线               |
 | `b234c5e6f789` | 修复学生用户ID和课程状态       |
 | `c345d6e7f890` | 规范化旧管理员角色             |
 | `c456f7a8b901` | 添加课程学生关联表             |
@@ -525,16 +525,18 @@ docker compose exec db psql -U postgres -d ai_teaching \
   -c "SELECT username, last_login_at FROM users WHERE last_login_at < NOW() - INTERVAL '90 days';"
 ```
 
-### 10.2 审计日志查询
+### 10.2 登录与账户状态查询
+
+> 说明：审计日志表（`audit_logs`）已随重构下线，平台不再记录全量操作流水；登录与账户安全信息保存在 `users` 表中。
 
 ```bash
-# 查询最近50条审计日志
+# 查询最近登录的账户
 docker compose exec db psql -U postgres -d ai_teaching \
-  -c "SELECT created_at, username, action, resource_type, description FROM audit_logs ORDER BY created_at DESC LIMIT 50;"
+  -c "SELECT username, email, last_login_at, last_login_ip, login_count FROM users ORDER BY last_login_at DESC NULLS LAST LIMIT 50;"
 
-# 查询特定用户的登录记录
+# 查询被锁定或存在失败登录的账户
 docker compose exec db psql -U postgres -d ai_teaching \
-  -c "SELECT created_at, ip_address, success FROM audit_logs WHERE action='login' AND username='teacher' ORDER BY created_at DESC;"
+  -c "SELECT username, failed_login_attempts, locked_until FROM users WHERE locked_until IS NOT NULL OR failed_login_attempts > 0;"
 ```
 
 ### 10.3 安全更新
@@ -596,8 +598,7 @@ DELETE FROM courses WHERE is_deleted = true AND deleted_at < NOW() - INTERVAL '7
 docker compose exec backend python scripts/create_user.py \
   --username teacher \
   --email teacher@example.com \
-  --password NewSecurePassword123! \
-  --reset-password
+  --password NewSecurePassword123!
 ```
 
 ---
@@ -611,6 +612,6 @@ docker compose exec backend python scripts/create_user.py \
 | 每日 | `docker compose logs --tail=50 backend \| grep ERROR` |
 | 每周 | 数据库备份验证（检查备份文件大小非空）                 |
 | 每周 | 磁盘空间检查 `df -h`                                 |
-| 每月 | 审计日志清理（保留90天）                               |
+| 每月 | 长期未登录 / 被锁定账户检查                          |
 | 每月 | 依赖安全审计 `pip-audit` / `npm audit`             |
 | 每月 | 系统重启测试 `docker compose restart`                |
