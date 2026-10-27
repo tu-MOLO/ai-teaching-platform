@@ -226,6 +226,7 @@ test.describe('教案管理', () => {
         title: lessonTitle,
         subject: '语文',
         grade: '一年级',
+        duration: 40,
         teaching_content: '测试教学内容',
         status: 'draft',
       },

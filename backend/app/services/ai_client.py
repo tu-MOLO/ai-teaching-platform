@@ -48,7 +48,9 @@ class AIServiceError(Exception):
 
 def build_timeout() -> httpx.Timeout:
     """构造 AI 请求超时：连接短、读取长。"""
-    return httpx.Timeout(connect=_CONNECT_TIMEOUT, read=_READ_TIMEOUT, write=_CONNECT_TIMEOUT, pool=_CONNECT_TIMEOUT)
+    return httpx.Timeout(
+        connect=_CONNECT_TIMEOUT, read=_READ_TIMEOUT, write=_CONNECT_TIMEOUT, pool=_CONNECT_TIMEOUT
+    )
 
 
 def build_client() -> httpx.AsyncClient:
@@ -138,7 +140,10 @@ def describe_exception(exc: Exception, api_base: str) -> AIServiceError:
 
     if isinstance(exc, httpx.ConnectError):
         detail = str(exc)
-        if isinstance(exc.__cause__, ssl.SSLCertVerificationError) or "CERTIFICATE_VERIFY_FAILED" in detail:
+        if (
+            isinstance(exc.__cause__, ssl.SSLCertVerificationError)
+            or "CERTIFICATE_VERIFY_FAILED" in detail
+        ):
             message = (
                 "连接 AI 服务时证书校验未通过，请求被中止。"
                 "常见原因是公司网络或本机代理对 HTTPS 做了中间人拦截。"

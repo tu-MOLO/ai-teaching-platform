@@ -12,7 +12,7 @@ concurrency:
 
 env:
   PYTHON_VERSION: "3.11"
-  NODE_VERSION: "18"
+  NODE_VERSION: "24"
 
 jobs:
   # ============================================================
@@ -267,7 +267,7 @@ jobs:
   # ============================================================
   e2e-test:
     name: E2E — Playwright Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: docker-build
     defaults:
       run:
@@ -291,6 +291,11 @@ jobs:
         run: |
           docker compose -f ../docker-compose.e2e.yml up -d --build
           echo "Waiting for services to be healthy..."
+          docker compose -f ../docker-compose.e2e.yml ps
+
+      - name: Show E2E service logs (on failure)
+        if: failure()
+        run: docker compose -f ../docker-compose.e2e.yml logs --no-color --tail=200
 
       - name: Run E2E tests
         run: npx playwright test --project=chromium

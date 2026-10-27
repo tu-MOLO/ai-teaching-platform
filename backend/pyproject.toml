@@ -1,6 +1,6 @@
 [project]
 name = "ai-teaching-platform-backend"
-version = "1.1.0"
+version = "1.2.0"
 description = "AI培智教学平台后端 - 面向教师本地交付场景的全栈教学管理平台"
 readme = "README.md"
 requires-python = ">=3.11"

@@ -199,14 +199,17 @@ async def test_generate_draft_section_uses_matching_prompt(
 
     async def fake_chat(self, cfg, system_prompt, user_content):
         prompts.append(system_prompt)
-        return json.dumps(
-            {
-                "student_profile": "喜欢拼图",
-                "domain_summaries": [{"domain": "感知", "current_level": "需少量辅助"}],
-                "missing_info": [],
-            },
-            ensure_ascii=False,
-        ), "test-model"
+        return (
+            json.dumps(
+                {
+                    "student_profile": "喜欢拼图",
+                    "domain_summaries": [{"domain": "感知", "current_level": "需少量辅助"}],
+                    "missing_info": [],
+                },
+                ensure_ascii=False,
+            ),
+            "test-model",
+        )
 
     monkeypatch.setattr(IEPAIService, "_chat", fake_chat)
 
@@ -220,9 +223,7 @@ async def test_generate_draft_section_uses_matching_prompt(
     assert parsed["domain_summaries"][0]["current_level"] == "需少量辅助"
 
 
-async def test_generate_draft_invalid_section(
-    db_session, test_user, iep_with_content, monkeypatch
-):
+async def test_generate_draft_invalid_section(db_session, test_user, iep_with_content, monkeypatch):
     _patch_cfg(monkeypatch, _CFG)
     with pytest.raises(BadRequestException):
         await IEPAIService(db_session).generate_draft(
@@ -258,9 +259,7 @@ async def test_generate_draft_normalizes_object_items(
         ),
     )
 
-    parsed, _ = await IEPAIService(db_session).generate_draft(
-        iep_with_content.id, test_user.id
-    )
+    parsed, _ = await IEPAIService(db_session).generate_draft(iep_with_content.id, test_user.id)
     assert parsed["missing_info"] == ["缺家庭情况"]
     goal = parsed["long_term_goals"][0]
     assert goal["goal"] == "提升追踪 （依据：stg-1）"
@@ -300,9 +299,7 @@ async def test_generate_report_normalizes_object_items(
         ),
     )
 
-    parsed, _ = await IEPAIService(db_session).generate_report(
-        iep_with_content.id, test_user.id
-    )
+    parsed, _ = await IEPAIService(db_session).generate_report(iep_with_content.id, test_user.id)
     assert parsed["highlights"] == ["能追视5秒 （依据：obs-1）"]
     assert parsed["family_suggestions"] == ["家里练追视"]
     assert parsed["goals_summary"]["achieved"] == ["追视达成 （依据：stg-1）"]

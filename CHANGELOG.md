@@ -5,7 +5,7 @@ All notable changes to the AI培智教学平台 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - Unreleased
+## [1.2.0] - 2026-10-25
 
 ### Added
 - 个别化教育计划（IEP / 一人一案）：自研六领域发展评估（感知 / 认知 / 语言与沟通 / 运动 / 生活自理 / 社会适应）、0–3 级掌握度评级、可配置评估模板与快照存档
@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 移除与「编辑资料」重复的「账户资料」菜单项
 - 全局弹窗层级调至侧边栏之上、宽度按视口自适应；宽表增加横向滚动容器
 - 邮箱改为选填：注册与个人资料编辑均不再强制填写邮箱，`users.email` 允许为空（含 Alembic 迁移 `b2c3d4e5f6a7`）
+- 构建与 CI 运行时统一升级到 Node.js 24（CI 的 `NODE_VERSION` 与前端 Dockerfile 基准镜像同步调整，自带 npm 11），前端 `engines` 提升为 Node ≥ 20 / npm ≥ 10；README、一键启动脚本与版本兼容性矩阵同步更新
 
 ### Removed
 - 邮箱验证码机制整体下线：移除注册邮箱验证码、邮箱验证码找回密码两条链路，及相关 API、数据模型、邮件发送工具、SMTP 配置与 `aiosmtplib` 依赖；密码重置统一为密保问题验证
@@ -56,6 +57,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 成长报告弹窗被侧边栏遮挡、弹窗宽度在窄屏溢出
 - AI 助手会话列表条目的日期与归档图标部分重合
 - 前端全局请求 10s 超时导致 AI 生成类长耗时接口被中断，相关接口单独放宽超时
+- GitHub Actions 流水线持续失败
+  - 后端 Black / isort 检查未通过，`AIService._stream_chat` 复杂度超限（C901）：格式化代码并抽取流式请求 helper 降低复杂度
+  - 前端 `npm ci` 在 Node 18（npm 10）下报 `Missing: @esbuild/<platform>@0.28.2 from lock file`：随 Node 24 + npm 11 升级解决，锁文件版本号与 `engines` 同步对齐
+  - 后端镜像缺少 PostgreSQL 驱动（`asyncpg`）与 Alembic 同步驱动（`psycopg2`），使用 PostgreSQL 时容器启动即崩溃：补齐两项依赖
+  - E2E 流程无法启动：MinIO 镜像已下架、`BACKEND_CORS_ORIGINS` 使用逗号分隔导致配置解析失败、Playwright fixture 首个参数未使用解构写法：移除 MinIO 依赖并统一端口为 8000/5173，CORS 改为 JSON 数组，启动前初始化预置教师账号
 
 ## [1.1.0] - 2026-07-11
 

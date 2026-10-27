@@ -9,8 +9,8 @@ test.describe('AI 助手页面', () => {
       await page.goto('/ai-assistant')
       await page.waitForLoadState('networkidle')
 
-      // 如果页面显示"请先配置 API 密钥"提示，则跳过实际发送测试
-      const noApiKeyHint = page.getByText('请先配置 API 密钥以启用 AI 助手功能')
+      // 如果页面显示"AI 助手尚未启用"提示，则跳过实际发送测试
+      const noApiKeyHint = page.getByText('AI 助手尚未启用')
       if (await noApiKeyHint.isVisible({ timeout: 3000 }).catch(() => false)) {
         // 未配置 API 密钥：验证配置引导显示，且聊天输入区不可见
         await expect(noApiKeyHint).toBeVisible()
@@ -56,10 +56,11 @@ test.describe('AI 助手页面', () => {
       await page.waitForLoadState('networkidle')
 
       // 如果未配置 API 密钥，只验证页面渲染
-      const noApiKeyHint = page.getByText('请先配置 API 密钥以启用 AI 助手功能')
+      const noApiKeyHint = page.getByText('AI 助手尚未启用')
       if (await noApiKeyHint.isVisible({ timeout: 3000 }).catch(() => false)) {
-        // 未配置 API 密钥：验证配置引导显示
+        // 未配置 API 密钥：仍应展示会话列表入口与配置引导
         await expect(noApiKeyHint).toBeVisible()
+        await expect(page.getByRole('button', { name: '新建对话' })).toBeVisible({ timeout: 5000 })
         return
       }
 

@@ -362,10 +362,11 @@ class ExportService:
             """
 
             for portfolio in type_portfolios:
+                created_at = portfolio.created_at.strftime("%Y-%m-%d %H:%M:%S")
                 html += f"""
                 <div class="portfolio-item">
                     <div class="portfolio-title">{escape(portfolio.title or '')}</div>
-                    <div class="portfolio-meta">创建时间: {portfolio.created_at.strftime('%Y-%m-%d %H:%M:%S')}</div>
+                    <div class="portfolio-meta">创建时间: {created_at}</div>
                     {f'<p>{escape(portfolio.content or "")}</p>' if portfolio.content else ''}
                 """
 

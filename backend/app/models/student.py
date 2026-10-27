@@ -69,8 +69,8 @@ class Student(BaseModel):
         "Course",
         secondary="course_student",
         back_populates="students",
-        primaryjoin="and_(Student.id == course_student.c.student_id, Course.is_deleted == False)",  # noqa
-        secondaryjoin="Course.id == course_student.c.course_id",
+        primaryjoin="Student.id == course_student.c.student_id",
+        secondaryjoin="and_(Course.id == course_student.c.course_id, Course.is_deleted == False)",  # noqa
         lazy="selectin",
     )
 

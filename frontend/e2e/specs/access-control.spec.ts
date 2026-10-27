@@ -44,7 +44,7 @@ test.describe('访问控制', () => {
       const courseData = {
         name: `用户A的课程-${Date.now()}`,
         subject: '数学',
-        grade: '三年级',
+        grades: ['三年级'],
         description: '这是用户A创建的测试课程',
       }
       const courseResult = (await createCourse(request, userA.token, courseData)) as Record<string, unknown>

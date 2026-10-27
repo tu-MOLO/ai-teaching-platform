@@ -49,7 +49,9 @@ export interface AuthFixtures {
 }
 
 export const test = base.extend<AuthFixtures>({
-  testUser: async (_fixtures, use) => {
+  // Playwright 要求 fixture 首个参数必须是解构写法，因此这里无法省略
+  // eslint-disable-next-line no-empty-pattern
+  testUser: async ({}, use) => {
     await use(DEFAULT_USER)
   },
 

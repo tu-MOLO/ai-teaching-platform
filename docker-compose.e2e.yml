@@ -25,28 +25,6 @@ services:
     networks:
       - ai-teaching-e2e-network
 
-  # MinIO 对象存储
-  minio:
-    image: minio/minio:RELEASE.2025-06-13T14-13-47Z
-    container_name: ai-teaching-minio-e2e
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-CHANGE_ME_MINIO_ACCESS_KEY}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET_KEY}
-    volumes:
-      - minio_data_e2e:/data
-    ports:
-      - "9010:9000"
-      - "9011:9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - ai-teaching-e2e-network
-
   # Redis 缓存
   redis:
     image: redis:7-alpine
@@ -73,9 +51,12 @@ services:
     container_name: ai-teaching-migration-e2e
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-CHANGE_ME_DB_PASSWORD}@db:5432/${DB_NAME:-ai_teaching}
-    command: alembic upgrade head
+      SECRET_KEY: ${E2E_SECRET_KEY:-e2e-test-secret-key-at-least-32-chars-long!!}
+    # 先执行迁移，再初始化预置数据（教师账号、标签、教案模板）
+    command: sh -c "alembic upgrade head; python scripts/init_data.py"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - ai-teaching-e2e-network
 
@@ -91,7 +72,7 @@ services:
       TESTING: "true"
       DEBUG: "true"
       APP_NAME: "AI Teaching Platform E2E"
-      APP_VERSION: "1.1.0"
+      APP_VERSION: "1.2.0"
       
       # 数据库配置
       DATABASE_URL: postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-CHANGE_ME_DB_PASSWORD}@db:5432/${DB_NAME:-ai_teaching}
@@ -104,33 +85,34 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
       REFRESH_TOKEN_EXPIRE_DAYS: "7"
       
-      # MinIO 配置
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-CHANGE_ME_MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-CHANGE_ME_MINIO_SECRET_KEY}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-ai-teaching}
-      MINIO_SECURE: "false"
-      MINIO_REGION: "us-east-1"
+      # MinIO 配置（E2E 不启用对象存储，存储层自动回退到本地文件）
+      MINIO_ENDPOINT: ""
+      MINIO_ACCESS_KEY: ""
+      MINIO_SECRET_KEY: ""
       
       # Redis 配置
       REDIS_URL: redis://:${REDIS_PASSWORD:-CHANGE_ME_REDIS_PASSWORD}@redis:6379/0
       
+      # 单 worker 启动：DEBUG 下每个 worker 都会执行建表与默认数据初始化，
+      # 多 worker 并发建表会触发 PostgreSQL 的 DDL 竞争导致启动失败
+      WEB_CONCURRENCY: "1"
+
       # 日志配置
       LOG_LEVEL: "INFO"
       
-      # CORS 配置
-      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      # CORS 配置（pydantic-settings 按 JSON 解析列表字段，不能用逗号分隔）
+      BACKEND_CORS_ORIGINS: '${BACKEND_CORS_ORIGINS:-["http://localhost:3000","http://localhost:5173"]}'
     ports:
-      - "8001:8000"
+      - "8000:8000"
     volumes:
       - backend_logs_e2e:/app/logs
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_healthy
       redis:
         condition: service_healthy
+      migration:
+        condition: service_completed_successfully
     networks:
       - ai-teaching-e2e-network
     healthcheck:
@@ -148,7 +130,7 @@ services:
     container_name: ai-teaching-frontend-e2e
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "5173:80"
     depends_on:
       backend:
         condition: service_healthy
@@ -158,8 +140,6 @@ services:
 # 数据卷（独立于主环境）
 volumes:
   postgres_data_e2e:
-    driver: local
-  minio_data_e2e:
     driver: local
   redis_data_e2e:
     driver: local

@@ -3,7 +3,7 @@
 # 多阶段构建：构建 + Nginx 托管
 # ============================================
 
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 

@@ -66,16 +66,27 @@ class TestDetailedHealthEndpoint:
 
 class TestCORSMiddleware:
     @pytest.mark.asyncio
-    async def test_cors_headers_in_debug_mode(self, client):
-        response = await client.options(
-            "/health",
-            headers={
-                "Origin": "http://localhost:5173/",
-                "Access-Control-Request-Method": "GET",
-            },
-        )
-        assert response.status_code == 200
-        assert "access-control-allow-origin" in response.headers
+    async def test_cors_headers_in_debug_mode(self):
+        with patch("app.main.settings") as mock_settings:
+            mock_settings.DEBUG = True
+            mock_settings.APP_NAME = "AI Teaching Platform"
+            mock_settings.APP_VERSION = "1.0.0"
+            mock_settings.BACKEND_CORS_ORIGINS = []
+            mock_settings.MAX_UPLOAD_SIZE = 100 * 1024 * 1024
+            mock_settings.API_V1_STR = "/api/v1"
+
+            app = create_application()
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as ac:
+                response = await ac.options(
+                    "/health",
+                    headers={
+                        "Origin": "http://localhost:5173",
+                        "Access-Control-Request-Method": "GET",
+                    },
+                )
+                assert response.status_code == 200
+                assert "access-control-allow-origin" in response.headers
 
     @pytest.mark.asyncio
     async def test_cors_production_mode(self):

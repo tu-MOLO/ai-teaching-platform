@@ -259,9 +259,7 @@ class IEPAIService:
                     item["evidence_refs"] = cls._text_list(item.get("evidence_refs"))
                     normalized.append(item)
                 elif isinstance(item, str):
-                    normalized.append(
-                        {"domain": "", "description": item, "evidence_refs": []}
-                    )
+                    normalized.append({"domain": "", "description": item, "evidence_refs": []})
             parsed["domain_progress"] = normalized
         return parsed
 
@@ -273,27 +271,26 @@ class IEPAIService:
         summaries = parsed.get("domain_summaries")
         if isinstance(summaries, list):
             parsed["domain_summaries"] = [
-                {
-                    **s,
-                    "domain": cls._as_text(s.get("domain")),
-                    "current_level": cls._as_text(s.get("current_level")),
-                    "priority": cls._as_text(s.get("priority")),
-                }
-                if isinstance(s, dict)
-                else s
+                (
+                    {
+                        **s,
+                        "domain": cls._as_text(s.get("domain")),
+                        "current_level": cls._as_text(s.get("current_level")),
+                        "priority": cls._as_text(s.get("priority")),
+                    }
+                    if isinstance(s, dict)
+                    else s
+                )
                 for s in summaries
             ]
         goals = parsed.get("long_term_goals")
         if isinstance(goals, list):
             parsed["long_term_goals"] = [
-                cls._normalize_long_term_goal(g) if isinstance(g, dict) else g
-                for g in goals
+                cls._normalize_long_term_goal(g) if isinstance(g, dict) else g for g in goals
             ]
         supports = parsed.get("supports")
         if isinstance(supports, dict):
-            parsed["supports"] = {
-                key: cls._text_list(value) for key, value in supports.items()
-            }
+            parsed["supports"] = {key: cls._text_list(value) for key, value in supports.items()}
         return parsed
 
     @classmethod
@@ -304,17 +301,19 @@ class IEPAIService:
         shorts = goal.get("short_term_goals")
         if isinstance(shorts, list):
             normalized["short_term_goals"] = [
-                {
-                    **s,
-                    "condition": cls._as_text(s.get("condition")),
-                    "behavior": cls._as_text(s.get("behavior")),
-                    "criterion": cls._as_text(s.get("criterion")),
-                    "teaching_methods": cls._text_list(s.get("teaching_methods")),
-                    "materials": cls._text_list(s.get("materials")),
-                    "evaluation": cls._as_text(s.get("evaluation")),
-                }
-                if isinstance(s, dict)
-                else s
+                (
+                    {
+                        **s,
+                        "condition": cls._as_text(s.get("condition")),
+                        "behavior": cls._as_text(s.get("behavior")),
+                        "criterion": cls._as_text(s.get("criterion")),
+                        "teaching_methods": cls._text_list(s.get("teaching_methods")),
+                        "materials": cls._text_list(s.get("materials")),
+                        "evaluation": cls._as_text(s.get("evaluation")),
+                    }
+                    if isinstance(s, dict)
+                    else s
+                )
                 for s in shorts
             ]
         return normalized
@@ -443,11 +442,7 @@ class IEPAIService:
             raise BadRequestException("该 IEP 已定稿，不能再生成 AI 初稿；请先创建修订版本")
 
         context = self._assessment_context(iep)
-        prompt = (
-            IEP_DRAFT_SYSTEM_PROMPT
-            if section == "all"
-            else DRAFT_SECTION_PROMPTS[section]
-        )
+        prompt = IEP_DRAFT_SYSTEM_PROMPT if section == "all" else DRAFT_SECTION_PROMPTS[section]
         content, model = await self._chat(cfg, prompt, context)
         parsed = self._normalize_draft(self._parse_json(content))
         log_id = await self._record_log(iep.id, "draft", model, context, content)

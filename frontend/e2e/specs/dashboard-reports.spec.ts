@@ -63,7 +63,7 @@ test.describe('仪表盘与报告页面', () => {
       const courseData = await createCourse(request, token, {
         name: `E2E 仪表盘测试课程 ${Date.now()}`,
         subject: '数学',
-        grade: '三年级',
+        grades: ['三年级'],
         schedule: '周一 9:00-9:40',
         status: 'active',
       })

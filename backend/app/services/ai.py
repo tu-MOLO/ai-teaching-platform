@@ -1347,6 +1347,53 @@ class AIService:
         return None
 
     @staticmethod
+    async def _stream_once(
+        effective_config: dict,
+        current_messages: list,
+        conversation_id: str,
+        state: dict[str, Any],
+    ) -> AsyncGenerator[str, None]:
+        """执行一轮流式请求并把 SSE 事件透传给前端。
+
+        请求失败时不抛异常，只推一条可展示的错误事件，并把 ``state["aborted"]``
+        置为 True 以便调用方结束整条流。
+        """
+        async with ai_client_module.build_client() as client:
+            try:
+                async with client.stream(
+                    "POST",
+                    f"{effective_config['api_base']}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {effective_config['api_key']}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": effective_config["model"],
+                        "messages": current_messages,
+                        "tools": TOOL_DEFINITIONS,
+                        "stream": True,
+                    },
+                ) as response:
+                    ai_client_module.raise_for_status(response, effective_config["api_base"])
+
+                    async for line in response.aiter_lines():
+                        event = AIService._process_sse_line(line, conversation_id, state)
+                        if event == "__done__":
+                            break
+                        if event:
+                            yield event
+            except AIServiceError as exc:
+                # 已经是可直接展示的文案，原样推给前端
+                state["aborted"] = True
+                yield AIService._error_event(exc.user_message)
+            except Exception as exc:  # noqa: BLE001 - 兜底，避免整条流变成 500
+                described = ai_client_module.log_and_describe(
+                    exc, effective_config["api_base"], "stream_chat"
+                )
+                state["aborted"] = True
+                yield AIService._error_event(described.user_message)
+
+    @staticmethod
     async def _stream_chat(
         db: AsyncSession,
         user_id: str,
@@ -1360,40 +1407,13 @@ class AIService:
         for iteration in range(max_iterations):
             state: dict[str, Any] = {"response_content": "", "tool_calls_list": []}
 
-            async with ai_client_module.build_client() as client:
-                try:
-                    async with client.stream(
-                        "POST",
-                        f"{effective_config['api_base']}/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {effective_config['api_key']}",
-                            "Content-Type": "application/json",
-                        },
-                        json={
-                            "model": effective_config["model"],
-                            "messages": current_messages,
-                            "tools": TOOL_DEFINITIONS,
-                            "stream": True,
-                        },
-                    ) as response:
-                        ai_client_module.raise_for_status(response, effective_config["api_base"])
+            async for event in AIService._stream_once(
+                effective_config, current_messages, conversation.id, state
+            ):
+                yield event
 
-                        async for line in response.aiter_lines():
-                            event = AIService._process_sse_line(line, conversation.id, state)
-                            if event == "__done__":
-                                break
-                            if event:
-                                yield event
-                except AIServiceError as exc:
-                    # 已经是可直接展示的文案，原样推给前端
-                    yield AIService._error_event(exc.user_message)
-                    return
-                except Exception as exc:  # noqa: BLE001 - 兜底，避免整条流变成 500
-                    described = ai_client_module.log_and_describe(
-                        exc, effective_config["api_base"], "stream_chat"
-                    )
-                    yield AIService._error_event(described.user_message)
-                    return
+            if state.get("aborted"):
+                return
 
             response_content: str = state["response_content"]
             tool_calls_list: list[dict[str, Any]] = state["tool_calls_list"]

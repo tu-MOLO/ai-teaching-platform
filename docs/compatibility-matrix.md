@@ -16,9 +16,10 @@
 
 | 版本 | 支持状态 | 备注 |
 |------|----------|------|
-| Node.js 18 | ✅ 完全支持 | Dockerfile 使用 `node:18-alpine` |
-| Node.js 20 | ✅ 推荐支持 | 建议验证 |
-| Node.js 22 | ⚠️ 未验证 | 理论兼容 |
+| Node.js 24 | ✅ 完全支持 | CI 与 Dockerfile 基准（`node:24-alpine`，自带 npm 11） |
+| Node.js 22 | ✅ 支持 | vitest 4 / jsdom 29 要求 Node ≥ 20 |
+| Node.js 20 | ✅ 支持 | vitest 4 / jsdom 29 要求 Node ≥ 20 |
+| Node.js 18 | ❌ 不支持 | 依赖要求 Node ≥ 20；且其 npm 10 无法消费当前 `package-lock.json` |
 | Node.js 16 | ❌ 不支持 | Vite 5 需要 18+ |
 
 ### 1.3 Docker

@@ -58,7 +58,8 @@ test.describe('个人资料', () => {
 
     // 5. 点击"保存"按钮，监听 API 响应
     const saveResponse = page.waitForResponse(
-      (resp) => resp.url().includes('/api/v1/user/profile') && resp.status() === 200
+      (resp) => /\/api\/v1\/users\/[^/]+$/.test(new URL(resp.url()).pathname) &&
+        resp.request().method() === 'PUT' && resp.status() === 200
     )
     const saveButton = page.getByRole('button', { name: '保存' })
     await expect(saveButton).toBeVisible({ timeout: 5000 })
@@ -125,8 +126,10 @@ test.describe('个人资料', () => {
     ).toBeVisible({ timeout: 5000 })
   })
 
-  test('修改密码成功', async ({ authenticatedPage }) => {
+  test('修改密码成功', async ({ authenticatedPage, request }) => {
     const page = authenticatedPage
+    const originalPassword = 'Teacher@Local2026!'
+    const newPassword = 'NewTeacher@2026'
 
     // 1. 导航到个人资料页面
     await page.goto('/profile')
@@ -148,21 +151,21 @@ test.describe('个人资料', () => {
     // 4. 填写正确的当前密码
     const currentPasswordInput = modal.locator('input#currentPassword')
     await expect(currentPasswordInput).toBeVisible({ timeout: 5000 })
-    await currentPasswordInput.fill('Teacher@Local2026!')
+    await currentPasswordInput.fill(originalPassword)
 
     // 5. 填写符合规则的新密码
     const newPasswordInput = modal.locator('input#newPassword')
     await expect(newPasswordInput).toBeVisible({ timeout: 5000 })
-    await newPasswordInput.fill('NewTeacher@2026')
+    await newPasswordInput.fill(newPassword)
 
     // 6. 填写确认密码（与新密码一致）
     const confirmPasswordInput = modal.locator('input#confirmPassword')
     await expect(confirmPasswordInput).toBeVisible({ timeout: 5000 })
-    await confirmPasswordInput.fill('NewTeacher@2026')
+    await confirmPasswordInput.fill(newPassword)
 
     // 7. 监听修改密码 API 响应，然后点击"确认修改"按钮
     const passwordResponse = page.waitForResponse(
-      (resp) => resp.url().includes('/api/v1/user/password') && resp.status() === 200
+      (resp) => resp.url().includes('/api/v1/auth/password/change') && resp.status() === 200
     )
     const confirmButton = modal.getByRole('button', { name: '确认修改' })
     await confirmButton.click()
@@ -177,5 +180,19 @@ test.describe('个人资料', () => {
 
     // 10. 验证弹窗关闭
     await expect(modal).not.toBeVisible({ timeout: 10000 })
+
+    // 11. 还原密码，避免影响后续用例的登录（密码修改会使旧 token 失效，需重新登录）
+    const relogin = await request.post('/api/v1/auth/login', {
+      data: { username: 'teacher', password: newPassword },
+    })
+    expect(relogin.ok()).toBeTruthy()
+    const reloginBody = await relogin.json()
+    const newToken = reloginBody?.token?.access_token
+    expect(newToken).toBeTruthy()
+    const restore = await request.post('/api/v1/auth/password/change', {
+      headers: { Authorization: `Bearer ${newToken}` },
+      data: { current_password: newPassword, new_password: originalPassword },
+    })
+    expect(restore.ok()).toBeTruthy()
   })
 })

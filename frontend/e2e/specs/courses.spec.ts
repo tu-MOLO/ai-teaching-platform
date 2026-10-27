@@ -56,7 +56,7 @@ test.describe('课程管理', () => {
     const courseData = await createCourse(request, token, {
       name: 'E2E 编辑前课程名',
       subject: '语文',
-      grade: '一年级',
+      grades: ['一年级'],
       schedule: '周二 10:00-10:40',
       status: 'active',
     })
@@ -111,7 +111,7 @@ test.describe('课程管理', () => {
     const courseData = await createCourse(request, token, {
       name: courseName,
       subject: '语文',
-      grade: '一年级',
+      grades: ['一年级'],
       schedule: '周五 14:00-14:40',
       status: 'active',
     })
@@ -150,14 +150,14 @@ test.describe('课程管理', () => {
     const token = await loginViaApi(request, testUser.username, testUser.password)
     expect(token).toBeTruthy()
 
-    // 1. 通过 API 批量创建 15 个课程（超过默认分页大小 10）
+    // 1. 通过 API 批量创建 25 个课程（超过默认分页大小 20）
     const createdCourseIds: string[] = []
     const timestamp = Date.now()
-    for (let i = 1; i <= 15; i++) {
+    for (let i = 1; i <= 25; i++) {
       const courseData = await createCourse(request, token, {
         name: `E2E 分页测试课程 ${i} - ${timestamp}`,
         subject: '语文',
-        grade: '一年级',
+        grades: ['一年级'],
         schedule: '周一 9:00-9:40',
         status: 'active',
       })
@@ -166,7 +166,7 @@ test.describe('课程管理', () => {
         createdCourseIds.push(courseId)
       }
     }
-    expect(createdCourseIds.length).toBe(15)
+    expect(createdCourseIds.length).toBe(25)
 
     try {
       // 2. 导航到课程列表
@@ -221,7 +221,7 @@ test.describe('课程管理', () => {
     const courseData = await createCourse(request, token, {
       name: searchTestCourseName,
       subject: '数学',
-      grade: '二年级',
+      grades: ['二年级'],
       schedule: '周三 10:00-10:40',
       status: 'active',
     })

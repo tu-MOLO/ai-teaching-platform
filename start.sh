@@ -23,7 +23,7 @@ echo "   使用 Python: $PYTHON ($($PYTHON --version 2>&1))"
 
 # 检测 Node.js
 if ! command -v node &>/dev/null; then
-    echo "[错误] 未找到 Node.js，请安装 Node.js 18+"
+    echo "[错误] 未找到 Node.js，请安装 Node.js 20+"
     exit 1
 fi
 echo "   使用 Node: $(node --version)"

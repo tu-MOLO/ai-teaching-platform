@@ -18,7 +18,7 @@ test.describe('成长档案', () => {
     const courseData = await createCourse(request, token, {
       name: 'E2E 测试课程',
       subject: '语文',
-      grade: '一年级',
+      grades: ['一年级'],
       status: 'active',
     })
     const courseId = (courseData as any).id || (courseData as any).data?.id
@@ -116,7 +116,7 @@ test.describe('成长档案', () => {
     const courseData = await createCourse(request, token, {
       name: 'E2E 筛选测试课程',
       subject: '数学',
-      grade: '二年级',
+      grades: ['二年级'],
       status: 'active',
     })
     const courseId = (courseData as any).id || (courseData as any).data?.id
@@ -210,7 +210,7 @@ test.describe('成长档案', () => {
     const courseData = await createCourse(request, token, {
       name: 'E2E 编辑档案测试课程',
       subject: '语文',
-      grade: '一年级',
+      grades: ['一年级'],
       status: 'active',
     })
     const courseId = (courseData as any).id || (courseData as any).data?.id
@@ -311,7 +311,9 @@ test.describe('成长档案', () => {
         content: '这是待删除的测试记录',
       },
     })
-    const portfolioData = await portfolioRes.json()
+    const portfolioBody = await portfolioRes.text()
+    expect(portfolioRes.status(), portfolioBody).toBe(201)
+    const portfolioData = JSON.parse(portfolioBody)
     const recordId = (portfolioData as any).id || (portfolioData as any).data?.id
     expect(recordId).toBeTruthy()
 
@@ -333,8 +335,9 @@ test.describe('成长档案', () => {
     await expect(popconfirm).toBeVisible({ timeout: 5000 })
 
     // 5. 点击"确定"按钮确认删除
-    // Popconfirm 内的确认按钮文本为"删除"（okText="删除"）
-    const confirmButton = popconfirm.locator('button').filter({ hasText: '删除' })
+    // okType="danger" 在 antd 5.29 中渲染为 ant-btn-default + ant-btn-dangerous（不是 primary），
+    // 且按钮文本会被自动插入空格（"删 除"），因此按 role + 正则定位
+    const confirmButton = popconfirm.getByRole('button', { name: /删\s*除/ })
     await confirmButton.click()
 
     // 6. 验证记录从时间轴中移除（记录标题不再可见）
